@@ -1,0 +1,55 @@
+<%- include('partials/head') %>
+
+<section class="hero">
+    <h1>Premium Badminton Equipment</h1>
+    <p>Find the best rackets, shoes, and accessories for your game</p>
+    <a href="/products" class="btn btn-primary btn-large">Shop Now</a>
+</section>
+
+<section class="categories">
+    <h2>Shop by Category</h2>
+    <div class="category-cards">
+        <a href="/products?category=rackets" class="category-card">
+            <div class="category-image">
+                <img src="https://placehold.co/600x400/f5f5f5/333333?text=Badminton+Rackets" alt="Badminton Rackets">
+            </div>
+            <div class="category-info">
+                <h3>Rackets</h3>
+                <p>Professional and recreational rackets from top brands</p>
+            </div>
+        </a>
+        
+        <a href="/products?category=shoes" class="category-card">
+            <div class="category-image">
+                <img src="https://placehold.co/600x400/f5f5f5/333333?text=Badminton+Shoes" alt="Badminton Shoes">
+            </div>
+            <div class="category-info">
+                <h3>Shoes</h3>
+                <p>Court shoes designed for agility and comfort</p>
+            </div>
+        </a>
+        
+        <a href="/products?category=accessories" class="category-card">
+            <div class="category-image">
+                <img src="https://placehold.co/600x400/f5f5f5/333333?text=Accessories" alt="Accessories">
+            </div>
+            <div class="category-info">
+                <h3>Accessories</h3>
+                <p>Strings, grips, bags, shuttlecocks and more</p>
+            </div>
+        </a>
+    </div>
+</section>
+
+<% if (featuredProducts && featuredProducts.length > 0) { %>
+<section class="featured">
+    <h2>Featured Products</h2>
+    <div class="products-grid">
+        <% featuredProducts.forEach(product => { %>
+            <%- include('partials/product-card', { product }) %>
+        <% }) %>
+    </div>
+</section>
+<% } %>
+
+<%- include('partials/tail') %>

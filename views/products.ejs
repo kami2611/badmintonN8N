@@ -1,0 +1,92 @@
+<%- include('partials/head') %>
+
+<div class="products-page">
+    <aside class="filters">
+        <h3>Filters</h3>
+        <form action="/products" method="GET" id="filter-form">
+            <% if (search) { %>
+                <input type="hidden" name="search" value="<%= search %>">
+            <% } %>
+            
+            <div class="filter-group">
+                <h4>Category</h4>
+                <label>
+                    <input type="radio" name="category" value="" <%= !category ? 'checked' : '' %>> All
+                </label>
+                <label>
+                    <input type="radio" name="category" value="rackets" <%= category === 'rackets' ? 'checked' : '' %>> Rackets
+                </label>
+                <label>
+                    <input type="radio" name="category" value="shoes" <%= category === 'shoes' ? 'checked' : '' %>> Shoes
+                </label>
+                <label>
+                    <input type="radio" name="category" value="accessories" <%= category === 'accessories' ? 'checked' : '' %>> Accessories
+                </label>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Brand</h4>
+                <% brands.forEach(b => { %>
+                    <label>
+                        <input type="checkbox" name="brand" value="<%= b %>" <%= selectedBrands.includes(b) ? 'checked' : '' %>> <%= b %>
+                    </label>
+                <% }) %>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Price Range</h4>
+                <label>
+                    <input type="number" name="minPrice" placeholder="Min" value="<%= minPrice || '' %>" class="price-input">
+                </label>
+                <span>to</span>
+                <label>
+                    <input type="number" name="maxPrice" placeholder="Max" value="<%= maxPrice || '' %>" class="price-input">
+                </label>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Sort By</h4>
+                <select name="sort">
+                    <option value="" <%= !sort ? 'selected' : '' %>>Default</option>
+                    <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+                    <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
+                    <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name: A to Z</option>
+                    <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Name: Z to A</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="/products" class="btn btn-outline">Clear All</a>
+        </form>
+    </aside>
+    
+    <section class="products-section">
+        <div class="products-header">
+            <h1>
+                <% if (category) { %>
+                    <%= category.charAt(0).toUpperCase() + category.slice(1) %>
+                <% } else if (search) { %>
+                    Search Results for "<%= search %>"
+                <% } else { %>
+                    All Products
+                <% } %>
+            </h1>
+            <p><%= products.length %> product<%= products.length !== 1 ? 's' : '' %> found</p>
+        </div>
+        
+        <% if (products.length > 0) { %>
+            <div class="products-grid">
+                <% products.forEach(product => { %>
+                    <%- include('partials/product-card', { product }) %>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="no-products">
+                <p>No products found matching your criteria.</p>
+                <a href="/products" class="btn btn-primary">View All Products</a>
+            </div>
+        <% } %>
+    </section>
+</div>
+
+<%- include('partials/tail') %>

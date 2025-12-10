@@ -1,0 +1,21 @@
+{
+  "name": "badminton-store",
+  "version": "1.0.0",
+  "description": "Badminton ecommerce store",
+  "license": "ISC",
+  "author": "",
+  "main": "App.js",
+  "scripts": {
+    "start": "node App.js",
+    "dev": "nodemon App.js",
+    "seed": "node seeds.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.21.0",
+    "mongoose": "^8.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

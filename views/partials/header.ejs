@@ -1,0 +1,24 @@
+<header class="header">
+    <div class="header-container">
+        <a href="/" class="logo">
+            <span class="logo-icon">🏸</span>
+            <span class="logo-text">BadmintonStore</span>
+        </a>
+        
+        <form class="search-bar" action="/products" method="GET">
+            <input type="text" name="search" placeholder="Search products..." value="<%= typeof search !== 'undefined' ? search : '' %>">
+            <button type="submit">Search</button>
+        </form>
+        
+        <nav class="header-nav">
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/checkout" class="nav-link cart-link">
+                Cart (<span id="cart-count"><%= typeof cartCount !== 'undefined' ? cartCount : 0 %></span>)
+            </a>
+            <div class="auth-buttons">
+                <a href="/login" class="btn btn-outline">Login</a>
+                <a href="/signup" class="btn btn-primary">Sign Up</a>
+            </div>
+        </nav>
+    </div>
+</header>

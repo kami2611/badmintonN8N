@@ -1,0 +1,43 @@
+const express = require('express');
+const router = express.Router();
+const Product = require('../models/Product');
+
+// Landing page
+router.get('/', async (req, res) => {
+    try {
+        const featuredProducts = await Product.find({ featured: true }).limit(8);
+        const cartCount = 0; // Will be handled by client-side JS
+        res.render('index', { 
+            title: 'Home',
+            featuredProducts,
+            cartCount
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Login page
+router.get('/login', (req, res) => {
+    res.render('login', { title: 'Login', cartCount: 0 });
+});
+
+// Signup page
+router.get('/signup', (req, res) => {
+    res.render('signup', { title: 'Sign Up', cartCount: 0 });
+});
+
+// Handle login (placeholder)
+router.post('/login', (req, res) => {
+    // In a real app, you'd verify credentials here
+    res.redirect('/');
+});
+
+// Handle signup (placeholder)
+router.post('/signup', (req, res) => {
+    // In a real app, you'd create user here
+    res.redirect('/login');
+});
+
+module.exports = router;

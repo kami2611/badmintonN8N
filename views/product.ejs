@@ -1,0 +1,87 @@
+<%- include('partials/head') %>
+
+<div class="product-detail">
+    <div class="product-images">
+        <div class="main-image">
+            <img src="<%= product.images[0] || 'https://placehold.co/600x600/f5f5f5/333333?text=No+Image' %>" alt="<%= product.name %>" id="main-product-image">
+        </div>
+        <% if (product.images.length > 1) { %>
+            <div class="thumbnail-images">
+                <% product.images.forEach((img, index) => { %>
+                    <img src="<%= img %>" alt="<%= product.name %> - Image <%= index + 1 %>" class="thumbnail <%= index === 0 ? 'active' : '' %>" data-src="<%= img %>">
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+    
+    <div class="product-info-detail">
+        <nav class="breadcrumb">
+            <a href="/">Home</a> / 
+            <a href="/products">Products</a> / 
+            <a href="/products?category=<%= product.category %>"><%= product.category.charAt(0).toUpperCase() + product.category.slice(1) %></a>
+        </nav>
+        
+        <h1><%= product.name %></h1>
+        <p class="brand">Brand: <strong><%= product.brand %></strong></p>
+        <p class="price">$<%= product.price.toFixed(2) %></p>
+        
+        <div class="stock-status">
+            <% if (product.stock > 0) { %>
+                <span class="in-stock">In Stock (<%= product.stock %> available)</span>
+            <% } else { %>
+                <span class="out-of-stock">Out of Stock</span>
+            <% } %>
+        </div>
+        
+        <div class="quantity-selector">
+            <label for="quantity">Quantity:</label>
+            <div class="quantity-controls">
+                <button type="button" class="qty-btn" id="qty-decrease">-</button>
+                <input type="number" id="quantity" value="1" min="1" max="<%= product.stock %>">
+                <button type="button" class="qty-btn" id="qty-increase">+</button>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary btn-large add-to-cart-detail" data-id="<%= product._id %>" <%= product.stock === 0 ? 'disabled' : '' %>>
+            Add to Cart
+        </button>
+        
+        <div class="product-description">
+            <h3>Description</h3>
+            <p><%= product.description %></p>
+        </div>
+        
+        <% if (product.specifications) { %>
+            <div class="product-specifications">
+                <h3>Specifications</h3>
+                <table>
+                    <% if (product.specifications.weight) { %>
+                        <tr><td>Weight</td><td><%= product.specifications.weight %></td></tr>
+                    <% } %>
+                    <% if (product.specifications.material) { %>
+                        <tr><td>Material</td><td><%= product.specifications.material %></td></tr>
+                    <% } %>
+                    <% if (product.specifications.color) { %>
+                        <tr><td>Color</td><td><%= product.specifications.color %></td></tr>
+                    <% } %>
+                    <% if (product.specifications.size) { %>
+                        <tr><td>Size</td><td><%= product.specifications.size %></td></tr>
+                    <% } %>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<% if (relatedProducts && relatedProducts.length > 0) { %>
+    <section class="related-products">
+        <h2>Related Products</h2>
+        <div class="products-grid">
+            <% relatedProducts.forEach(product => { %>
+                <%- include('partials/product-card', { product }) %>
+            <% }) %>
+        </div>
+    </section>
+<% } %>
+
+<%- include('partials/tail') %>
