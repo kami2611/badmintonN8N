@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Orders</h1>
+        </header>
+        
+        <div class="filters-bar">
+            <form action="/admin/orders" method="GET" class="filter-form">
+                <select name="status">
+                    <option value="">All Statuses</option>
+                    <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>Pending</option>
+                    <option value="processing" <%= status === 'processing' ? 'selected' : '' %>>Processing</option>
+                    <option value="shipped" <%= status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                    <option value="delivered" <%= status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                    <option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                </select>
+                <button type="submit" class="btn btn-outline">Filter</button>
+                <% if (status) { %>
+                    <a href="/admin/orders" class="btn btn-outline">Clear</a>
+                <% } %>
+            </form>
+        </div>
+        
+        <p class="results-count"><%= orders.length %> order(s) found</p>
+        
+        <% if (orders.length > 0) { %>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Email</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td>
+                                <a href="/admin/orders/<%= order._id %>">
+                                    #<%= order._id.toString().slice(-8).toUpperCase() %>
+                                </a>
+                            </td>
+                            <td><%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %></td>
+                            <td><%= order.guestEmail || '-' %></td>
+                            <td><%= order.items.length %></td>
+                            <td>$<%= order.totalAmount.toFixed(2) %></td>
+                            <td>
+                                <span class="status-badge status-<%= order.status %>">
+                                    <%= order.status %>
+                                </span>
+                            </td>
+                            <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                            <td>
+                                <a href="/admin/orders/<%= order._id %>" class="btn btn-small">View</a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p class="no-data">No orders found.</p>
+        <% } %>
+    </main>
+</body>
+</html>

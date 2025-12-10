@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Dashboard</h1>
+            <a href="/" class="btn btn-outline" target="_blank">View Store</a>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Products</h3>
+                <p class="stat-number"><%= stats.totalProducts %></p>
+                <span class="stat-detail">
+                    Rackets: <%= stats.rackets %> | 
+                    Shoes: <%= stats.shoes %> | 
+                    Accessories: <%= stats.accessories %>
+                </span>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <p class="stat-number"><%= stats.totalOrders %></p>
+                <span class="stat-detail"><%= stats.pendingOrders %> pending</span>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <p class="stat-number">$<%= stats.totalRevenue.toFixed(2) %></p>
+                <span class="stat-detail">All time</span>
+            </div>
+        </div>
+        
+        <section class="recent-orders">
+            <div class="section-header">
+                <h2>Recent Orders</h2>
+                <a href="/admin/orders" class="btn btn-outline">View All</a>
+            </div>
+            
+            <% if (recentOrders.length > 0) { %>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recentOrders.forEach(order => { %>
+                            <tr>
+                                <td>
+                                    <a href="/admin/orders/<%= order._id %>">
+                                        #<%= order._id.toString().slice(-8).toUpperCase() %>
+                                    </a>
+                                </td>
+                                <td><%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %></td>
+                                <td><%= order.items.length %> item(s)</td>
+                                <td>$<%= order.totalAmount.toFixed(2) %></td>
+                                <td>
+                                    <span class="status-badge status-<%= order.status %>">
+                                        <%= order.status %>
+                                    </span>
+                                </td>
+                                <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p class="no-data">No orders yet.</p>
+            <% } %>
+        </section>
+    </main>
+</body>
+</html>

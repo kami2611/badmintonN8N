@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Order #<%= order._id.toString().slice(-8).toUpperCase() %></h1>
+            <a href="/admin/orders" class="btn btn-outline">← Back to Orders</a>
+        </header>
+        
+        <div class="order-detail-grid">
+            <div class="order-info-card">
+                <h3>Order Information</h3>
+                <table class="info-table">
+                    <tr>
+                        <td>Order ID:</td>
+                        <td><%= order._id %></td>
+                    </tr>
+                    <tr>
+                        <td>Date:</td>
+                        <td><%= new Date(order.createdAt).toLocaleString() %></td>
+                    </tr>
+                    <tr>
+                        <td>Status:</td>
+                        <td>
+                            <span class="status-badge status-<%= order.status %>">
+                                <%= order.status %>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Payment:</td>
+                        <td><%= order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod %></td>
+                    </tr>
+                </table>
+                
+                <form action="/admin/orders/<%= order._id %>/status" method="POST" class="status-form">
+                    <label for="status">Update Status:</label>
+                    <select name="status" id="status">
+                        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                        <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                        <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                        <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+            
+            <div class="order-info-card">
+                <h3>Customer Information</h3>
+                <table class="info-table">
+                    <tr>
+                        <td>Name:</td>
+                        <td><%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %></td>
+                    </tr>
+                    <tr>
+                        <td>Email:</td>
+                        <td><%= order.guestEmail || '-' %></td>
+                    </tr>
+                </table>
+                
+                <h4>Shipping Address</h4>
+                <p class="address">
+                    <%= order.shippingAddress.street %><br>
+                    <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> <%= order.shippingAddress.zipCode %><br>
+                    <%= order.shippingAddress.country %>
+                </p>
+            </div>
+        </div>
+        
+        <div class="order-items-card">
+            <h3>Order Items</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% order.items.forEach(item => { %>
+                        <tr>
+                            <td><%= item.name %></td>
+                            <td>$<%= item.price.toFixed(2) %></td>
+                            <td><%= item.quantity %></td>
+                            <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                        <td><strong>$<%= order.totalAmount.toFixed(2) %></strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
