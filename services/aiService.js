@@ -63,46 +63,68 @@ const tools = {
     ],
 };
 
+// Helper function for delay
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function processUserCommand(userText) {
-    try {
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash",
-            tools: [tools],
-            systemInstruction: {
-                parts: [{ text: "You are an inventory assistant. You can Create, Update, Delete, and List products. For updates and deletes, ask for the product name if not provided. Be helpful and concise." }]
-            }
-        });
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (true) {
+        try {
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-2.5-flash",
+                tools: [tools],
+                systemInstruction: {
+                    parts: [{ text: "You are an inventory assistant. You can Create, Update, Delete, and List products. For updates and deletes, ask for the product name if not provided. Be helpful and concise." }]
+                }
+            });
 
-        const chat = model.startChat();
-        const result = await chat.sendMessage(userText);
-        const response = result.response;
-        const functionCalls = response.functionCalls();
+            const chat = model.startChat();
+            const result = await chat.sendMessage(userText);
+            const response = result.response;
+            const functionCalls = response.functionCalls();
 
-        if (functionCalls && functionCalls.length > 0) {
-            const call = functionCalls[0];
-            const args = call.args;
+            if (functionCalls && functionCalls.length > 0) {
+                const call = functionCalls[0];
+                const args = call.args;
 
-            // Map function names to Action Types
-            if (call.name === "create_product") {
-                if(args.category) args.category = args.category.toLowerCase();
-                return { type: "ACTION", action: "CREATE_PRODUCT", data: args };
+                // Map function names to Action Types
+                if (call.name === "create_product") {
+                    if(args.category) args.category = args.category.toLowerCase();
+                    return { type: "ACTION", action: "CREATE_PRODUCT", data: args };
+                }
+                if (call.name === "update_product") {
+                    return { type: "ACTION", action: "UPDATE_PRODUCT", data: args };
+                }
+                if (call.name === "delete_product") {
+                    return { type: "ACTION", action: "DELETE_PRODUCT", data: args };
+                }
+                if (call.name === "list_products") {
+                    return { type: "ACTION", action: "LIST_PRODUCTS", data: args };
+                }
             }
-            if (call.name === "update_product") {
-                return { type: "ACTION", action: "UPDATE_PRODUCT", data: args };
+
+            return { type: "REPLY", text: response.text() };
+
+        } catch (error) {
+            console.error(`Gemini AI Error (Attempt ${retries + 1}):`, error.message);
+            
+            // Check for 503 Service Unavailable or Overloaded
+            if (error.message.includes("503") || error.message.includes("overloaded")) {
+                retries++;
+                if (retries > maxRetries) {
+                    return { type: "ERROR", text: "The AI model is currently overloaded. Please try again in a few moments." };
+                }
+                
+                // Exponential backoff: 1s, 2s, 4s
+                const waitTime = 1000 * Math.pow(2, retries - 1);
+                await delay(waitTime);
+                continue;
             }
-            if (call.name === "delete_product") {
-                return { type: "ACTION", action: "DELETE_PRODUCT", data: args };
-            }
-            if (call.name === "list_products") {
-                return { type: "ACTION", action: "LIST_PRODUCTS", data: args };
-            }
+
+            return { type: "ERROR", text: "System error." };
         }
-
-        return { type: "REPLY", text: response.text() };
-
-    } catch (error) {
-        console.error("Gemini AI Error:", error);
-        return { type: "ERROR", text: "System error." };
     }
 }
 
