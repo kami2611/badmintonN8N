@@ -27,6 +27,11 @@ const sellerSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    onboardingStep: {
+        type: String,
+        enum: ['new', 'name_entered', 'complete'],
+        default: 'complete' // Existing web users are already complete
+    },
     isActive: {
         type: Boolean,
         default: true

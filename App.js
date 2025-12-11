@@ -41,6 +41,7 @@ const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/seller');
 const storeRoutes = require('./routes/store');
+const whatsappRoutes = require('./routes/whatsapp');
 
 app.use('/', indexRoutes);
 app.use('/products', productRoutes);
@@ -49,6 +50,7 @@ app.use('/api', apiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/seller', sellerRoutes);
 app.use('/store', storeRoutes);
+app.use('/whatsapp', whatsappRoutes); 
 
 // 404 handler
 app.use((req, res) => {
