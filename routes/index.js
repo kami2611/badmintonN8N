@@ -5,11 +5,19 @@ const Product = require('../models/Product');
 // Landing page
 router.get('/', async (req, res) => {
     try {
-        const featuredProducts = await Product.find({ featured: true }).limit(8);
+        const featuredProducts = await Product.find({ featured: true })
+            .populate('seller', 'storeName')
+            .limit(8);
+        
+        const productsWithSeller = featuredProducts.map(p => ({
+            ...p.toObject(),
+            sellerInfo: p.seller
+        }));
+        
         const cartCount = 0; // Will be handled by client-side JS
         res.render('index', { 
             title: 'Home',
-            featuredProducts,
+            featuredProducts: productsWithSeller,
             cartCount
         });
     } catch (error) {

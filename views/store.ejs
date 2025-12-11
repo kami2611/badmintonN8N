@@ -1,0 +1,55 @@
+<%- include('partials/head') %>
+
+<section class="store-header">
+    <div class="store-info-container">
+        <div class="store-icon-large">🏪</div>
+        <div class="store-details">
+            <h1><%= seller.storeName %></h1>
+            <p class="store-meta">
+                <span>📦 <%= stats.totalProducts %> Products</span>
+                <% if (seller.phone) { %>
+                    <span>📞 <%= seller.phone %></span>
+                <% } %>
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="store-categories">
+    <div class="category-stats">
+        <div class="category-stat-item">
+            <span class="category-count"><%= stats.rackets %></span>
+            <span class="category-label">Rackets</span>
+        </div>
+        <div class="category-stat-item">
+            <span class="category-count"><%= stats.shoes %></span>
+            <span class="category-label">Shoes</span>
+        </div>
+        <div class="category-stat-item">
+            <span class="category-count"><%= stats.accessories %></span>
+            <span class="category-label">Accessories</span>
+        </div>
+    </div>
+</section>
+
+<section class="featured">
+    <div class="section-header">
+        <h2>All Products from <%= seller.storeName %></h2>
+        <p class="results-count"><%= products.length %> product(s)</p>
+    </div>
+    
+    <% if (products.length > 0) { %>
+        <div class="products-grid">
+            <% products.forEach(product => { %>
+                <%- include('partials/product-card', { product }) %>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <div class="no-products">
+            <p>This store doesn't have any products yet.</p>
+            <a href="/products" class="btn btn-primary">Browse All Products</a>
+        </div>
+    <% } %>
+</section>
+
+<%- include('partials/tail') %>

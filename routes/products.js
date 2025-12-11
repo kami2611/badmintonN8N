@@ -52,8 +52,16 @@ router.get('/', async (req, res) => {
                 sortOption = { createdAt: -1 };
         }
         
-        // Execute query
-        const products = await Product.find(query).sort(sortOption);
+        // Execute query - populate seller info
+        const products = await Product.find(query)
+            .populate('seller', 'storeName')
+            .sort(sortOption);
+        
+        // Add sellerInfo to each product for template
+        const productsWithSeller = products.map(p => ({
+            ...p.toObject(),
+            sellerInfo: p.seller
+        }));
         
         // Get all brands for filter
         const allBrands = await Product.distinct('brand');
@@ -63,7 +71,7 @@ router.get('/', async (req, res) => {
         
         res.render('products', {
             title: 'Products',
-            products,
+            products: productsWithSeller,
             brands: allBrands,
             selectedBrands,
             category: category || '',

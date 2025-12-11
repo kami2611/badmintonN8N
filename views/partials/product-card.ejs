@@ -3,10 +3,19 @@
         <div class="product-image">
             <img src="<%= product.images[0] || 'https://placehold.co/400x400/f5f5f5/333333?text=No+Image' %>" alt="<%= product.name %>">
         </div>
-        <div class="product-info">
-            <h3 class="product-name"><%= product.name %></h3>
-            <p class="product-price">$<%= product.price.toFixed(2) %></p>
-        </div>
     </a>
+    <div class="product-info">
+        <a href="/products/<%= product._id %>">
+            <h3 class="product-name"><%= product.name %></h3>
+        </a>
+        <p class="product-price">$<%= product.price.toFixed(2) %></p>
+        <% if (product.sellerInfo) { %>
+            <div class="product-seller">
+                <a href="/store/<%= product.sellerInfo._id %>" onclick="event.stopPropagation()">
+                    <span class="store-icon">🏪</span> <%= product.sellerInfo.storeName %>
+                </a>
+            </div>
+        <% } %>
+    </div>
     <button class="btn btn-primary add-to-cart" data-id="<%= product._id %>">Add to Cart</button>
 </div>
