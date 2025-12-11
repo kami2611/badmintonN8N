@@ -1,41 +1,51 @@
 <%- include('partials/head') %>
 
 <section class="hero">
-    <h1>Premium Badminton Equipment</h1>
-    <p>Find the best rackets, shoes, and accessories for your game</p>
-    <a href="/products" class="btn btn-primary btn-large">Shop Now</a>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <span class="hero-badge">Premium Quality</span>
+        <h1>Elevate Your Game</h1>
+        <p>Professional badminton equipment trusted by champions worldwide</p>
+        <div class="hero-buttons">
+            <a href="/products" class="btn btn-primary btn-large">Shop Collection</a>
+            <a href="/products?category=rackets" class="btn btn-outline-light btn-large">View Rackets</a>
+        </div>
+    </div>
 </section>
 
 <section class="categories">
-    <h2>Shop by Category</h2>
+    <div class="section-header">
+        <h2>Shop by Category</h2>
+        <p>Find the perfect gear for every aspect of your game</p>
+    </div>
     <div class="category-cards">
         <a href="/products?category=rackets" class="category-card">
             <div class="category-image">
-                <img src="https://placehold.co/600x400/f5f5f5/333333?text=Badminton+Rackets" alt="Badminton Rackets">
+                <img src="https://images.unsplash.com/photo-1617083934555-ac7d4d3c0e71?w=600&h=400&fit=crop" alt="Badminton Rackets">
             </div>
-            <div class="category-info">
+            <div class="category-overlay">
                 <h3>Rackets</h3>
-                <p>Professional and recreational rackets from top brands</p>
+                <span class="category-cta">Shop Now →</span>
             </div>
         </a>
         
         <a href="/products?category=shoes" class="category-card">
             <div class="category-image">
-                <img src="https://placehold.co/600x400/f5f5f5/333333?text=Badminton+Shoes" alt="Badminton Shoes">
+                <img src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600&h=400&fit=crop" alt="Court Shoes">
             </div>
-            <div class="category-info">
-                <h3>Shoes</h3>
-                <p>Court shoes designed for agility and comfort</p>
+            <div class="category-overlay">
+                <h3>Court Shoes</h3>
+                <span class="category-cta">Shop Now →</span>
             </div>
         </a>
         
         <a href="/products?category=accessories" class="category-card">
             <div class="category-image">
-                <img src="https://placehold.co/600x400/f5f5f5/333333?text=Accessories" alt="Accessories">
+                <img src="https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=600&h=400&fit=crop" alt="Accessories">
             </div>
-            <div class="category-info">
+            <div class="category-overlay">
                 <h3>Accessories</h3>
-                <p>Strings, grips, bags, shuttlecocks and more</p>
+                <span class="category-cta">Shop Now →</span>
             </div>
         </a>
     </div>
@@ -43,13 +53,20 @@
 
 <% if (featuredProducts && featuredProducts.length > 0) { %>
 <section class="featured">
-    <h2>Featured Products</h2>
+    <div class="section-header">
+        <h2>Featured Products</h2>
+        <p>Handpicked favorites from our collection</p>
+    </div>
     <div class="products-grid">
         <% featuredProducts.forEach(product => { %>
             <%- include('partials/product-card', { product }) %>
         <% }) %>
     </div>
+    <div class="featured-cta">
+        <a href="/products" class="btn btn-outline btn-large">View All Products</a>
+    </div>
 </section>
 <% } %>
+
 
 <%- include('partials/tail') %>
