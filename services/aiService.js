@@ -8,18 +8,56 @@ const tools = {
     functionDeclarations: [
         {
             name: "create_product",
-            description: "Create a new product. Only call this when you have ALL details. If details are missing, ask the user for them.",
+            description: "Create a new product. Requires Name, Price, Category, Stock, Brand, Description.",
             parameters: {
                 type: "OBJECT",
                 properties: {
-                    name: { type: "STRING", description: "Product name" },
-                    price: { type: "NUMBER", description: "Price" },
-                    category: { type: "STRING", description: "Category (rackets, shoes, accessories)" },
-                    stock: { type: "NUMBER", description: "Stock quantity" },
-                    brand: { type: "STRING", description: "Brand name" },
-                    description: { type: "STRING", description: "Product description" }
+                    name: { type: "STRING" },
+                    price: { type: "NUMBER" },
+                    category: { type: "STRING" },
+                    stock: { type: "NUMBER" },
+                    brand: { type: "STRING" },
+                    description: { type: "STRING" }
                 },
                 required: ["name", "price", "category", "stock", "brand", "description"],
+            },
+        },
+        // NEW: Update Product
+        {
+            name: "update_product",
+            description: "Update an existing product. User must specify the product name to find it, and then the fields to change.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    searchName: { type: "STRING", description: "The name of the product to update" },
+                    newPrice: { type: "NUMBER", description: "New price (optional)" },
+                    newStock: { type: "NUMBER", description: "New stock quantity (optional)" },
+                    newDescription: { type: "STRING", description: "New description (optional)" }
+                },
+                required: ["searchName"],
+            },
+        },
+        // NEW: Delete Product
+        {
+            name: "delete_product",
+            description: "Delete a product permanently from inventory.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product to delete" }
+                },
+                required: ["productName"],
+            },
+        },
+        // NEW: List Products
+        {
+            name: "list_products",
+            description: "List products in the inventory. Can filter by category or show all.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    category: { type: "STRING", description: "Category to filter by (optional)" }
+                },
             },
         }
     ],
@@ -27,44 +65,44 @@ const tools = {
 
 async function processUserCommand(userText) {
     try {
-        // Use gemini-1.5-flash as it supports system instructions and tools well
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-flash-latest",
+            model: "gemini-2.5-flash",
             tools: [tools],
             systemInstruction: {
-                parts: [{ text: "You are an inventory assistant. To add a product, you STRICTLY need: Name, Price, Category, Stock, Brand, and Description. If the user misses ANY of these, do NOT call the create_product function. Instead, ask for the missing information politely. Do NOT guess values." }]
+                parts: [{ text: "You are an inventory assistant. You can Create, Update, Delete, and List products. For updates and deletes, ask for the product name if not provided. Be helpful and concise." }]
             }
         });
 
         const chat = model.startChat();
-        
         const result = await chat.sendMessage(userText);
         const response = result.response;
-        
         const functionCalls = response.functionCalls();
 
         if (functionCalls && functionCalls.length > 0) {
             const call = functionCalls[0];
-            if (call.name === "create_product") {
-                const productData = call.args;
-                if(productData.category) productData.category = productData.category.toLowerCase();
+            const args = call.args;
 
-                return {
-                    type: "ACTION",
-                    action: "CREATE_PRODUCT",
-                    data: productData
-                };
+            // Map function names to Action Types
+            if (call.name === "create_product") {
+                if(args.category) args.category = args.category.toLowerCase();
+                return { type: "ACTION", action: "CREATE_PRODUCT", data: args };
+            }
+            if (call.name === "update_product") {
+                return { type: "ACTION", action: "UPDATE_PRODUCT", data: args };
+            }
+            if (call.name === "delete_product") {
+                return { type: "ACTION", action: "DELETE_PRODUCT", data: args };
+            }
+            if (call.name === "list_products") {
+                return { type: "ACTION", action: "LIST_PRODUCTS", data: args };
             }
         }
 
-        return {
-            type: "REPLY",
-            text: response.text()
-        };
+        return { type: "REPLY", text: response.text() };
 
     } catch (error) {
         console.error("Gemini AI Error:", error);
-        return { type: "ERROR", text: "I'm having trouble connecting to my brain right now." };
+        return { type: "ERROR", text: "System error." };
     }
 }
 

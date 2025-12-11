@@ -107,6 +107,7 @@ async function handleIncomingMessage(phone, text) {
                 // The AI just wants to chat (e.g., "Hello")
                 await sendMessage(phone, aiResult.text);
             } 
+            // CREATE
             else if (aiResult.type === 'ACTION' && aiResult.action === 'CREATE_PRODUCT') {
                 const productData = aiResult.data;
 
@@ -124,8 +125,75 @@ async function handleIncomingMessage(phone, text) {
                 const successMsg = `✅ **Product Created!**\n\nName: ${finalProductData.name}\nPrice: $${finalProductData.price}\nStock: ${finalProductData.stock}\nCategory: ${finalProductData.category}\nBrand: ${finalProductData.brand}`;
                 await sendMessage(phone, successMsg);
             }
+
+            // UPDATE
+            else if (aiResult.type === 'ACTION' && aiResult.action === 'UPDATE_PRODUCT') {
+                const { searchName, newPrice, newStock, newDescription } = aiResult.data;
+                
+                // Find product by name AND seller (security)
+                // Using regex for case-insensitive partial match
+                const product = await Product.findOne({ 
+                    seller: seller._id, 
+                    name: { $regex: searchName, $options: 'i' } 
+                });
+
+                if (!product) {
+                    await sendMessage(phone, `❌ I couldn't find a product named "${searchName}".`);
+                    return;
+                }
+
+                // Apply updates
+                if (newPrice) product.price = newPrice;
+                if (newStock) product.stock = newStock;
+                if (newDescription) product.description = newDescription;
+                
+                await product.save();
+                await sendMessage(phone, `✅ Updated **${product.name}**.\nPrice: ${product.price}\nStock: ${product.stock}`);
+            }
+
+            // DELETE
+            else if (aiResult.type === 'ACTION' && aiResult.action === 'DELETE_PRODUCT') {
+                const { productName } = aiResult.data;
+                
+                const deleted = await Product.findOneAndDelete({ 
+                    seller: seller._id, 
+                    name: { $regex: productName, $options: 'i' } 
+                });
+
+                if (deleted) {
+                    await sendMessage(phone, `🗑️ Deleted **${deleted.name}** from inventory.`);
+                } else {
+                    await sendMessage(phone, `❌ I couldn't find "${productName}" to delete.`);
+                }
+            }
+
+            // LIST
+            else if (aiResult.type === 'ACTION' && aiResult.action === 'LIST_PRODUCTS') {
+                const { category } = aiResult.data;
+                const query = { seller: seller._id };
+                if (category) query.category = category.toLowerCase();
+
+                const products = await Product.find(query).limit(10); // Limit to 10 to avoid spamming
+
+                if (products.length === 0) {
+                    await sendMessage(phone, "Your inventory is empty.");
+                } else {
+                    let msg = "📋 **Your Inventory:**\n\n";
+                    products.forEach(p => {
+                        msg += `• ${p.name} - $${p.price} (${p.stock} left)\n`;
+                    });
+                    await sendMessage(phone, msg);
+                }
+            }
+            
+            // ERROR
+            else if (aiResult.type === 'ERROR') {
+                await sendMessage(phone, `⚠️ ${aiResult.text}`);
+            }
+            
+            // CHAT
             else {
-                await sendMessage(phone, "I didn't understand that command.");
+                await sendMessage(phone, aiResult.text || "I didn't understand.");
             }
         }
 
