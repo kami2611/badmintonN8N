@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Login | BadmintonStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/seller.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    
+    <main class="main-content">
+        <div class="auth-page">
+            <div class="auth-box">
+                <h1>Seller Login</h1>
+                <p class="auth-subtitle">Access your seller dashboard</p>
+                
+                <% if (error) { %>
+                    <div class="alert alert-error"><%= error %></div>
+                <% } %>
+                
+                <form action="/seller/login" method="POST">
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-large">Login</button>
+                </form>
+                
+                <p class="auth-link">Don't have a seller account? <a href="/seller/signup">Register as Seller</a></p>
+            </div>
+        </div>
+    </main>
+    
+    <%- include('../partials/footer') %>
+</body>
+</html>

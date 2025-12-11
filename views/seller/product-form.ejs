@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/seller.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1><%= title %></h1>
+            <a href="/seller/products" class="btn btn-outline">← Back to Products</a>
+        </header>
+        
+        <form action="<%= action %>" method="POST" class="admin-form">
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                
+                <div class="form-group">
+                    <label for="name">Product Name *</label>
+                    <input type="text" id="name" name="name" value="<%= product ? product.name : '' %>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description *</label>
+                    <textarea id="description" name="description" rows="4" required><%= product ? product.description : '' %></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="price">Price ($) *</label>
+                        <input type="number" id="price" name="price" step="0.01" min="0" value="<%= product ? product.price : '' %>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stock">Stock *</label>
+                        <input type="number" id="stock" name="stock" min="0" value="<%= product ? product.stock : 0 %>" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">Category *</label>
+                        <select id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="rackets" <%= product && product.category === 'rackets' ? 'selected' : '' %>>Rackets</option>
+                            <option value="shoes" <%= product && product.category === 'shoes' ? 'selected' : '' %>>Shoes</option>
+                            <option value="accessories" <%= product && product.category === 'accessories' ? 'selected' : '' %>>Accessories</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="brand">Brand *</label>
+                        <input type="text" id="brand" name="brand" value="<%= product ? product.brand : '' %>" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Images</h3>
+                <div class="form-group">
+                    <label for="images">Image URLs (one per line)</label>
+                    <textarea id="images" name="images" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"><%= product && product.images ? product.images.join('\n') : '' %></textarea>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Specifications</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="weight">Weight</label>
+                        <input type="text" id="weight" name="weight" value="<%= product && product.specifications ? product.specifications.weight || '' : '' %>" placeholder="e.g., 83g">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material">Material</label>
+                        <input type="text" id="material" name="material" value="<%= product && product.specifications ? product.specifications.material || '' : '' %>" placeholder="e.g., Carbon Fiber">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="color">Color</label>
+                        <input type="text" id="color" name="color" value="<%= product && product.specifications ? product.specifications.color || '' : '' %>" placeholder="e.g., Black/Red">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="size">Size</label>
+                        <input type="text" id="size" name="size" value="<%= product && product.specifications ? product.specifications.size || '' : '' %>" placeholder="e.g., G4">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <%= product ? 'Update Product' : 'Add Product' %>
+                </button>
+                <a href="/seller/products" class="btn btn-outline btn-large">Cancel</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

@@ -2,13 +2,49 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Seller = require('../models/Seller');
 
-// Simple admin auth middleware (in production, use proper authentication)
+// Admin auth middleware - checks session
 const adminAuth = (req, res, next) => {
-    // For demo purposes, we'll use a simple query param or session
-    // In production, implement proper admin authentication
-    next();
+    if (req.session && req.session.isAdmin) {
+        next();
+    } else {
+        res.redirect('/admin/login');
+    }
 };
+
+// Admin Login Page
+router.get('/login', (req, res) => {
+    if (req.session && req.session.isAdmin) {
+        return res.redirect('/admin');
+    }
+    res.render('admin/login', { 
+        title: 'Admin Login',
+        error: null 
+    });
+});
+
+// Admin Login
+router.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+        req.session.isAdmin = true;
+        req.session.adminUsername = username;
+        res.redirect('/admin');
+    } else {
+        res.render('admin/login', {
+            title: 'Admin Login',
+            error: 'Invalid username or password'
+        });
+    }
+});
+
+// Admin Logout
+router.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/admin/login');
+});
 
 // Admin Dashboard
 router.get('/', adminAuth, async (req, res) => {
@@ -212,6 +248,124 @@ router.post('/orders/:id/status', adminAuth, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send('Error updating order');
+    }
+});
+
+// ==================== SELLER MANAGEMENT ====================
+
+// Sellers List
+router.get('/sellers', adminAuth, async (req, res) => {
+    try {
+        const { search, status } = req.query;
+        let query = {};
+        
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { storeName: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        if (status === 'active') query.isActive = true;
+        if (status === 'inactive') query.isActive = false;
+        
+        const sellers = await Seller.find(query).sort({ createdAt: -1 });
+        
+        // Get product count for each seller
+        const sellersWithStats = await Promise.all(sellers.map(async (seller) => {
+            const productCount = await Product.countDocuments({ seller: seller._id });
+            return {
+                ...seller.toObject(),
+                productCount
+            };
+        }));
+        
+        res.render('admin/sellers', {
+            title: 'Manage Sellers',
+            sellers: sellersWithStats,
+            search: search || '',
+            status: status || ''
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// View Seller Details
+router.get('/sellers/:id', adminAuth, async (req, res) => {
+    try {
+        const seller = await Seller.findById(req.params.id);
+        if (!seller) {
+            return res.status(404).send('Seller not found');
+        }
+        
+        const products = await Product.find({ seller: seller._id }).sort({ createdAt: -1 });
+        const productIds = products.map(p => p._id);
+        
+        // Get orders containing seller's products
+        const orders = await Order.find({ 'items.product': { $in: productIds } });
+        let totalRevenue = 0;
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                if (productIds.some(id => id.equals(item.product))) {
+                    totalRevenue += item.price * item.quantity;
+                }
+            });
+        });
+        
+        res.render('admin/seller-detail', {
+            title: seller.storeName,
+            seller,
+            products,
+            stats: {
+                totalProducts: products.length,
+                totalOrders: orders.length,
+                totalRevenue
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Toggle Seller Status (activate/deactivate)
+router.post('/sellers/:id/toggle-status', adminAuth, async (req, res) => {
+    try {
+        const seller = await Seller.findById(req.params.id);
+        if (!seller) {
+            return res.status(404).send('Seller not found');
+        }
+        
+        seller.isActive = !seller.isActive;
+        await seller.save();
+        
+        res.redirect(`/admin/sellers/${req.params.id}`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error updating seller');
+    }
+});
+
+// Delete Seller (and optionally their products)
+router.post('/sellers/:id/delete', adminAuth, async (req, res) => {
+    try {
+        const { deleteProducts } = req.body;
+        
+        if (deleteProducts === 'on') {
+            await Product.deleteMany({ seller: req.params.id });
+        } else {
+            // Unlink products from seller
+            await Product.updateMany({ seller: req.params.id }, { $unset: { seller: 1 } });
+        }
+        
+        await Seller.findByIdAndDelete(req.params.id);
+        res.redirect('/admin/sellers');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error deleting seller');
     }
 });
 

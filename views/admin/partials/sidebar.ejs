@@ -9,6 +9,10 @@
             <span class="nav-icon">📊</span>
             Dashboard
         </a>
+        <a href="/admin/sellers" class="nav-item <%= typeof title !== 'undefined' && (title === 'Manage Sellers' || title.includes('Seller')) ? 'active' : '' %>">
+            <span class="nav-icon">👥</span>
+            Sellers
+        </a>
         <a href="/admin/products" class="nav-item <%= typeof title !== 'undefined' && (title === 'Manage Products' || title === 'Add Product' || title === 'Edit Product') ? 'active' : '' %>">
             <span class="nav-icon">📦</span>
             Products
@@ -20,6 +24,10 @@
     </nav>
     
     <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item">
+            <span class="nav-icon">🚪</span>
+            Logout
+        </a>
         <a href="/" class="nav-item">
             <span class="nav-icon">🏠</span>
             Back to Store

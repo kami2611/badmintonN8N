@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/seller.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <div>
+                <h1>Welcome, <%= sellerName %></h1>
+                <p class="store-name"><%= storeName %></p>
+            </div>
+            <a href="/" class="btn btn-outline" target="_blank">View Store</a>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Products</h3>
+                <p class="stat-number"><%= stats.totalProducts %></p>
+                <a href="/seller/products" class="stat-link">Manage Products →</a>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Orders Received</h3>
+                <p class="stat-number"><%= stats.totalOrders %></p>
+                <a href="/seller/orders" class="stat-link">View Orders →</a>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <p class="stat-number">$<%= stats.totalRevenue.toFixed(2) %></p>
+                <span class="stat-detail">From your products</span>
+            </div>
+            
+            <div class="stat-card <%= stats.lowStock > 0 ? 'stat-warning' : '' %>">
+                <h3>Low Stock Alert</h3>
+                <p class="stat-number"><%= stats.lowStock %></p>
+                <span class="stat-detail">Products with stock < 5</span>
+            </div>
+        </div>
+        
+        <section class="recent-orders">
+            <div class="section-header">
+                <h2>Recent Products</h2>
+                <a href="/seller/products/add" class="btn btn-primary">+ Add Product</a>
+            </div>
+            
+            <% if (recentProducts.length > 0) { %>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recentProducts.forEach(product => { %>
+                            <tr>
+                                <td>
+                                    <img src="<%= product.images[0] || 'https://placehold.co/50x50/f5f5f5/333333?text=No+Img' %>" 
+                                         alt="<%= product.name %>" 
+                                         class="product-thumbnail">
+                                </td>
+                                <td><%= product.name %></td>
+                                <td><%= product.category %></td>
+                                <td>$<%= product.price.toFixed(2) %></td>
+                                <td>
+                                    <span class="<%= product.stock < 5 ? 'low-stock' : '' %>">
+                                        <%= product.stock %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="/seller/products/edit/<%= product._id %>" class="btn btn-small">Edit</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="no-data">
+                    <p>You haven't added any products yet.</p>
+                    <a href="/seller/products/add" class="btn btn-primary">Add Your First Product</a>
+                </div>
+            <% } %>
+        </section>
+    </main>
+</body>
+</html>

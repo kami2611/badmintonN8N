@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Sellers</h1>
+        </header>
+        
+        <div class="filters-bar">
+            <form action="/admin/sellers" method="GET" class="filter-form">
+                <input type="text" name="search" placeholder="Search by name, store, phone..." value="<%= search %>">
+                <select name="status">
+                    <option value="">All Status</option>
+                    <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+                    <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                </select>
+                <button type="submit" class="btn btn-outline">Filter</button>
+                <% if (search || status) { %>
+                    <a href="/admin/sellers" class="btn btn-outline">Clear</a>
+                <% } %>
+            </form>
+        </div>
+        
+        <p class="results-count"><%= sellers.length %> seller(s) found</p>
+        
+        <% if (sellers.length > 0) { %>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Store Name</th>
+                        <th>Seller Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Products</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% sellers.forEach(seller => { %>
+                        <tr>
+                            <td><strong><%= seller.storeName %></strong></td>
+                            <td><%= seller.name %></td>
+                            <td><%= seller.phone %></td>
+                            <td><%= seller.email || '-' %></td>
+                            <td><%= seller.productCount %></td>
+                            <td>
+                                <span class="status-badge status-<%= seller.isActive ? 'active' : 'inactive' %>">
+                                    <%= seller.isActive ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td><%= new Date(seller.createdAt).toLocaleDateString() %></td>
+                            <td>
+                                <a href="/admin/sellers/<%= seller._id %>" class="btn btn-small">View</a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p class="no-data">No sellers found.</p>
+        <% } %>
+    </main>
+</body>
+</html>

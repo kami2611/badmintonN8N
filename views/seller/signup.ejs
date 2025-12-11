@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register as Seller | BadmintonStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/seller.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    
+    <main class="main-content">
+        <div class="auth-page">
+            <div class="auth-box auth-box-wide">
+                <h1>Register as Seller</h1>
+                <p class="auth-subtitle">Start selling badminton equipment today</p>
+                
+                <% if (error) { %>
+                    <div class="alert alert-error"><%= error %></div>
+                <% } %>
+                
+                <form action="/seller/signup" method="POST">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Your Name *</label>
+                            <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="storeName">Store Name *</label>
+                            <input type="text" id="storeName" name="storeName" placeholder="Enter your store name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email (Optional)</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your email">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">Password *</label>
+                            <input type="password" id="password" name="password" minlength="6" placeholder="Min 6 characters" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password *</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" minlength="6" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-large">Create Seller Account</button>
+                </form>
+                
+                <p class="auth-link">Already have a seller account? <a href="/seller/login">Login</a></p>
+            </div>
+        </div>
+    </main>
+    
+    <%- include('../partials/footer') %>
+</body>
+</html>

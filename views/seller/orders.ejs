@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | BadmintonStore</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/seller.css">
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>My Orders</h1>
+        </header>
+        
+        <p class="results-count"><%= orders.length %> order(s) containing your products</p>
+        
+        <% if (orders.length > 0) { %>
+            <% orders.forEach(order => { %>
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <div>
+                            <strong>Order #<%= order._id.toString().slice(-8).toUpperCase() %></strong>
+                            <span class="order-date"><%= new Date(order.createdAt).toLocaleDateString() %></span>
+                        </div>
+                        <span class="status-badge status-<%= order.status %>"><%= order.status %></span>
+                    </div>
+                    
+                    <div class="order-card-body">
+                        <div class="order-customer">
+                            <strong>Customer:</strong> <%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %>
+                        </div>
+                        
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Qty</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% order.sellerItems.forEach(item => { %>
+                                    <tr>
+                                        <td><%= item.name %></td>
+                                        <td>$<%= item.price.toFixed(2) %></td>
+                                        <td><%= item.quantity %></td>
+                                        <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                        
+                        <div class="order-card-footer">
+                            <strong>Your Earnings: $<%= order.sellerTotal.toFixed(2) %></strong>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="no-data">
+                <p>No orders yet for your products.</p>
+                <a href="/seller/products" class="btn btn-primary">Manage Products</a>
+            </div>
+        <% } %>
+    </main>
+</body>
+</html>

@@ -1,5 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const session = require('express-session');
 const path = require('path');
 
 const app = express();
@@ -20,18 +22,31 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'badminton-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: false,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
 // Routes
 const indexRoutes = require('./routes/index');
 const productRoutes = require('./routes/products');
 const checkoutRoutes = require('./routes/checkout');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
+const sellerRoutes = require('./routes/seller');
 
 app.use('/', indexRoutes);
 app.use('/products', productRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/api', apiRoutes);
 app.use('/admin', adminRoutes);
+app.use('/seller', sellerRoutes);
 
 // 404 handler
 app.use((req, res) => {
