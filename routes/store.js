@@ -41,7 +41,10 @@ router.get('/:id', async (req, res) => {
                 shoes,
                 accessories
             },
-            cartCount: 0
+            cartCount: 0,
+            user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
+                  req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 
+                  null
         });
     } catch (error) {
         console.error(error);

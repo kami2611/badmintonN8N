@@ -7,7 +7,10 @@ const Order = require('../models/Order');
 router.get('/', (req, res) => {
     res.render('checkout', {
         title: 'Checkout',
-        cartCount: 0
+        cartCount: 0,
+        user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
+              req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 
+              null
     });
 });
 

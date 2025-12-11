@@ -18,7 +18,10 @@ router.get('/', async (req, res) => {
         res.render('index', { 
             title: 'Home',
             featuredProducts: productsWithSeller,
-            cartCount
+            cartCount,
+            user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
+                  req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 
+                  null
         });
     } catch (error) {
         console.error(error);

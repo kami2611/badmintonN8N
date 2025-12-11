@@ -13,6 +13,16 @@ const sellerAuth = (req, res, next) => {
     }
 };
 
+// Seller Logout
+router.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+        }
+        res.redirect('/');
+    });
+});
+
 // Seller Login Page
 router.get('/login', (req, res) => {
     if (req.session && req.session.sellerId) {

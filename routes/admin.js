@@ -13,6 +13,16 @@ const adminAuth = (req, res, next) => {
     }
 };
 
+// Admin Logout
+router.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+        }
+        res.redirect('/');
+    });
+});
+
 // Admin Login Page
 router.get('/login', (req, res) => {
     if (req.session && req.session.isAdmin) {

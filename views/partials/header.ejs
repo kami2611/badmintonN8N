@@ -15,10 +15,29 @@
             <a href="/checkout" class="nav-link cart-link">
                 Cart (<span id="cart-count"><%= typeof cartCount !== 'undefined' ? cartCount : 0 %></span>)
             </a>
-            <div class="auth-buttons">
-                <a href="/seller/login" class="btn btn-outline">Seller Login</a>
-                <a href="/seller/signup" class="btn btn-primary">Become a Seller</a>
-            </div>
+            
+            <% if (typeof user !== 'undefined' && user) { %>
+                <div class="account-dropdown">
+                    <button class="account-btn">
+                        <span class="account-icon">👤</span>
+                        <span class="account-name"><%= user.name %></span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <% if (user.isAdmin) { %>
+                            <a href="/admin" class="dropdown-item">Manage Sellers</a>
+                        <% } else if (user.isSeller) { %>
+                            <a href="/seller/dashboard" class="dropdown-item">Manage Store</a>
+                        <% } %>
+                        <a href="<%= user.isAdmin ? '/admin/logout' : '/seller/logout' %>" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="auth-buttons">
+                    <a href="/seller/login" class="btn btn-outline">Seller Login</a>
+                    <a href="/seller/signup" class="btn btn-primary">Become a Seller</a>
+                </div>
+            <% } %>
         </nav>
     </div>
 </header>
