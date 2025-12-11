@@ -114,27 +114,41 @@ img {
 /* Main Navigation */
 .main-nav {
     display: flex;
-    gap: 30px;
-}
-
-.nav-dropdown {
-    position: relative;
+    gap: 35px;  /* nice spacing between links */
+    flex: 1;
+    justify-content: center;
 }
 
 .main-nav .nav-link {
     font-size: 15px;
     font-weight: 500;
     color: #333;
-    padding: 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
     transition: color 0.2s;
 }
 
 .main-nav .nav-link:hover {
     color: #667eea;
-    text-decoration: none;
+}
+
+.nav-dropdown {
+    position: relative;
+}
+.nav-dropdown .nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #667eea;  /* Match the seller portal button color */
+    padding: 10px 20px;
+    border: 1px solid #667eea;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.nav-dropdown .nav-link:hover {
+    background: #667eea;
+    color: #fff;
 }
 
 .nav-arrow {
@@ -183,7 +197,7 @@ img {
 /* Header Search */
 .header-search {
     flex: 1;
-    max-width: 320px;
+    max-width: 500px;
     display: flex;
     background: #f5f5f7;
     border-radius: 100px;
@@ -1470,7 +1484,7 @@ img {
     }
     
     .header-search {
-        max-width: 140px;
+        max-width: 500px;
     }
     
     .hero h1 {
@@ -1506,4 +1520,19 @@ img {
     .footer-container {
         grid-template-columns: 1fr;
     }
+}
+
+.search-btn {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    transition: color 0.2s;
+}
+
+.search-btn:hover {
+    color: #667eea;
 }
