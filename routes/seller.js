@@ -3,6 +3,7 @@ const router = express.Router();
 const Seller = require('../models/Seller');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const { uploadProductMedia, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
 
 // Seller auth middleware
 const sellerAuth = (req, res, next) => {
@@ -229,36 +230,102 @@ router.get('/products/add', sellerAuth, (req, res) => {
         title: 'Add Product',
         storeName: req.session.storeName,
         product: null,
-        action: '/seller/products/add'
+        action: '/seller/products/add',
+        error: null
     });
 });
 
-// Add Product
-router.post('/products/add', sellerAuth, async (req, res) => {
-    try {
-        const {
-            name, description, price, category, brand,
-            images, stock, weight, material, color, size
-        } = req.body;
+// Multer middleware for product media
+const productMediaUpload = uploadProductMedia.fields([
+    { name: 'images', maxCount: 5 },
+    { name: 'video', maxCount: 1 }
+]);
+
+// Add Product with file upload
+router.post('/products/add', sellerAuth, (req, res) => {
+    productMediaUpload(req, res, async (err) => {
+        if (err) {
+            console.error('Upload error:', err);
+            return res.render('seller/product-form', {
+                title: 'Add Product',
+                storeName: req.session.storeName,
+                product: null,
+                action: '/seller/products/add',
+                error: err.message
+            });
+        }
         
-        const product = new Product({
-            name,
-            description,
-            price: parseFloat(price),
-            category,
-            brand,
-            images: images ? images.split('\n').map(img => img.trim()).filter(img => img) : [],
-            stock: parseInt(stock) || 0,
-            specifications: { weight, material, color, size },
-            seller: req.session.sellerId
-        });
-        
-        await product.save();
-        res.redirect('/seller/products');
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error adding product');
-    }
+        try {
+            const {
+                name, description, price, category, brand,
+                existingImages, stock, weight, material, color, size
+            } = req.body;
+            
+            // Upload images to Cloudinary
+            const imageUrls = [];
+            if (req.files && req.files.images) {
+                for (const file of req.files.images) {
+                    // Validate file size (2MB for images)
+                    if (file.size > 2 * 1024 * 1024) {
+                        return res.render('seller/product-form', {
+                            title: 'Add Product',
+                            storeName: req.session.storeName,
+                            product: null,
+                            action: '/seller/products/add',
+                            error: `Image ${file.originalname} exceeds 2MB limit`
+                        });
+                    }
+                    
+                    const result = await uploadToCloudinary(file.buffer, {
+                        folder: 'badminton-store/products',
+                        transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
+                        resource_type: 'image'
+                    });
+                    imageUrls.push(result.secure_url);
+                }
+            }
+            
+            // Upload video to Cloudinary if provided
+            let videoData = null;
+            if (req.files && req.files.video && req.files.video[0]) {
+                const videoFile = req.files.video[0];
+                const result = await uploadToCloudinary(videoFile.buffer, {
+                    folder: 'badminton-store/videos',
+                    resource_type: 'video',
+                    eager: [{ format: 'mp4' }]
+                });
+                videoData = {
+                    url: result.secure_url,
+                    publicId: result.public_id
+                };
+            }
+            
+            const product = new Product({
+                name,
+                description,
+                price: parseFloat(price),
+                category,
+                brand,
+                images: imageUrls,
+                video: videoData,
+                stock: parseInt(stock) || 0,
+                specifications: { weight, material, color, size },
+                seller: req.session.sellerId
+            });
+            
+            await product.save();
+            res.redirect('/seller/products');
+        } catch (error) {
+            console.error(error);
+            res.render('seller/product-form', {
+                title: 'Add Product',
+                storeName: req.session.storeName,
+                product: null,
+                action: '/seller/products/add',
+                error: 'Error adding product. Please try again.'
+            });
+        }
+    });
 });
 
 // Edit Product Form
@@ -277,7 +344,8 @@ router.get('/products/edit/:id', sellerAuth, async (req, res) => {
             title: 'Edit Product',
             storeName: req.session.storeName,
             product,
-            action: `/seller/products/edit/${product._id}`
+            action: `/seller/products/edit/${product._id}`,
+            error: null
         });
     } catch (error) {
         console.error(error);
@@ -285,42 +353,168 @@ router.get('/products/edit/:id', sellerAuth, async (req, res) => {
     }
 });
 
-// Update Product
-router.post('/products/edit/:id', sellerAuth, async (req, res) => {
-    try {
-        const {
-            name, description, price, category, brand,
-            images, stock, weight, material, color, size
-        } = req.body;
+// Update Product with file upload
+router.post('/products/edit/:id', sellerAuth, (req, res) => {
+    productMediaUpload(req, res, async (err) => {
+        if (err) {
+            console.error('Upload error:', err);
+            const product = await Product.findOne({ _id: req.params.id, seller: req.session.sellerId });
+            return res.render('seller/product-form', {
+                title: 'Edit Product',
+                storeName: req.session.storeName,
+                product,
+                action: `/seller/products/edit/${req.params.id}`,
+                error: err.message
+            });
+        }
         
-        await Product.findOneAndUpdate(
-            { _id: req.params.id, seller: req.session.sellerId },
-            {
-                name,
-                description,
-                price: parseFloat(price),
-                category,
-                brand,
-                images: images ? images.split('\n').map(img => img.trim()).filter(img => img) : [],
-                stock: parseInt(stock) || 0,
-                specifications: { weight, material, color, size }
+        try {
+            const {
+                name, description, price, category, brand,
+                existingImages, removeVideo, stock, weight, material, color, size
+            } = req.body;
+            
+            const product = await Product.findOne({ 
+                _id: req.params.id, 
+                seller: req.session.sellerId 
+            });
+            
+            if (!product) {
+                return res.status(404).send('Product not found');
             }
-        );
-        
-        res.redirect('/seller/products');
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error updating product');
-    }
+            
+            // Handle existing images (keep selected ones)
+            let imageUrls = [];
+            if (existingImages) {
+                const keepImages = Array.isArray(existingImages) ? existingImages : [existingImages];
+                imageUrls = keepImages;
+                
+                // Delete removed images from Cloudinary
+                const removedImages = product.images.filter(img => !keepImages.includes(img));
+                for (const imgUrl of removedImages) {
+                    const publicId = getPublicIdFromUrl(imgUrl);
+                    if (publicId) {
+                        await deleteFromCloudinary(publicId, 'image');
+                    }
+                }
+            }
+            
+            // Upload new images
+            if (req.files && req.files.images) {
+                // Check total images don't exceed 5
+                if (imageUrls.length + req.files.images.length > 5) {
+                    return res.render('seller/product-form', {
+                        title: 'Edit Product',
+                        storeName: req.session.storeName,
+                        product,
+                        action: `/seller/products/edit/${req.params.id}`,
+                        error: 'Maximum 5 images allowed per product'
+                    });
+                }
+                
+                for (const file of req.files.images) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        return res.render('seller/product-form', {
+                            title: 'Edit Product',
+                            storeName: req.session.storeName,
+                            product,
+                            action: `/seller/products/edit/${req.params.id}`,
+                            error: `Image ${file.originalname} exceeds 2MB limit`
+                        });
+                    }
+                    
+                    const result = await uploadToCloudinary(file.buffer, {
+                        folder: 'badminton-store/products',
+                        transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
+                        resource_type: 'image'
+                    });
+                    imageUrls.push(result.secure_url);
+                }
+            }
+            
+            // Handle video
+            let videoData = product.video;
+            
+            // Remove video if requested
+            if (removeVideo === 'true' && product.video && product.video.publicId) {
+                await deleteFromCloudinary(product.video.publicId, 'video');
+                videoData = null;
+            }
+            
+            // Upload new video if provided
+            if (req.files && req.files.video && req.files.video[0]) {
+                // Delete old video first
+                if (product.video && product.video.publicId) {
+                    await deleteFromCloudinary(product.video.publicId, 'video');
+                }
+                
+                const videoFile = req.files.video[0];
+                const result = await uploadToCloudinary(videoFile.buffer, {
+                    folder: 'badminton-store/videos',
+                    resource_type: 'video',
+                    eager: [{ format: 'mp4' }]
+                });
+                videoData = {
+                    url: result.secure_url,
+                    publicId: result.public_id
+                };
+            }
+            
+            await Product.findOneAndUpdate(
+                { _id: req.params.id, seller: req.session.sellerId },
+                {
+                    name,
+                    description,
+                    price: parseFloat(price),
+                    category,
+                    brand,
+                    images: imageUrls,
+                    video: videoData,
+                    stock: parseInt(stock) || 0,
+                    specifications: { weight, material, color, size }
+                }
+            );
+            
+            res.redirect('/seller/products');
+        } catch (error) {
+            console.error(error);
+            const product = await Product.findOne({ _id: req.params.id, seller: req.session.sellerId });
+            res.render('seller/product-form', {
+                title: 'Edit Product',
+                storeName: req.session.storeName,
+                product,
+                action: `/seller/products/edit/${req.params.id}`,
+                error: 'Error updating product. Please try again.'
+            });
+        }
+    });
 });
 
 // Delete Product
 router.post('/products/delete/:id', sellerAuth, async (req, res) => {
     try {
-        await Product.findOneAndDelete({ 
+        const product = await Product.findOne({ 
             _id: req.params.id, 
             seller: req.session.sellerId 
         });
+        
+        if (product) {
+            // Delete images from Cloudinary
+            for (const imgUrl of product.images) {
+                const publicId = getPublicIdFromUrl(imgUrl);
+                if (publicId) {
+                    await deleteFromCloudinary(publicId, 'image');
+                }
+            }
+            
+            // Delete video from Cloudinary
+            if (product.video && product.video.publicId) {
+                await deleteFromCloudinary(product.video.publicId, 'video');
+            }
+            
+            await Product.findByIdAndDelete(product._id);
+        }
+        
         res.redirect('/seller/products');
     } catch (error) {
         console.error(error);
