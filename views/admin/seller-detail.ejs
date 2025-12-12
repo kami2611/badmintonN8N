@@ -47,9 +47,23 @@
                             </span>
                         </td>
                     </tr>
+                    <tr>
+                        <td>Featured:</td>
+                        <td>
+                            <span class="status-badge status-<%= seller.featured ? 'featured' : 'not-featured' %>">
+                                <%= seller.featured ? '⭐ Featured Seller' : 'Not Featured' %>
+                            </span>
+                        </td>
+                    </tr>
                 </table>
                 
                 <div class="seller-actions">
+                    <form action="/admin/sellers/<%= seller._id %>/toggle-featured" method="POST" style="display: inline;">
+                        <button type="submit" class="btn <%= seller.featured ? 'btn-outline' : 'btn-featured' %>">
+                            <%= seller.featured ? '☆ Remove Featured' : '⭐ Make Featured' %>
+                        </button>
+                    </form>
+                    
                     <form action="/admin/sellers/<%= seller._id %>/toggle-status" method="POST" style="display: inline;">
                         <button type="submit" class="btn <%= seller.isActive ? 'btn-warning' : 'btn-success' %>">
                             <%= seller.isActive ? 'Deactivate Seller' : 'Activate Seller' %>

@@ -288,8 +288,8 @@ img {
 
 /* Logo Image - Rotating Animation */
 .logo-img {
-    width: 140px;
-    height: 140px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     object-fit: contain;
     animation: logoSpin 8s linear infinite;
@@ -693,16 +693,16 @@ img {
 .slide-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+    
     z-index: 1;
 }
 
 .slide-overlay-blue {
-    background: linear-gradient(135deg, rgba(45, 80, 180, 0.88) 0%, rgba(30, 144, 180, 0.85) 100%);
+    
 }
 
 .slide-overlay-green {
-    background: linear-gradient(135deg, rgba(56, 132, 100, 0.88) 0%, rgba(34, 85, 96, 0.85) 100%);
+    background: linear-gradient(135deg, rgba(11, 79, 63, 0.85) 0%, rgba(217, 164, 65, 0.85) 100%);
 }
 
 /* Slide Content */
@@ -830,7 +830,7 @@ img {
 .carousel-progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #0B4F3F, #D9A441);
     transition: width 0.1s linear;
 }
 
@@ -1020,7 +1020,7 @@ img {
 }
 
 .category-card:hover .category-overlay {
-    background: linear-gradient(to top, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.6) 50%, transparent 100%);
+    background: linear-gradient(to top, rgba(11, 79, 63, 0.9) 0%, rgba(46, 196, 168, 0.6) 50%, transparent 100%);
 }
 
 .category-overlay h3 {

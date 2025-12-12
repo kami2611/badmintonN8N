@@ -64,7 +64,13 @@
                                     <%= product.stock %>
                                 </span>
                             </td>
-                            <td><%= product.featured ? '⭐' : '-' %></td>
+                            <td>
+                                <button class="featured-toggle-btn <%= product.featured ? 'is-featured' : '' %>" 
+                                        onclick="toggleProductFeatured('<%= product._id %>', this)"
+                                        title="<%= product.featured ? 'Remove from featured' : 'Make featured' %>">
+                                    <span class="star-icon"><%= product.featured ? '⭐' : '☆' %></span>
+                                </button>
+                            </td>
                             <td class="actions">
                                 <a href="/admin/products/edit/<%= product._id %>" class="btn btn-small">Edit</a>
                                 <form action="/admin/products/delete/<%= product._id %>" method="POST" class="inline-form" onsubmit="return confirm('Are you sure you want to delete this product?');">
@@ -79,5 +85,37 @@
             <p class="no-data">No products found.</p>
         <% } %>
     </main>
+    
+    <script>
+        async function toggleProductFeatured(productId, btn) {
+            try {
+                const response = await fetch(`/admin/products/${productId}/toggle-featured`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const starIcon = btn.querySelector('.star-icon');
+                    if (data.featured) {
+                        btn.classList.add('is-featured');
+                        starIcon.textContent = '⭐';
+                        btn.title = 'Remove from featured';
+                    } else {
+                        btn.classList.remove('is-featured');
+                        starIcon.textContent = '☆';
+                        btn.title = 'Make featured';
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling featured:', error);
+                alert('Failed to update featured status');
+            }
+        }
+    </script>
 </body>
 </html>

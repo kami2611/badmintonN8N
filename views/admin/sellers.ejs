@@ -40,6 +40,7 @@
                         <th>Phone</th>
                         <th>Email</th>
                         <th>Products</th>
+                        <th>Featured</th>
                         <th>Status</th>
                         <th>Joined</th>
                         <th>Actions</th>
@@ -53,6 +54,13 @@
                             <td><%= seller.phone %></td>
                             <td><%= seller.email || '-' %></td>
                             <td><%= seller.productCount %></td>
+                            <td>
+                                <button class="featured-toggle-btn <%= seller.featured ? 'is-featured' : '' %>" 
+                                        onclick="toggleSellerFeatured('<%= seller._id %>', this)"
+                                        title="<%= seller.featured ? 'Remove from featured' : 'Make featured' %>">
+                                    <span class="star-icon"><%= seller.featured ? '⭐' : '☆' %></span>
+                                </button>
+                            </td>
                             <td>
                                 <span class="status-badge status-<%= seller.isActive ? 'active' : 'inactive' %>">
                                     <%= seller.isActive ? 'Active' : 'Inactive' %>
@@ -70,5 +78,37 @@
             <p class="no-data">No sellers found.</p>
         <% } %>
     </main>
+    
+    <script>
+        async function toggleSellerFeatured(sellerId, btn) {
+            try {
+                const response = await fetch(`/admin/sellers/${sellerId}/toggle-featured`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const starIcon = btn.querySelector('.star-icon');
+                    if (data.featured) {
+                        btn.classList.add('is-featured');
+                        starIcon.textContent = '⭐';
+                        btn.title = 'Remove from featured';
+                    } else {
+                        btn.classList.remove('is-featured');
+                        starIcon.textContent = '☆';
+                        btn.title = 'Make featured';
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling featured:', error);
+                alert('Failed to update featured status');
+            }
+        }
+    </script>
 </body>
 </html>

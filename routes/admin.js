@@ -73,6 +73,11 @@ router.get('/', adminAuth, async (req, res) => {
         const shoes = await Product.countDocuments({ category: 'shoes' });
         const accessories = await Product.countDocuments({ category: 'accessories' });
         
+        // Featured counts
+        const featuredProducts = await Product.countDocuments({ featured: true });
+        const totalSellers = await Seller.countDocuments();
+        const featuredSellers = await Seller.countDocuments({ featured: true });
+        
         res.render('admin/dashboard', {
             title: 'Admin Dashboard',
             stats: {
@@ -82,7 +87,10 @@ router.get('/', adminAuth, async (req, res) => {
                 totalRevenue,
                 rackets,
                 shoes,
-                accessories
+                accessories,
+                featuredProducts,
+                totalSellers,
+                featuredSellers
             },
             recentOrders
         });
@@ -209,6 +217,29 @@ router.post('/products/delete/:id', adminAuth, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send('Error deleting product');
+    }
+});
+
+// Toggle Product Featured Status
+router.post('/products/:id/toggle-featured', adminAuth, async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).send('Product not found');
+        }
+        
+        product.featured = !product.featured;
+        await product.save();
+        
+        // Check if request is AJAX
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.json({ success: true, featured: product.featured });
+        }
+        
+        res.redirect('/admin/products');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error updating product');
     }
 });
 
@@ -351,6 +382,29 @@ router.post('/sellers/:id/toggle-status', adminAuth, async (req, res) => {
         
         seller.isActive = !seller.isActive;
         await seller.save();
+        
+        res.redirect(`/admin/sellers/${req.params.id}`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error updating seller');
+    }
+});
+
+// Toggle Seller Featured Status
+router.post('/sellers/:id/toggle-featured', adminAuth, async (req, res) => {
+    try {
+        const seller = await Seller.findById(req.params.id);
+        if (!seller) {
+            return res.status(404).send('Seller not found');
+        }
+        
+        seller.featured = !seller.featured;
+        await seller.save();
+        
+        // Check if request is AJAX
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.json({ success: true, featured: seller.featured });
+        }
         
         res.redirect(`/admin/sellers/${req.params.id}`);
     } catch (error) {

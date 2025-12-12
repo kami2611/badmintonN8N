@@ -37,6 +37,18 @@
                 <p class="stat-number">$<%= stats.totalRevenue.toFixed(2) %></p>
                 <span class="stat-detail">All time</span>
             </div>
+            
+            <div class="stat-card">
+                <h3>⭐ Featured Products</h3>
+                <p class="stat-number"><%= stats.featuredProducts %></p>
+                <span class="stat-detail">of <%= stats.totalProducts %> products</span>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Total Sellers</h3>
+                <p class="stat-number"><%= stats.totalSellers %></p>
+                <span class="stat-detail">⭐ <%= stats.featuredSellers %> featured</span>
+            </div>
         </div>
         
         <section class="recent-orders">
