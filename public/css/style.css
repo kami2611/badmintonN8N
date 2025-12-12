@@ -239,6 +239,9 @@ img {
     padding: 8px;
     color: #333;
     transition: color 0.2s;
+    background: transparent;  /* ADD THIS */
+    border: none;             /* ADD THIS */
+    cursor: pointer;   
 }
 
 .cart-btn:hover {
@@ -1818,8 +1821,6 @@ body.menu-open {
         display: flex !important;
     }
 }
-// ...existing code...
-
 /* ===== CART DRAWER STYLES ===== */
 .cart-overlay {
     display: none;
@@ -2082,5 +2083,98 @@ body.cart-open {
     .cart-drawer-item-image {
         width: 70px;
         height: 70px;
+    }
+}
+/* ===== FILTERS DRAWER STYLES ===== */
+#filter-toggle-btn {
+    display: none; /* Hidden on desktop */
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+    justify-content: center;
+}
+
+.filters-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 996;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.filters-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.filters-header {
+    display: none; /* Hidden on desktop */
+}
+
+/* Responsive styles for filters */
+@media (max-width: 768px) {
+    .products-page {
+        grid-template-columns: 1fr;
+    }
+
+    #filter-toggle-btn {
+        display: flex;
+    }
+
+    .filters {
+        position: fixed;
+        top: 0;
+        left: -320px; /* Start off-screen */
+        width: 320px;
+        max-width: 90vw;
+        height: 100vh;
+        background: #fff;
+        z-index: 997;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        padding: 0; /* Remove padding for drawer view */
+    }
+
+    .filters.active {
+        left: 0; /* Slide in */
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 25px;
+        border-bottom: 1px solid #eee;
+        flex-shrink: 0;
+    }
+    
+    .filters-header h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .filters-close-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        padding: 4px;
+        display: flex;
+    }
+
+    #filter-form {
+        padding: 25px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    
+    /* Hide original h3 as it's now in the header */
+    .filters > h3 {
+        display: none;
     }
 }

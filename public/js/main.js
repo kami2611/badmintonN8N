@@ -431,4 +431,41 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initial render of cart drawer
     renderCartDrawer();
+    
+    // ===== Product Filters Drawer =====
+    const filterToggleBtn = document.getElementById('filter-toggle-btn');
+    
+    // Only run this code if we are on a page with filters
+    if (filterToggleBtn) {
+        const filtersDrawer = document.querySelector('.filters');
+        const filtersOverlay = document.querySelector('.filters-overlay');
+        const filtersCloseBtn = document.querySelector('.filters-close-btn');
+
+        function openFiltersDrawer() {
+            if (filtersDrawer && filtersOverlay) {
+                filtersDrawer.classList.add('active');
+                filtersOverlay.classList.add('active');
+                document.body.classList.add('menu-open'); // Reuse class to prevent body scroll
+            }
+        }
+
+        function closeFiltersDrawer() {
+            if (filtersDrawer && filtersOverlay) {
+                filtersDrawer.classList.remove('active');
+                filtersOverlay.classList.remove('active');
+                document.body.classList.remove('menu-open');
+            }
+        }
+
+        filterToggleBtn.addEventListener('click', openFiltersDrawer);
+        filtersCloseBtn.addEventListener('click', closeFiltersDrawer);
+        filtersOverlay.addEventListener('click', closeFiltersDrawer);
+        
+        // Also close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && filtersDrawer.classList.contains('active')) {
+                closeFiltersDrawer();
+            }
+        });
+    }
 });
