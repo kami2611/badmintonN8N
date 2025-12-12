@@ -59,6 +59,75 @@ const tools = {
                     category: { type: "STRING", description: "Category to filter by (optional)" }
                 },
             },
+        },
+        // Image Management
+        {
+            name: "add_product_images",
+            description: "Prepare to add images to a product. User says something like 'add images to [product name]' or 'upload photos for [product]'. The user will then send images in following messages.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product to add images to" }
+                },
+                required: ["productName"],
+            },
+        },
+        {
+            name: "delete_product_image",
+            description: "Delete a specific image from a product by image number (1-5).",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product" },
+                    imageNumber: { type: "NUMBER", description: "The image number to delete (1-5)" }
+                },
+                required: ["productName", "imageNumber"],
+            },
+        },
+        {
+            name: "delete_all_product_images",
+            description: "Delete all images from a product.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product to remove all images from" }
+                },
+                required: ["productName"],
+            },
+        },
+        // Video Management
+        {
+            name: "add_product_video",
+            description: "Prepare to add or replace video on a product. User says something like 'add video to [product]' or 'upload video for [product]'. The user will then send the video.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product to add video to" }
+                },
+                required: ["productName"],
+            },
+        },
+        {
+            name: "delete_product_video",
+            description: "Delete the video from a product.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product to remove video from" }
+                },
+                required: ["productName"],
+            },
+        },
+        {
+            name: "view_product_media",
+            description: "View/list images and video of a product to see what media is attached.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    productName: { type: "STRING", description: "The name of the product to view media for" }
+                },
+                required: ["productName"],
+            },
         }
     ],
 };
@@ -102,6 +171,28 @@ async function processUserCommand(userText) {
                 }
                 if (call.name === "list_products") {
                     return { type: "ACTION", action: "LIST_PRODUCTS", data: args };
+                }
+                
+                // Image management
+                if (call.name === "add_product_images") {
+                    return { type: "ACTION", action: "ADD_PRODUCT_IMAGES", data: args };
+                }
+                if (call.name === "delete_product_image") {
+                    return { type: "ACTION", action: "DELETE_PRODUCT_IMAGE", data: args };
+                }
+                if (call.name === "delete_all_product_images") {
+                    return { type: "ACTION", action: "DELETE_ALL_PRODUCT_IMAGES", data: args };
+                }
+                
+                // Video management
+                if (call.name === "add_product_video") {
+                    return { type: "ACTION", action: "ADD_PRODUCT_VIDEO", data: args };
+                }
+                if (call.name === "delete_product_video") {
+                    return { type: "ACTION", action: "DELETE_PRODUCT_VIDEO", data: args };
+                }
+                if (call.name === "view_product_media") {
+                    return { type: "ACTION", action: "VIEW_PRODUCT_MEDIA", data: args };
                 }
             }
 
