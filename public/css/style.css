@@ -280,14 +280,36 @@ img {
 .logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.5px;
 }
 
-.logo-icon {
-    font-size: 28px;
+/* Logo Image - Rotating Animation */
+.logo-img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: contain;
+    animation: logoSpin 8s linear infinite;
+    transition: transform 0.3s ease;
+}
+
+/* Pause rotation on hover */
+.logo:hover .logo-img {
+    animation-play-state: paused;
+    transform: scale(1.05);
+}
+
+/* Logo rotation keyframes */
+@keyframes logoSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .logo-text {
@@ -2236,7 +2258,7 @@ body.menu-open {
 }
 
 /* ===== RESPONSIVE HEADER IMPROVEMENTS ===== */
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     .mobile-menu-toggle {
         display: flex;
         align-items: center;
@@ -2283,6 +2305,93 @@ body.menu-open {
     
     .logo-icon {
         font-size: 24px;
+    }
+    
+    .header-actions {
+        gap: 5px;
+    }
+    
+    .cart-btn,
+    .account-btn,
+    .search-toggle-btn {
+        padding: 6px;
+    }
+    
+    .header-search-expandable.active .search-input {
+        width: 120px;
+        padding: 8px 10px 8px 5px;
+    }
+    
+    .cart-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+    }
+} */
+ @media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        order: -1;
+        margin-right: 10px;
+    }
+    
+    .main-nav {
+        display: none;
+    }
+    
+    .header-container {
+        padding: 12px 15px;
+        gap: 15px;
+    }
+    
+    .logo {
+        flex: 1;
+        gap: 8px;
+    }
+    
+    /* Responsive logo size for tablets */
+    .logo-img {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+    
+    .header-actions {
+        gap: 10px;
+    }
+    
+    .header-login-btn {
+        display: none;
+    }
+    
+    .header-search-expandable.active .search-input {
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-container {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+    
+    .logo {
+        gap: 6px;
+    }
+    
+    /* Responsive logo size for mobile */
+    .logo-img {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .logo-text {
+        font-size: 18px;
     }
     
     .header-actions {
