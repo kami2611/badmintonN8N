@@ -1057,6 +1057,178 @@ img {
     margin-top: 50px;
 }
 
+/* ===== FEATURED SELLERS SECTION ===== */
+.featured-sellers {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px 40px 100px;
+    background: #fff;
+}
+
+.sellers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.seller-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: #f8f9ff;
+    border-radius: 16px;
+    padding: 30px 25px;
+    transition: all 0.3s ease;
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.seller-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+.seller-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.avatar-letter {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.seller-info {
+    flex: 1;
+}
+
+.seller-store-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 5px;
+}
+
+.seller-owner {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.seller-stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.seller-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #555;
+}
+
+.seller-stat svg {
+    color: #667eea;
+}
+
+.seller-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: #333;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 100px;
+}
+
+/* Featured Sellers Responsive */
+@media (max-width: 1024px) {
+    .sellers-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .featured-sellers {
+        padding: 60px 20px 80px;
+    }
+    
+    .sellers-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .seller-card {
+        padding: 25px 20px;
+    }
+    
+    .seller-avatar {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .avatar-letter {
+        font-size: 26px;
+    }
+    
+    .seller-store-name {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sellers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .seller-card {
+        flex-direction: row;
+        text-align: left;
+        padding: 20px;
+        gap: 15px;
+    }
+    
+    .seller-avatar {
+        width: 55px;
+        height: 55px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+    
+    .avatar-letter {
+        font-size: 22px;
+    }
+    
+    .seller-info {
+        text-align: left;
+    }
+    
+    .seller-stats {
+        justify-content: flex-start;
+    }
+    
+    .seller-badge {
+        top: 10px;
+        right: 10px;
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+}
+
 /* ===== PRODUCTS GRID ===== */
 .products-grid {
     display: grid;

@@ -120,5 +120,33 @@
 </section>
 <% } %>
 
+<% if (featuredSellers && featuredSellers.length > 0) { %>
+<section class="featured-sellers">
+    <div class="section-header">
+        <h2>Featured Sellers</h2>
+        <p>Trusted stores handpicked for quality and service</p>
+    </div>
+    <div class="sellers-grid">
+        <% featuredSellers.forEach(seller => { %>
+        <a href="/store/<%= seller._id %>" class="seller-card">
+            <div class="seller-avatar">
+                <span class="avatar-letter"><%= seller.storeName.charAt(0).toUpperCase() %></span>
+            </div>
+            <div class="seller-info">
+                <h3 class="seller-store-name"><%= seller.storeName %></h3>
+                <p class="seller-owner">by <%= seller.name %></p>
+                <div class="seller-stats">
+                    <span class="seller-stat">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        <%= seller.productCount %> Products
+                    </span>
+                </div>
+            </div>
+            <div class="seller-badge">⭐ Featured</div>
+        </a>
+        <% }) %>
+    </div>
+</section>
+<% } %>
 
 <%- include('partials/tail') %>
