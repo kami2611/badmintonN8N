@@ -1,15 +1,67 @@
 <%- include('partials/head') %>
 
-<section class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <span class="hero-badge">Premium Quality</span>
-        <h1>Elevate Your Game</h1>
-        <p>Professional badminton equipment trusted by champions worldwide</p>
-        <div class="hero-buttons">
-            <a href="/products" class="btn btn-primary btn-large">Shop Collection</a>
-            <a href="/products?category=rackets" class="btn btn-outline-light btn-large">View Rackets</a>
+<!-- REPLACE the existing hero section (lines 3-15) with this carousel -->
+<section class="hero-carousel">
+    <div class="carousel-container">
+        <!-- Slide 1: Rackets -->
+        <div class="carousel-slide active" data-index="0">
+            <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1920&q=80');"></div>
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+                <span class="slide-badge">Pro Performance</span>
+                <h1>Premium Rackets</h1>
+                <p>Engineered for power, precision, and perfect control. Find your winning edge.</p>
+                <a href="/products?category=rackets" class="btn btn-primary btn-large">Shop Rackets</a>
+            </div>
         </div>
+        
+        <!-- Slide 2: Shoes -->
+        <div class="carousel-slide" data-index="1">
+            <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=1920&q=80');"></div>
+            <div class="slide-overlay slide-overlay-blue"></div>
+            <div class="slide-content">
+                <span class="slide-badge">Court Ready</span>
+                <h1>Performance Shoes</h1>
+                <p>Superior grip, lightweight comfort, and agility for every move on the court.</p>
+                <a href="/products?category=shoes" class="btn btn-primary btn-large">Shop Shoes</a>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Accessories -->
+        <div class="carousel-slide" data-index="2">
+            <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=1920&q=80');"></div>
+            <div class="slide-overlay slide-overlay-green"></div>
+            <div class="slide-content">
+                <span class="slide-badge">Complete Your Kit</span>
+                <h1>Accessories</h1>
+                <p>Shuttlecocks, bags, grips, and everything you need to play your best game.</p>
+                <a href="/products?category=accessories" class="btn btn-primary btn-large">Shop Accessories</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation Arrows -->
+    <button class="carousel-arrow carousel-prev" aria-label="Previous slide">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    </button>
+    <button class="carousel-arrow carousel-next" aria-label="Next slide">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </button>
+    
+    <!-- Dots Navigation -->
+    <div class="carousel-dots">
+        <button class="carousel-dot active" data-slide="0" aria-label="Go to slide 1"></button>
+        <button class="carousel-dot" data-slide="1" aria-label="Go to slide 2"></button>
+        <button class="carousel-dot" data-slide="2" aria-label="Go to slide 3"></button>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="carousel-progress">
+        <div class="carousel-progress-bar"></div>
     </div>
 </section>
 
@@ -21,7 +73,7 @@
     <div class="category-cards">
         <a href="/products?category=rackets" class="category-card">
             <div class="category-image">
-                <img src="https://unsplash.com/photos/black-and-red-yonex-badminton-racket-9-Kj6Od-NIY" alt="Badminton Rackets">
+                <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1920&q=80" alt="Badminton Rackets">
             </div>
             <div class="category-overlay">
                 <h3>Rackets</h3>

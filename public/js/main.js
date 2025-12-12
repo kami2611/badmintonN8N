@@ -468,4 +468,207 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // ===== Hero Carousel =====
+    const heroCarousel = document.querySelector('.hero-carousel');
+    
+    if (heroCarousel) {
+        const slides = heroCarousel.querySelectorAll('.carousel-slide');
+        const dots = heroCarousel.querySelectorAll('.carousel-dot');
+        const prevBtn = heroCarousel.querySelector('.carousel-prev');
+        const nextBtn = heroCarousel.querySelector('.carousel-next');
+        const progressBar = heroCarousel.querySelector('.carousel-progress-bar');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+        const autoPlayInterval = 3000; // 3 seconds per slide
+        let autoPlayTimer;
+        let progressTimer;
+        let progressStart;
+        let isPaused = false;
+        
+        // Go to specific slide
+        function goToSlide(index) {
+            // Handle wrapping
+            if (index < 0) index = totalSlides - 1;
+            if (index >= totalSlides) index = 0;
+            
+            // Remove active class from all
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Add active class to current
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+            
+            currentSlide = index;
+            
+            // Reset progress bar
+            resetProgress();
+        }
+        
+        // Next slide
+        function nextSlide() {
+            goToSlide(currentSlide + 1);
+        }
+        
+        // Previous slide
+        function prevSlide() {
+            goToSlide(currentSlide - 1);
+        }
+        
+        // Progress bar animation
+        function resetProgress() {
+            if (progressBar) {
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '0%';
+                
+                // Force reflow
+                progressBar.offsetHeight;
+                
+                if (!isPaused) {
+                    progressBar.style.transition = `width ${autoPlayInterval}ms linear`;
+                    progressBar.style.width = '100%';
+                }
+            }
+        }
+        
+        // Start auto-play
+        function startAutoPlay() {
+            stopAutoPlay();
+            isPaused = false;
+            heroCarousel.classList.remove('paused');
+            resetProgress();
+            
+            autoPlayTimer = setInterval(() => {
+                if (!isPaused) {
+                    nextSlide();
+                }
+            }, autoPlayInterval);
+        }
+        
+        // Stop auto-play
+        function stopAutoPlay() {
+            if (autoPlayTimer) {
+                clearInterval(autoPlayTimer);
+            }
+        }
+        
+        // Pause carousel
+        function pauseCarousel() {
+            isPaused = true;
+            heroCarousel.classList.add('paused');
+            if (progressBar) {
+                const computedWidth = getComputedStyle(progressBar).width;
+                progressBar.style.transition = 'none';
+                progressBar.style.width = computedWidth;
+            }
+        }
+        
+        // Resume carousel
+        function resumeCarousel() {
+            isPaused = false;
+            heroCarousel.classList.remove('paused');
+            
+            if (progressBar) {
+                const currentWidth = parseFloat(progressBar.style.width);
+                const remainingPercent = 100 - currentWidth;
+                const remainingTime = (remainingPercent / 100) * autoPlayInterval;
+                
+                progressBar.style.transition = `width ${remainingTime}ms linear`;
+                progressBar.style.width = '100%';
+            }
+        }
+        
+        // Event Listeners
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                prevSlide();
+                startAutoPlay();
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                nextSlide();
+                startAutoPlay();
+            });
+        }
+        
+        // Dots navigation
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                goToSlide(index);
+                startAutoPlay();
+            });
+        });
+        
+        // Pause on hover
+        heroCarousel.addEventListener('mouseenter', pauseCarousel);
+        heroCarousel.addEventListener('mouseleave', () => {
+            resumeCarousel();
+            // Restart timer to ensure consistent timing
+            startAutoPlay();
+        });
+        
+        // Touch/Swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        heroCarousel.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            pauseCarousel();
+        }, { passive: true });
+        
+        heroCarousel.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+            startAutoPlay();
+        }, { passive: true });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next slide
+                    nextSlide();
+                } else {
+                    // Swipe right - previous slide
+                    prevSlide();
+                }
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            // Only if carousel is in viewport
+            const rect = heroCarousel.getBoundingClientRect();
+            const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+            
+            if (isInViewport) {
+                if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                    startAutoPlay();
+                } else if (e.key === 'ArrowRight') {
+                    nextSlide();
+                    startAutoPlay();
+                }
+            }
+        });
+        
+        // Visibility change - pause when tab is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                pauseCarousel();
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        });
+        
+        // Initialize carousel
+        startAutoPlay();
+    }
 });
