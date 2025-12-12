@@ -26,6 +26,192 @@ img {
     height: auto;
 }
 
+
+/* ===== TOP ANNOUNCEMENT BAR ===== */
+.top-bar {
+    background: #1a1a2e;
+    color: #fff;
+    font-size: 13px;
+    position: relative;
+    z-index: 101;
+}
+
+.top-bar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 8px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Left Section - Contact */
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.top-bar-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    transition: color 0.2s;
+    white-space: nowrap;
+}
+
+.top-bar-link:hover {
+    color: #667eea;
+}
+
+.top-bar-link svg {
+    flex-shrink: 0;
+}
+
+.top-bar-divider {
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 300;
+}
+
+/* Center Section - Marquee */
+.top-bar-center {
+    flex: 1;
+    overflow: hidden;
+    margin: 0 20px;
+}
+
+.marquee-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.marquee-content {
+    display: flex;
+    width: max-content;
+    animation: marquee 25s linear infinite;
+}
+
+.marquee-text {
+    display: inline-block;
+    padding: 0 10px;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Pause on hover */
+.marquee-wrapper:hover .marquee-content {
+    animation-play-state: paused;
+}
+
+/* Right Section - Social */
+.top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.top-bar-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0.8;
+    transition: all 0.2s;
+}
+
+.top-bar-social:hover {
+    opacity: 1;
+    color: #667eea;
+    transform: translateY(-1px);
+}
+
+/* ===== TOP BAR RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    .top-bar-container {
+        padding: 8px 20px;
+    }
+    
+    .top-bar-center {
+        margin: 0 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-bar {
+        font-size: 12px;
+    }
+    
+    .top-bar-container {
+        padding: 6px 15px;
+        gap: 10px;
+    }
+    
+    .top-bar-left {
+        gap: 10px;
+    }
+    
+    .top-bar-link span {
+        display: none;
+    }
+    
+    .top-bar-divider {
+        display: none;
+    }
+    
+    .top-bar-center {
+        margin: 0 10px;
+    }
+    
+    .top-bar-right {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-bar-container {
+        padding: 6px 12px;
+    }
+    
+    .top-bar-left {
+        gap: 8px;
+    }
+    
+    /* Show only phone and whatsapp icons */
+    .top-bar-link {
+        padding: 4px;
+    }
+    
+    .top-bar-center {
+        margin: 0 8px;
+        font-size: 11px;
+    }
+    
+    .top-bar-right {
+        gap: 8px;
+    }
+    
+    .top-bar-social svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* ===== UTILITIES ===== */
+
 /* ===== UTILITIES ===== */
 .btn {
     display: inline-block;
