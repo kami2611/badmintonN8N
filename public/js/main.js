@@ -31,7 +31,8 @@ function addToCart(productId, quantity = 1) {
             
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartCount();
-            alert('Added to cart!');
+            renderCartDrawer();
+            openCartDrawer(); // Open drawer instead of alert
         })
         .catch(err => {
             console.error('Error adding to cart:', err);
@@ -121,6 +122,111 @@ function renderCart() {
     const cartItemsInput = document.getElementById('cartItemsInput');
     if (cartItemsInput) {
         cartItemsInput.value = JSON.stringify(cart);
+    }
+}
+
+// Render cart drawer items
+function renderCartDrawer() {
+    const drawerItems = document.getElementById('cart-drawer-items');
+    const drawerEmpty = document.getElementById('cart-drawer-empty');
+    const drawerFooter = document.getElementById('cart-drawer-footer');
+    const drawerCount = document.getElementById('cart-drawer-count');
+    const drawerSubtotal = document.getElementById('cart-drawer-subtotal');
+    
+    if (!drawerItems) return;
+    
+    // Update count in header
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    if (drawerCount) drawerCount.textContent = totalItems;
+    
+    if (cart.length === 0) {
+        drawerItems.innerHTML = '';
+        drawerEmpty.classList.add('show');
+        drawerFooter.classList.add('hidden');
+        return;
+    }
+    
+    drawerEmpty.classList.remove('show');
+    drawerFooter.classList.remove('hidden');
+    
+    let html = '';
+    let subtotal = 0;
+    
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        html += `
+            <div class="cart-drawer-item">
+                <div class="cart-drawer-item-image">
+                    <img src="${item.image || 'https://placehold.co/100x100/f5f5f5/333333?text=No+Image'}" alt="${item.name}">
+                </div>
+                <div class="cart-drawer-item-info">
+                    <div class="cart-drawer-item-name">${item.name}</div>
+                    <div class="cart-drawer-item-price">$${item.price.toFixed(2)}</div>
+                    <div class="cart-drawer-item-actions">
+                        <div class="cart-drawer-qty">
+                            <button onclick="updateCartFromDrawer('${item._id}', ${item.quantity - 1})">−</button>
+                            <span>${item.quantity}</span>
+                            <button onclick="updateCartFromDrawer('${item._id}', ${item.quantity + 1})">+</button>
+                        </div>
+                        <button class="cart-drawer-remove" onclick="removeFromCartDrawer('${item._id}')" aria-label="Remove item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    drawerItems.innerHTML = html;
+    if (drawerSubtotal) drawerSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+}
+
+// Update cart from drawer
+function updateCartFromDrawer(productId, quantity) {
+    if (quantity < 1) {
+        removeFromCartDrawer(productId);
+        return;
+    }
+    const item = cart.find(item => item._id === productId);
+    if (item) {
+        item.quantity = quantity;
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        renderCartDrawer();
+        renderCart(); // Also update checkout page if open
+    }
+}
+
+// Remove from cart (drawer version)
+function removeFromCartDrawer(productId) {
+    cart = cart.filter(item => item._id !== productId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    renderCartDrawer();
+    renderCart(); // Also update checkout page if open
+}
+
+// Cart drawer toggle functions
+function openCartDrawer() {
+    const cartDrawer = document.getElementById('cart-drawer');
+    const cartOverlay = document.querySelector('.cart-overlay');
+    if (cartDrawer && cartOverlay) {
+        cartDrawer.classList.add('active');
+        cartOverlay.classList.add('active');
+        document.body.classList.add('cart-open');
+        renderCartDrawer();
+    }
+}
+
+function closeCartDrawer() {
+    const cartDrawer = document.getElementById('cart-drawer');
+    const cartOverlay = document.querySelector('.cart-overlay');
+    if (cartDrawer && cartOverlay) {
+        cartDrawer.classList.remove('active');
+        cartOverlay.classList.remove('active');
+        document.body.classList.remove('cart-open');
     }
 }
 
@@ -290,4 +396,39 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.mobile-nav-link').forEach(link => {
         link.addEventListener('click', closeMobileMenu);
     });
+    
+    // Cart Drawer Toggle
+    const cartToggleBtn = document.getElementById('cart-toggle-btn');
+    const cartDrawerClose = document.querySelector('.cart-drawer-close');
+    const cartOverlay = document.querySelector('.cart-overlay');
+    const continueShoppingBtn = document.getElementById('continue-shopping-btn');
+    
+    if (cartToggleBtn) {
+        cartToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openCartDrawer();
+        });
+    }
+    
+    if (cartDrawerClose) {
+        cartDrawerClose.addEventListener('click', closeCartDrawer);
+    }
+    
+    if (cartOverlay) {
+        cartOverlay.addEventListener('click', closeCartDrawer);
+    }
+    
+    if (continueShoppingBtn) {
+        continueShoppingBtn.addEventListener('click', closeCartDrawer);
+    }
+    
+    // Close cart drawer on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCartDrawer();
+        }
+    });
+    
+    // Initial render of cart drawer
+    renderCartDrawer();
 });
