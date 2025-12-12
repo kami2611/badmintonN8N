@@ -73,21 +73,38 @@
     
     <section class="products-section">
         <div class="products-header">
-            <!-- Add this button -->
-            <button class="btn btn-outline" id="filter-toggle-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                <span>Filters</span>
-            </button>
-            <h1>
-                <% if (category) { %>
-                    <%= category.charAt(0).toUpperCase() + category.slice(1) %>
-                <% } else if (search) { %>
-                    Search Results for "<%= search %>"
-                <% } else { %>
-                    All Products
-                <% } %>
-            </h1>
-            <p><%= products.length %> product<%= products.length !== 1 ? 's' : '' %> found</p>
+            <div class="products-header-top">
+                <!-- Filter button for mobile -->
+                <button class="btn btn-outline" id="filter-toggle-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                    <span>Filters</span>
+                </button>
+                
+                <div class="products-title-section">
+                    <h1>
+                        <% if (category) { %>
+                            <%= category.charAt(0).toUpperCase() + category.slice(1) %>
+                        <% } else if (search) { %>
+                            Search Results for "<%= search %>"
+                        <% } else { %>
+                            All Products
+                        <% } %>
+                    </h1>
+                    <p><%= products.length %> product<%= products.length !== 1 ? 's' : '' %> found</p>
+                </div>
+                
+                <div class="products-sort">
+                    <label for="sort-select">Sort by:</label>
+                    <select id="sort-select" onchange="applySortFilter(this.value)">
+                        <option value="" <%= !sort ? 'selected' : '' %>>Newest</option>
+                        <option value="featured" <%= sort === 'featured' ? 'selected' : '' %>>Featured</option>
+                        <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name: A-Z</option>
+                        <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Name: Z-A</option>
+                        <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+                        <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
+                    </select>
+                </div>
+            </div>
         </div>
         
         <% if (products.length > 0) { %>
@@ -104,5 +121,17 @@
         <% } %>
     </section>
 </div>
+
+<script>
+    function applySortFilter(sortValue) {
+        const url = new URL(window.location.href);
+        if (sortValue) {
+            url.searchParams.set('sort', sortValue);
+        } else {
+            url.searchParams.delete('sort');
+        }
+        window.location.href = url.toString();
+    }
+</script>
 
 <%- include('partials/tail') %>

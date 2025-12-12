@@ -48,6 +48,9 @@ router.get('/', async (req, res) => {
             case 'name_desc':
                 sortOption = { name: -1 };
                 break;
+            case 'featured':
+                sortOption = { featured: -1, createdAt: -1 };
+                break;
             default:
                 sortOption = { createdAt: -1 };
         }
