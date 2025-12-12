@@ -230,16 +230,42 @@ function closeCartDrawer() {
     }
 }
 
-// Product detail page - image gallery
+// Product detail page - image gallery with video support
 function initImageGallery() {
     const thumbnails = document.querySelectorAll('.thumbnail');
     const mainImage = document.getElementById('main-product-image');
+    const mainImageContainer = document.querySelector('.main-image');
+    const productVideo = document.getElementById('product-video');
     
     thumbnails.forEach(thumb => {
         thumb.addEventListener('click', () => {
             thumbnails.forEach(t => t.classList.remove('active'));
             thumb.classList.add('active');
-            mainImage.src = thumb.dataset.src;
+            
+            const mediaType = thumb.dataset.type;
+            
+            if (mediaType === 'video' && productVideo) {
+                // Show video, hide image
+                mainImageContainer.style.display = 'none';
+                productVideo.style.display = 'block';
+                const video = productVideo.querySelector('video');
+                if (video) {
+                    video.play().catch(() => {}); // Auto-play (may fail due to browser policy)
+                }
+            } else {
+                // Show image, hide video
+                mainImageContainer.style.display = 'block';
+                if (productVideo) {
+                    productVideo.style.display = 'none';
+                    const video = productVideo.querySelector('video');
+                    if (video) {
+                        video.pause();
+                    }
+                }
+                if (mainImage && thumb.dataset.src) {
+                    mainImage.src = thumb.dataset.src;
+                }
+            }
         });
     });
 }
