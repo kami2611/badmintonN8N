@@ -221,4 +221,73 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.order-confirmation')) {
         clearCart();
     }
+    
+    const searchForm = document.querySelector('.header-search-expandable');
+    const searchBtn = document.querySelector('.search-toggle-btn');
+    const searchInput = searchForm.querySelector('.search-input');
+    
+    searchBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        searchForm.classList.toggle('active');
+        
+        if (searchForm.classList.contains('active')) {
+            searchInput.focus();
+        }
+    });
+    
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchForm.contains(e.target)) {
+            searchForm.classList.remove('active');
+        }
+    });
+    
+    // Submit on Enter
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && searchInput.value.trim()) {
+            searchForm.submit();
+        }
+    });
+    
+    // Mobile Menu Toggle
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const mobileMenuClose = document.querySelector('.mobile-menu-close');
+    const mobileNav = document.querySelector('.mobile-nav');
+    const mobileOverlay = document.querySelector('.mobile-menu-overlay');
+    
+    function openMobileMenu() {
+        mobileNav.classList.add('active');
+        mobileOverlay.classList.add('active');
+        document.body.classList.add('menu-open');
+    }
+    
+    function closeMobileMenu() {
+        mobileNav.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        document.body.classList.remove('menu-open');
+    }
+    
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', openMobileMenu);
+    }
+    
+    if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+    }
+    
+    if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+    }
+    
+    // Close mobile menu on window resize to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            closeMobileMenu();
+        }
+    });
+    
+    // Close mobile menu when clicking a link
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', closeMobileMenu);
+    });
 });
