@@ -1570,6 +1570,131 @@ img {
     color: #666;
 }
 
+/* ===== PAGINATION ===== */
+.pagination {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #666;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pagination-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-page:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.pagination-page.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-color: transparent;
+}
+
+.pagination-ellipsis {
+    padding: 0 8px;
+    color: #999;
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .pagination-controls {
+        gap: 4px;
+    }
+    
+    .pagination-btn,
+    .pagination-page {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        padding: 0 8px;
+        font-size: 13px;
+    }
+    
+    .pagination-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pagination {
+        margin-top: 30px;
+        padding-top: 20px;
+    }
+    
+    .pagination-info {
+        font-size: 13px;
+        text-align: center;
+    }
+    
+    .pagination-btn,
+    .pagination-page {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        padding: 0 6px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+}
+
 /* ===== PRODUCT DETAIL PAGE ===== */
 .product-detail {
     max-width: 1200px;
@@ -1636,7 +1761,24 @@ img {
 
 .product-info-detail .brand {
     color: #666;
+    margin-bottom: 10px;
+}
+
+.product-info-detail .seller-info {
+    color: #666;
     margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.product-info-detail .seller-link {
+    color: #667eea;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.product-info-detail .seller-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
 }
 
 .product-info-detail .price {

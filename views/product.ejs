@@ -23,6 +23,11 @@
         
         <h1><%= product.name %></h1>
         <p class="brand">Brand: <strong><%= product.brand %></strong></p>
+        <% if (product.sellerInfo) { %>
+        <p class="seller-info">
+            Sold by: <a href="/store/<%= product.sellerInfo._id %>" class="seller-link"><%= product.sellerInfo.storeName %></a>
+        </p>
+        <% } %>
         <p class="price">$<%= product.price.toFixed(2) %></p>
         
         <div class="stock-status">

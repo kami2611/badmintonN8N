@@ -90,7 +90,7 @@
                             All Products
                         <% } %>
                     </h1>
-                    <p><%= products.length %> product<%= products.length !== 1 ? 's' : '' %> found</p>
+                    <p><%= totalProducts %> product<%= totalProducts !== 1 ? 's' : '' %> found</p>
                 </div>
                 
                 <div class="products-sort">
@@ -113,6 +113,57 @@
                     <%- include('partials/product-card', { product }) %>
                 <% }) %>
             </div>
+            
+            <% if (totalPages > 1) { %>
+            <nav class="pagination">
+                <div class="pagination-info">
+                    Showing <%= (currentPage - 1) * perPage + 1 %>-<%= Math.min(currentPage * perPage, totalProducts) %> of <%= totalProducts %> products
+                </div>
+                <div class="pagination-controls">
+                    <% if (currentPage > 1) { %>
+                        <a href="<%= buildPaginationUrl(1) %>" class="pagination-btn" title="First page">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
+                        </a>
+                        <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="pagination-btn" title="Previous page">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </a>
+                    <% } %>
+                    
+                    <div class="pagination-pages">
+                        <% 
+                        let startPage = Math.max(1, currentPage - 2);
+                        let endPage = Math.min(totalPages, currentPage + 2);
+                        
+                        if (startPage > 1) { %>
+                            <a href="<%= buildPaginationUrl(1) %>" class="pagination-page">1</a>
+                            <% if (startPage > 2) { %>
+                                <span class="pagination-ellipsis">...</span>
+                            <% } %>
+                        <% }
+                        
+                        for (let i = startPage; i <= endPage; i++) { %>
+                            <a href="<%= buildPaginationUrl(i) %>" class="pagination-page <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+                        <% }
+                        
+                        if (endPage < totalPages) { %>
+                            <% if (endPage < totalPages - 1) { %>
+                                <span class="pagination-ellipsis">...</span>
+                            <% } %>
+                            <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-page"><%= totalPages %></a>
+                        <% } %>
+                    </div>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <a href="<%= buildPaginationUrl(currentPage + 1) %>" class="pagination-btn" title="Next page">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </a>
+                        <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-btn" title="Last page">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                        </a>
+                    <% } %>
+                </div>
+            </nav>
+            <% } %>
         <% } else { %>
             <div class="no-products">
                 <p>No products found matching your criteria.</p>

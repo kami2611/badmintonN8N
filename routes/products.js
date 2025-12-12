@@ -5,7 +5,12 @@ const Product = require('../models/Product');
 // Get all products with filters
 router.get('/', async (req, res) => {
     try {
-        const { category, brand, minPrice, maxPrice, sort, search } = req.query;
+        const { category, brand, minPrice, maxPrice, sort, search, page } = req.query;
+        
+        // Pagination settings
+        const currentPage = parseInt(page) || 1;
+        const perPage = 12; // Products per page
+        const skip = (currentPage - 1) * perPage;
         
         // Build query
         let query = {};
@@ -55,10 +60,16 @@ router.get('/', async (req, res) => {
                 sortOption = { createdAt: -1 };
         }
         
-        // Execute query - populate seller info
+        // Get total count for pagination
+        const totalProducts = await Product.countDocuments(query);
+        const totalPages = Math.ceil(totalProducts / perPage);
+        
+        // Execute query with pagination - populate seller info
         const products = await Product.find(query)
             .populate('seller', 'storeName')
-            .sort(sortOption);
+            .sort(sortOption)
+            .skip(skip)
+            .limit(perPage);
         
         // Add sellerInfo to each product for template
         const productsWithSeller = products.map(p => ({
@@ -72,6 +83,25 @@ router.get('/', async (req, res) => {
         // Selected brands as array
         const selectedBrands = brand ? (Array.isArray(brand) ? brand : [brand]) : [];
         
+        // Helper function to build pagination URLs preserving existing query params
+        const buildPaginationUrl = (pageNum) => {
+            const params = new URLSearchParams();
+            if (category) params.set('category', category);
+            if (brand) {
+                if (Array.isArray(brand)) {
+                    brand.forEach(b => params.append('brand', b));
+                } else {
+                    params.set('brand', brand);
+                }
+            }
+            if (minPrice) params.set('minPrice', minPrice);
+            if (maxPrice) params.set('maxPrice', maxPrice);
+            if (sort) params.set('sort', sort);
+            if (search) params.set('search', search);
+            params.set('page', pageNum);
+            return '/products?' + params.toString();
+        };
+        
         res.render('products', {
             title: 'Products',
             products: productsWithSeller,
@@ -82,6 +112,12 @@ router.get('/', async (req, res) => {
             maxPrice: maxPrice || '',
             sort: sort || '',
             search: search || '',
+            // Pagination data
+            currentPage,
+            totalPages,
+            totalProducts,
+            perPage,
+            buildPaginationUrl,
             cartCount: 0,
             user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
                   req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 
@@ -96,7 +132,8 @@ router.get('/', async (req, res) => {
 // Get single product
 router.get('/:id', async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id)
+            .populate('seller', 'storeName name');
         
         if (!product) {
             return res.status(404).send('Product not found');
@@ -106,12 +143,21 @@ router.get('/:id', async (req, res) => {
         const relatedProducts = await Product.find({
             category: product.category,
             _id: { $ne: product._id }
-        }).limit(4);
+        }).populate('seller', 'storeName').limit(4);
+        
+        // Add sellerInfo to related products
+        const relatedProductsWithSeller = relatedProducts.map(p => ({
+            ...p.toObject(),
+            sellerInfo: p.seller
+        }));
         
         res.render('product', {
             title: product.name,
-            product,
-            relatedProducts,
+            product: {
+                ...product.toObject(),
+                sellerInfo: product.seller
+            },
+            relatedProducts: relatedProductsWithSeller,
             cartCount: 0,
             user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
                   req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 
