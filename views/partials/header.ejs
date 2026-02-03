@@ -41,62 +41,7 @@
     </div>
 </div>
 <header class="header">
-    <div class="header-container">
-        <!-- Add mobile menu toggle button right after header-container opens -->
-        <button class="mobile-menu-toggle" aria-label="Toggle menu">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
-        
-        <a href="/" class="logo">
-            <!-- REPLACE the old logo-icon span with this img -->
-            <img src="/racketbazarsvglogo.png" alt="Racket Bazar Logo" class="logo-img">
-            <h3>Racket Bazar</h3>
-        </a>
-        <nav class="main-nav">
-            <a href="/products?category=rackets" class="nav-link">Rackets</a>
-            <a href="/products?category=shoes" class="nav-link">Shoes</a>
-            <a href="/products?category=accessories" class="nav-link">Accessories</a>
-            <a href="">nets</a>
-            <a href="">clothing</a>
-            <a href="">grips</a>
-        </nav>
-        <div class="header-actions">
-            <form class="header-search-expandable" action="/products" method="GET">
-                <button type="button" class="search-toggle-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </button>
-                <input type="text" name="search" placeholder="Search products..." class="search-input">
-            </form>
-            <!-- REPLACE the existing cart link with this button -->
-            <button class="cart-btn" id="cart-toggle-btn" aria-label="Open cart">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                <span class="cart-badge" id="cart-count"><%= typeof cartCount !== 'undefined' ? cartCount : 0 %></span>
-            </button>
-            
-            <% if (typeof user !== 'undefined' && user) { %>
-                <div class="account-dropdown">
-                    <button class="account-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </button>
-                    <div class="dropdown-menu">
-                        <div class="dropdown-header">Hi, <%= user.name %></div>
-                        <% if (user.isAdmin) { %>
-                            <a href="/admin" class="dropdown-item">Manage Sellers</a>
-                        <% } else if (user.isSeller) { %>
-                            <a href="/seller/dashboard" class="dropdown-item">Manage Store</a>
-                        <% } %>
-                        <a href="<%= user.isAdmin ? '/admin/logout' : '/seller/logout' %>" class="dropdown-item dropdown-logout">Logout</a>
-                    </div>
-                </div>
-            <% } else { %>
-                <a href="/seller/login" class="header-login-btn">Seller Portal</a>
-            <% } %>
-        </div>
-    </div>
+    
     
     <!-- Add mobile menu overlay - place before closing </header> tag -->
     <div class="mobile-menu-overlay"></div>

@@ -1,5 +1,14 @@
+    <% if (typeof pageClass === 'undefined' || pageClass !== 'page-home') { %>
     </main>
     <%- include('footer') %>
+    <% } %>
     <script src="/js/main.js"></script>
+    
+    <!-- Initialize Lucide Icons -->
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

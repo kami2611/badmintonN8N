@@ -3,608 +3,857 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | BadmintonStore</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/seller.css">
+    <title><%= title %> | RacketBazaar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'olive': { 50: '#f7f8f5', 100: '#eef0e9', 200: '#dde1d3', 300: '#c4ccb3', 400: '#a6b18e', 500: '#8a9970', 600: '#6e7d58', 700: '#556B2F', 800: '#475a28', 900: '#3c4b24', 950: '#1f2812' },
+                        'brand': { 'primary': '#556B2F', 'dark': '#1a2e1a', 'light': '#8FBC8F' },
+                        'surface': { 'bg': '#FAFAF9', 'card': '#FFFFFF', 'muted': '#F5F5F4' },
+                    },
+                    fontFamily: { 'sans': ['Inter', 'system-ui', 'sans-serif'] },
+                    boxShadow: { 'card': '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04)' },
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #c62828;
-        }
-        
-        .media-upload-section {
-            margin-bottom: 30px;
-        }
-        
-        .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-        
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f5f7ff;
-        }
-        
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #f0f3ff;
-        }
-        
-        .upload-area input[type="file"] {
-            display: none;
-        }
-        
-        .upload-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 10px;
-            color: #999;
-        }
-        
-        .upload-text {
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .upload-hint {
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .preview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .preview-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #f5f5f5;
-            aspect-ratio: 1;
-        }
-        
-        .preview-item img,
-        .preview-item video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .preview-item .remove-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 24px;
-            height: 24px;
-            background: rgba(0,0,0,0.6);
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-        
-        .preview-item .remove-btn:hover {
-            background: #c62828;
-        }
-        
-        .preview-item.existing {
-            border: 2px solid #667eea;
-        }
-        
-        .preview-item .existing-badge {
-            position: absolute;
-            bottom: 5px;
-            left: 5px;
-            background: #667eea;
-            color: #fff;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        
-        .file-info {
-            font-size: 11px;
-            color: #666;
-            text-align: center;
-            padding: 5px;
-            background: rgba(255,255,255,0.9);
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-        
-        .video-preview-container {
-            margin-top: 20px;
-        }
-        
-        .video-preview {
-            max-width: 300px;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .video-preview video {
-            width: 100%;
-            display: block;
-        }
-        
-        .video-duration-warning {
-            color: #c62828;
-            font-size: 13px;
-            margin-top: 10px;
-            display: none;
-        }
-        
-        .video-duration-warning.show {
-            display: block;
-        }
-        
-        .upload-limits {
-            background: #e3f2fd;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #1565c0;
-        }
-        
-        .upload-limits ul {
-            margin: 5px 0 0 20px;
-            list-style: disc;
-        }
-        
-        .image-counter {
-            font-size: 14px;
-            color: #666;
-            margin-top: 10px;
-        }
-        
-        .image-counter.limit-reached {
-            color: #c62828;
-        }
+        .nav-active { background-color: #eef0e9; color: #556B2F; border-left: 3px solid #556B2F; }
+        .upload-area { border: 2px dashed #d4d4d4; transition: all 0.2s; }
+        .upload-area:hover, .upload-area.dragover { border-color: #556B2F; background-color: #f7f8f5; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #556B2F !important; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1) !important; }
+        .category-card { transition: all 0.2s; }
+        .category-card:hover { border-color: #556B2F; background-color: #f7f8f5; }
+        .category-card.selected { border-color: #556B2F; background-color: #eef0e9; }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
     </style>
 </head>
-<body>
-    <%- include('partials/sidebar') %>
+<body class="bg-surface-bg font-sans min-h-screen">
     
-    <main class="admin-main">
-        <header class="admin-header">
-            <h1><%= title %></h1>
-            <a href="/seller/products" class="btn btn-outline">← Back to Products</a>
-        </header>
-        
-        <% if (error) { %>
-            <div class="error-message"><%= error %></div>
-        <% } %>
-        
-        <form action="<%= action %>" method="POST" enctype="multipart/form-data" class="admin-form" id="productForm">
-            <div class="form-section">
-                <h3>Basic Information</h3>
-                
-                <div class="form-group">
-                    <label for="name">Product Name *</label>
-                    <input type="text" id="name" name="name" value="<%= product ? product.name : '' %>" required>
+    <!-- Mobile Header -->
+    <header class="lg:hidden sticky top-0 z-40 bg-white border-b border-stone-200">
+        <div class="flex items-center justify-between px-4 py-3">
+            <a href="/seller/products" class="p-2 -ml-2 rounded-lg hover:bg-stone-100">
+                <i data-lucide="arrow-left" class="w-6 h-6 text-brand-dark"></i>
+            </a>
+            <span class="text-lg font-bold text-olive-700"><%= title %></span>
+            <div class="w-10"></div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-stone-200">
+            <div class="flex items-center gap-3 px-6 py-5 border-b border-stone-100">
+                <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="store" class="w-5 h-5 text-olive-700"></i>
                 </div>
-                
-                <div class="form-group">
-                    <label for="description">Description *</label>
-                    <textarea id="description" name="description" rows="4" required><%= product ? product.description : '' %></textarea>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="price">Price ($) *</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0" value="<%= product ? product.price : '' %>" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stock">Stock *</label>
-                        <input type="number" id="stock" name="stock" min="0" value="<%= product ? product.stock : 0 %>" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="category">Category *</label>
-                        <select id="category" name="category" required>
-                            <option value="">Select Category</option>
-                            <option value="rackets" <%= product && product.category === 'rackets' ? 'selected' : '' %>>Rackets</option>
-                            <option value="shoes" <%= product && product.category === 'shoes' ? 'selected' : '' %>>Shoes</option>
-                            <option value="accessories" <%= product && product.category === 'accessories' ? 'selected' : '' %>>Accessories</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="brand">Brand *</label>
-                        <input type="text" id="brand" name="brand" value="<%= product ? product.brand : '' %>" required>
-                    </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-brand-dark truncate"><%= typeof storeName !== 'undefined' ? storeName : 'Seller' %></p>
+                    <p class="text-xs text-stone-500">Seller Panel</p>
                 </div>
             </div>
-            
-            <div class="form-section media-upload-section">
-                <h3>Product Images</h3>
-                
-                <div class="upload-limits">
-                    <strong>Image Requirements:</strong>
-                    <ul>
-                        <li>Maximum 5 images per product</li>
-                        <li>Maximum 2MB per image</li>
-                        <li>Supported formats: JPG, PNG, WebP</li>
-                    </ul>
-                </div>
-                
-                <!-- Existing Images -->
-                <% if (product && product.images && product.images.length > 0) { %>
-                    <div class="preview-grid" id="existingImagesGrid">
-                        <% product.images.forEach((img, index) => { %>
-                            <div class="preview-item existing" data-url="<%= img %>">
-                                <img src="<%= img %>" alt="Product image <%= index + 1 %>">
-                                <input type="hidden" name="existingImages" value="<%= img %>">
-                                <button type="button" class="remove-btn" onclick="removeExistingImage(this)">×</button>
-                                <span class="existing-badge">Existing</span>
-                            </div>
-                        <% }) %>
-                    </div>
-                <% } %>
-                
-                <div class="upload-area" id="imageUploadArea">
-                    <input type="file" id="imageInput" name="images" multiple accept="image/jpeg,image/png,image/webp">
-                    <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                    <p class="upload-text">Click or drag images here to upload</p>
-                    <p class="upload-hint">JPG, PNG, WebP • Max 2MB each • Max 5 images</p>
-                </div>
-                
-                <div class="preview-grid" id="newImagesPreview"></div>
-                <p class="image-counter" id="imageCounter">0/5 images</p>
+            <nav class="flex-1 px-3 py-4 space-y-1">
+                <a href="/seller/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    Dashboard
+                </a>
+                <a href="/seller/products" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium nav-active">
+                    <i data-lucide="package" class="w-5 h-5"></i>
+                    Products
+                </a>
+                <a href="/seller/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    Orders
+                </a>
+            </nav>
+            <div class="px-3 py-4 border-t border-stone-100 space-y-1">
+                <a href="/" target="_blank" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                    View Store
+                </a>
+                <a href="/seller/logout" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    Logout
+                </a>
             </div>
-            
-            <div class="form-section media-upload-section">
-                <h3>Product Video (Optional)</h3>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 min-h-screen pb-24 lg:pb-8">
+            <div class="p-4 lg:p-6 max-w-3xl mx-auto">
                 
-                <div class="upload-limits">
-                    <strong>Video Requirements:</strong>
-                    <ul>
-                        <li>Maximum 1 video per product</li>
-                        <li>Maximum 20 seconds duration</li>
-                        <li>Supported formats: MP4, MOV, WebM</li>
-                    </ul>
-                </div>
-                
-                <!-- Existing Video -->
-                <% if (product && product.video && product.video.url) { %>
-                    <div class="video-preview-container" id="existingVideoContainer">
-                        <div class="video-preview">
-                            <video src="<%= product.video.url %>" controls></video>
-                            <button type="button" class="remove-btn" onclick="removeExistingVideo()">×</button>
+                <!-- Desktop Header -->
+                <div class="hidden lg:flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <a href="/seller/products" class="p-2 rounded-lg hover:bg-stone-100">
+                            <i data-lucide="arrow-left" class="w-5 h-5 text-stone-500"></i>
+                        </a>
+                        <div>
+                            <h1 class="text-2xl font-bold text-brand-dark"><%= title %></h1>
+                            <p class="text-stone-500 mt-1"><%= product ? 'Update your product details' : 'Fill in the details to add a new product' %></p>
                         </div>
-                        <p style="font-size: 13px; color: #666; margin-top: 10px;">Current video - upload a new one to replace</p>
                     </div>
-                    <input type="hidden" name="removeVideo" id="removeVideoInput" value="false">
+                </div>
+
+                <!-- Error Message -->
+                <% if (error) { %>
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-sm text-red-700"><%= error %></p>
+                </div>
                 <% } %>
-                
-                <div class="upload-area" id="videoUploadArea">
-                    <input type="file" id="videoInput" name="video" accept="video/mp4,video/quicktime,video/webm">
-                    <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                    </svg>
-                    <p class="upload-text">Click or drag video here to upload</p>
-                    <p class="upload-hint">MP4, MOV, WebM • Max 20 seconds</p>
-                </div>
-                
-                <div class="video-preview-container" id="newVideoPreview" style="display: none;">
-                    <div class="video-preview">
-                        <video id="videoPreviewElement" controls></video>
-                        <button type="button" class="remove-btn" onclick="removeNewVideo()">×</button>
-                    </div>
-                    <p class="video-duration-warning" id="videoDurationWarning">
-                        ⚠️ Video exceeds 20 seconds. Please select a shorter video.
-                    </p>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h3>Specifications</h3>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="weight">Weight</label>
-                        <input type="text" id="weight" name="weight" value="<%= product && product.specifications ? product.specifications.weight || '' : '' %>" placeholder="e.g., 83g">
-                    </div>
+
+                <form action="<%= action %>" method="POST" enctype="multipart/form-data" id="productForm">
                     
-                    <div class="form-group">
-                        <label for="material">Material</label>
-                        <input type="text" id="material" name="material" value="<%= product && product.specifications ? product.specifications.material || '' : '' %>" placeholder="e.g., Carbon Fiber">
+                    <!-- Step 1: Category Selection -->
+                    <div id="step-category" class="form-section active">
+                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center text-sm font-bold text-olive-700">1</div>
+                                <h2 class="font-semibold text-brand-dark">Select Category</h2>
+                            </div>
+                            <p class="text-sm text-stone-500 mb-4">Choose the category that best fits your product. This will determine the specific details you need to provide.</p>
+                            
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <!-- Rackets -->
+                                <label class="category-card cursor-pointer block p-4 border-2 border-stone-200 rounded-xl text-center <%= product && product.category === 'rackets' ? 'selected' : '' %>">
+                                    <input type="radio" name="category" value="rackets" class="hidden" <%= product && product.category === 'rackets' ? 'checked' : '' %> required>
+                                    <div class="w-12 h-12 bg-olive-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <i data-lucide="swords" class="w-6 h-6 text-olive-700"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-stone-700">Rackets</span>
+                                </label>
+                                
+                                <!-- Shoes -->
+                                <label class="category-card cursor-pointer block p-4 border-2 border-stone-200 rounded-xl text-center <%= product && product.category === 'shoes' ? 'selected' : '' %>">
+                                    <input type="radio" name="category" value="shoes" class="hidden" <%= product && product.category === 'shoes' ? 'checked' : '' %>>
+                                    <div class="w-12 h-12 bg-olive-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <i data-lucide="footprints" class="w-6 h-6 text-olive-700"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-stone-700">Shoes</span>
+                                </label>
+                                
+                                <!-- Kitbags -->
+                                <label class="category-card cursor-pointer block p-4 border-2 border-stone-200 rounded-xl text-center <%= product && product.category === 'bags' ? 'selected' : '' %>">
+                                    <input type="radio" name="category" value="bags" class="hidden" <%= product && product.category === 'bags' ? 'checked' : '' %>>
+                                    <div class="w-12 h-12 bg-olive-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <i data-lucide="briefcase" class="w-6 h-6 text-olive-700"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-stone-700">Kitbags</span>
+                                </label>
+                                
+                                <!-- Apparel -->
+                                <label class="category-card cursor-pointer block p-4 border-2 border-stone-200 rounded-xl text-center <%= product && product.category === 'apparel' ? 'selected' : '' %>">
+                                    <input type="radio" name="category" value="apparel" class="hidden" <%= product && product.category === 'apparel' ? 'checked' : '' %>>
+                                    <div class="w-12 h-12 bg-olive-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <i data-lucide="shirt" class="w-6 h-6 text-olive-700"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-stone-700">Apparel</span>
+                                </label>
+                                
+                                <!-- Shuttles -->
+                                <label class="category-card cursor-pointer block p-4 border-2 border-stone-200 rounded-xl text-center <%= product && product.category === 'shuttles' ? 'selected' : '' %>">
+                                    <input type="radio" name="category" value="shuttles" class="hidden" <%= product && product.category === 'shuttles' ? 'checked' : '' %>>
+                                    <div class="w-12 h-12 bg-olive-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <i data-lucide="circle-dot" class="w-6 h-6 text-olive-700"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-stone-700">Shuttles</span>
+                                </label>
+                                
+                                <!-- Accessories -->
+                                <label class="category-card cursor-pointer block p-4 border-2 border-stone-200 rounded-xl text-center <%= product && product.category === 'accessories' ? 'selected' : '' %>">
+                                    <input type="radio" name="category" value="accessories" class="hidden" <%= product && product.category === 'accessories' ? 'checked' : '' %>>
+                                    <div class="w-12 h-12 bg-olive-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <i data-lucide="puzzle" class="w-6 h-6 text-olive-700"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-stone-700">Accessories</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="nextToDetails" class="w-full py-3 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Continue to Details →
+                        </button>
                     </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="color">Color</label>
-                        <input type="text" id="color" name="color" value="<%= product && product.specifications ? product.specifications.color || '' : '' %>" placeholder="e.g., Black/Red">
+
+                    <!-- Step 2: Basic Details -->
+                    <div id="step-details" class="form-section">
+                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center text-sm font-bold text-olive-700">2</div>
+                                <h2 class="font-semibold text-brand-dark">Basic Details</h2>
+                            </div>
+                            
+                            <!-- Product Name -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
+                                <input type="text" name="name" value="<%= product ? product.name : '' %>" required placeholder="e.g., Yonex Astrox 77 Pro" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                            </div>
+                            
+                            <!-- Brand -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Brand <span class="text-red-500">*</span></label>
+                                <input type="text" name="brand" value="<%= product ? product.brand : '' %>" required placeholder="e.g., Yonex, Victor, Li-Ning" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Description <span class="text-red-500">*</span></label>
+                                <textarea name="description" rows="3" required placeholder="Describe your product, its condition, and any notable features..." class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm resize-none"><%= product ? product.description : '' %></textarea>
+                            </div>
+                            
+                            <!-- Price & Stock -->
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Price (Rs.) <span class="text-red-500">*</span></label>
+                                    <input type="number" name="price" value="<%= product ? product.price : '' %>" required min="0" placeholder="24500" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Stock <span class="text-red-500">*</span></label>
+                                    <input type="number" name="stock" value="<%= product ? product.stock : 1 %>" required min="0" placeholder="1" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                </div>
+                            </div>
+                            
+                            <!-- Condition -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Condition <span class="text-red-500">*</span></label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="cursor-pointer block p-3 border-2 rounded-xl text-center transition-all <%= product && product.condition === 'new' ? 'border-olive-500 bg-olive-50' : 'border-stone-200 hover:border-olive-300' %>" id="condition-new-label">
+                                        <input type="radio" name="condition" value="new" class="hidden" <%= !product || product.condition === 'new' ? 'checked' : '' %>>
+                                        <span class="text-sm font-medium">Brand New</span>
+                                    </label>
+                                    <label class="cursor-pointer block p-3 border-2 rounded-xl text-center transition-all <%= product && product.condition === 'used' ? 'border-olive-500 bg-olive-50' : 'border-stone-200 hover:border-olive-300' %>" id="condition-used-label">
+                                        <input type="radio" name="condition" value="used" class="hidden" <%= product && product.condition === 'used' ? 'checked' : '' %>>
+                                        <span class="text-sm font-medium">Used</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Condition Rating (for used items) -->
+                            <div id="conditionRatingField" class="mb-4 <%= product && product.condition === 'used' ? '' : 'hidden' %>">
+                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Condition Rating</label>
+                                <select name="conditionRating" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                    <% for(let i = 10; i >= 1; i--) { %>
+                                    <option value="<%= i %>" <%= product && product.conditionRating === i ? 'selected' : (i === 9 && (!product || !product.conditionRating) ? 'selected' : '') %>><%= i %>/10 - <%= i >= 9 ? 'Like New' : i >= 7 ? 'Good' : i >= 5 ? 'Fair' : 'Worn' %></option>
+                                    <% } %>
+                                </select>
+                            </div>
+                            
+                            <!-- Color (common) -->
+                            <div>
+                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Color</label>
+                                <input type="text" name="color" value="<%= product && product.specifications ? product.specifications.color || '' : '' %>" placeholder="e.g., Black/Red, Navy Blue" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button type="button" id="backToCategory" class="flex-1 py-3 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200">
+                                ← Back
+                            </button>
+                            <button type="button" id="nextToSpecs" class="flex-1 py-3 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800">
+                                Continue →
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="size">Size</label>
-                        <input type="text" id="size" name="size" value="<%= product && product.specifications ? product.specifications.size || '' : '' %>" placeholder="e.g., G4">
+
+                    <!-- Step 3: Category-Specific Specifications -->
+                    <div id="step-specs" class="form-section">
+                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center text-sm font-bold text-olive-700">3</div>
+                                <h2 class="font-semibold text-brand-dark">Specifications</h2>
+                            </div>
+                            <p class="text-sm text-stone-500 mb-4">Fill in the specific details for your product. Fields marked with * are required.</p>
+                            
+                            <!-- ========== RACKET SPECS ========== -->
+                            <div id="specs-rackets" class="specs-group hidden">
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Weight Class <span class="text-red-500">*</span></label>
+                                        <select name="weightClass" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="2U" <%= product && product.racketSpecs && product.racketSpecs.weightClass === '2U' ? 'selected' : '' %>>2U (90-94g)</option>
+                                            <option value="3U" <%= product && product.racketSpecs && product.racketSpecs.weightClass === '3U' ? 'selected' : '' %>>3U (85-89g)</option>
+                                            <option value="4U" <%= product && product.racketSpecs && product.racketSpecs.weightClass === '4U' ? 'selected' : '' %>>4U (80-84g)</option>
+                                            <option value="5U" <%= product && product.racketSpecs && product.racketSpecs.weightClass === '5U' ? 'selected' : '' %>>5U (75-79g)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Grip Size <span class="text-red-500">*</span></label>
+                                        <select name="gripSize" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="G4" <%= product && product.racketSpecs && product.racketSpecs.gripSize === 'G4' ? 'selected' : '' %>>G4 (Large)</option>
+                                            <option value="G5" <%= product && product.racketSpecs && product.racketSpecs.gripSize === 'G5' ? 'selected' : '' %>>G5 (Medium)</option>
+                                            <option value="G6" <%= product && product.racketSpecs && product.racketSpecs.gripSize === 'G6' ? 'selected' : '' %>>G6 (Small)</option>
+                                            <option value="G7" <%= product && product.racketSpecs && product.racketSpecs.gripSize === 'G7' ? 'selected' : '' %>>G7 (Extra Small)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Flexibility <span class="text-red-500">*</span></label>
+                                        <select name="flexibility" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="extra-stiff" <%= product && product.racketSpecs && product.racketSpecs.flexibility === 'extra-stiff' ? 'selected' : '' %>>Extra Stiff</option>
+                                            <option value="stiff" <%= product && product.racketSpecs && product.racketSpecs.flexibility === 'stiff' ? 'selected' : '' %>>Stiff</option>
+                                            <option value="medium" <%= product && product.racketSpecs && product.racketSpecs.flexibility === 'medium' ? 'selected' : '' %>>Medium</option>
+                                            <option value="flexible" <%= product && product.racketSpecs && product.racketSpecs.flexibility === 'flexible' ? 'selected' : '' %>>Flexible</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Balance <span class="text-red-500">*</span></label>
+                                        <select name="balance" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="head-heavy" <%= product && product.racketSpecs && product.racketSpecs.balance === 'head-heavy' ? 'selected' : '' %>>Head Heavy</option>
+                                            <option value="even" <%= product && product.racketSpecs && product.racketSpecs.balance === 'even' ? 'selected' : '' %>>Even Balance</option>
+                                            <option value="head-light" <%= product && product.racketSpecs && product.racketSpecs.balance === 'head-light' ? 'selected' : '' %>>Head Light</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">String Status</label>
+                                        <select name="stringStatus" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="strung" <%= product && product.racketSpecs && product.racketSpecs.stringStatus === 'strung' ? 'selected' : '' %>>Strung</option>
+                                            <option value="unstrung" <%= product && product.racketSpecs && product.racketSpecs.stringStatus === 'unstrung' ? 'selected' : '' %>>Unstrung</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">String Tension</label>
+                                        <input type="text" name="stringTension" value="<%= product && product.racketSpecs ? product.racketSpecs.stringTension || '' : '' %>" placeholder="e.g., 26 lbs" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Max Tension</label>
+                                        <input type="text" name="maxTension" value="<%= product && product.racketSpecs ? product.racketSpecs.maxTension || '' : '' %>" placeholder="e.g., 30 lbs" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Frame Material</label>
+                                        <input type="text" name="frameMaterial" value="<%= product && product.racketSpecs ? product.racketSpecs.frameMaterial || '' : '' %>" placeholder="e.g., Carbon Fiber" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ========== SHOE SPECS ========== -->
+                            <div id="specs-shoes" class="specs-group hidden">
+                                <div class="grid grid-cols-3 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size (EU) <span class="text-red-500">*</span></label>
+                                        <input type="text" name="sizeEU" value="<%= product && product.shoeSpecs ? product.shoeSpecs.sizeEU || '' : '' %>" placeholder="42" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size (US)</label>
+                                        <input type="text" name="sizeUS" value="<%= product && product.shoeSpecs ? product.shoeSpecs.sizeUS || '' : '' %>" placeholder="8.5" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size (UK)</label>
+                                        <input type="text" name="sizeUK" value="<%= product && product.shoeSpecs ? product.shoeSpecs.sizeUK || '' : '' %>" placeholder="7.5" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Width</label>
+                                        <select name="width" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Standard</option>
+                                            <option value="narrow" <%= product && product.shoeSpecs && product.shoeSpecs.width === 'narrow' ? 'selected' : '' %>>Narrow</option>
+                                            <option value="standard" <%= product && product.shoeSpecs && product.shoeSpecs.width === 'standard' ? 'selected' : '' %>>Standard</option>
+                                            <option value="wide" <%= product && product.shoeSpecs && product.shoeSpecs.width === 'wide' ? 'selected' : '' %>>Wide</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Closure</label>
+                                        <select name="closureType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="lace-up" <%= product && product.shoeSpecs && product.shoeSpecs.closureType === 'lace-up' ? 'selected' : '' %>>Lace-up</option>
+                                            <option value="velcro" <%= product && product.shoeSpecs && product.shoeSpecs.closureType === 'velcro' ? 'selected' : '' %>>Velcro</option>
+                                            <option value="slip-on" <%= product && product.shoeSpecs && product.shoeSpecs.closureType === 'slip-on' ? 'selected' : '' %>>Slip-on</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Sole Type</label>
+                                    <input type="text" name="soleType" value="<%= product && product.shoeSpecs ? product.shoeSpecs.soleType || '' : '' %>" placeholder="e.g., Non-marking rubber" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                </div>
+                            </div>
+                            
+                            <!-- ========== BAG SPECS ========== -->
+                            <div id="specs-bags" class="specs-group hidden">
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Capacity <span class="text-red-500">*</span></label>
+                                        <select name="capacity" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="3-racket" <%= product && product.bagSpecs && product.bagSpecs.capacity === '3-racket' ? 'selected' : '' %>>3 Rackets</option>
+                                            <option value="6-racket" <%= product && product.bagSpecs && product.bagSpecs.capacity === '6-racket' ? 'selected' : '' %>>6 Rackets</option>
+                                            <option value="9-racket" <%= product && product.bagSpecs && product.bagSpecs.capacity === '9-racket' ? 'selected' : '' %>>9 Rackets</option>
+                                            <option value="12-racket" <%= product && product.bagSpecs && product.bagSpecs.capacity === '12-racket' ? 'selected' : '' %>>12 Rackets</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Bag Type <span class="text-red-500">*</span></label>
+                                        <select name="bagType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="backpack" <%= product && product.bagSpecs && product.bagSpecs.bagType === 'backpack' ? 'selected' : '' %>>Backpack</option>
+                                            <option value="duffel" <%= product && product.bagSpecs && product.bagSpecs.bagType === 'duffel' ? 'selected' : '' %>>Duffel</option>
+                                            <option value="thermal" <%= product && product.bagSpecs && product.bagSpecs.bagType === 'thermal' ? 'selected' : '' %>>Thermal</option>
+                                            <option value="tote" <%= product && product.bagSpecs && product.bagSpecs.bagType === 'tote' ? 'selected' : '' %>>Tote</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Compartments</label>
+                                        <input type="number" name="compartments" value="<%= product && product.bagSpecs ? product.bagSpecs.compartments || '' : '' %>" min="1" placeholder="3" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                    <div class="flex flex-col justify-end">
+                                        <label class="flex items-center gap-2 cursor-pointer p-3 border border-stone-200 rounded-xl">
+                                            <input type="checkbox" name="hasShoeCompartment" class="w-4 h-4 rounded border-stone-300" <%= product && product.bagSpecs && product.bagSpecs.hasShoeCompartment ? 'checked' : '' %>>
+                                            <span class="text-sm text-stone-700">Shoe Compartment</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-2 cursor-pointer p-3 border border-stone-200 rounded-xl">
+                                        <input type="checkbox" name="hasThermalLining" class="w-4 h-4 rounded border-stone-300" <%= product && product.bagSpecs && product.bagSpecs.hasThermalLining ? 'checked' : '' %>>
+                                        <span class="text-sm text-stone-700">Thermal Lining (Temperature Protection)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- ========== APPAREL SPECS ========== -->
+                            <div id="specs-apparel" class="specs-group hidden">
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Type <span class="text-red-500">*</span></label>
+                                        <select name="apparelType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="t-shirt" <%= product && product.apparelSpecs && product.apparelSpecs.apparelType === 't-shirt' ? 'selected' : '' %>>T-Shirt</option>
+                                            <option value="polo" <%= product && product.apparelSpecs && product.apparelSpecs.apparelType === 'polo' ? 'selected' : '' %>>Polo</option>
+                                            <option value="shorts" <%= product && product.apparelSpecs && product.apparelSpecs.apparelType === 'shorts' ? 'selected' : '' %>>Shorts</option>
+                                            <option value="skirt" <%= product && product.apparelSpecs && product.apparelSpecs.apparelType === 'skirt' ? 'selected' : '' %>>Skirt</option>
+                                            <option value="jacket" <%= product && product.apparelSpecs && product.apparelSpecs.apparelType === 'jacket' ? 'selected' : '' %>>Jacket</option>
+                                            <option value="tracksuit" <%= product && product.apparelSpecs && product.apparelSpecs.apparelType === 'tracksuit' ? 'selected' : '' %>>Tracksuit</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size <span class="text-red-500">*</span></label>
+                                        <select name="apparelSize" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="XS" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === 'XS' ? 'selected' : '' %>>XS</option>
+                                            <option value="S" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === 'S' ? 'selected' : '' %>>S</option>
+                                            <option value="M" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === 'M' ? 'selected' : '' %>>M</option>
+                                            <option value="L" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === 'L' ? 'selected' : '' %>>L</option>
+                                            <option value="XL" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === 'XL' ? 'selected' : '' %>>XL</option>
+                                            <option value="2XL" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === '2XL' ? 'selected' : '' %>>2XL</option>
+                                            <option value="3XL" <%= product && product.apparelSpecs && product.apparelSpecs.apparelSize === '3XL' ? 'selected' : '' %>>3XL</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Gender</label>
+                                        <select name="gender" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="men" <%= product && product.apparelSpecs && product.apparelSpecs.gender === 'men' ? 'selected' : '' %>>Men</option>
+                                            <option value="women" <%= product && product.apparelSpecs && product.apparelSpecs.gender === 'women' ? 'selected' : '' %>>Women</option>
+                                            <option value="unisex" <%= product && product.apparelSpecs && product.apparelSpecs.gender === 'unisex' ? 'selected' : '' %>>Unisex</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Fabric</label>
+                                        <input type="text" name="fabricType" value="<%= product && product.apparelSpecs ? product.apparelSpecs.fabricType || '' : '' %>" placeholder="e.g., Polyester" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ========== SHUTTLE SPECS ========== -->
+                            <div id="specs-shuttles" class="specs-group hidden">
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Type <span class="text-red-500">*</span></label>
+                                        <select name="shuttleType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="feather" <%= product && product.shuttleSpecs && product.shuttleSpecs.shuttleType === 'feather' ? 'selected' : '' %>>Feather</option>
+                                            <option value="nylon" <%= product && product.shuttleSpecs && product.shuttleSpecs.shuttleType === 'nylon' ? 'selected' : '' %>>Nylon</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Speed <span class="text-red-500">*</span></label>
+                                        <select name="speed" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="75" <%= product && product.shuttleSpecs && product.shuttleSpecs.speed === '75' ? 'selected' : '' %>>75 (Slow)</option>
+                                            <option value="76" <%= product && product.shuttleSpecs && product.shuttleSpecs.speed === '76' ? 'selected' : '' %>>76</option>
+                                            <option value="77" <%= product && product.shuttleSpecs && product.shuttleSpecs.speed === '77' ? 'selected' : '' %>>77 (Medium)</option>
+                                            <option value="78" <%= product && product.shuttleSpecs && product.shuttleSpecs.speed === '78' ? 'selected' : '' %>>78</option>
+                                            <option value="79" <%= product && product.shuttleSpecs && product.shuttleSpecs.speed === '79' ? 'selected' : '' %>>79 (Fast)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Qty Per Tube</label>
+                                        <input type="number" name="quantityPerTube" value="<%= product && product.shuttleSpecs ? product.shuttleSpecs.quantityPerTube || '' : '' %>" min="1" placeholder="12" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Grade</label>
+                                        <input type="text" name="grade" value="<%= product && product.shuttleSpecs ? product.shuttleSpecs.grade || '' : '' %>" placeholder="e.g., Tournament" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ========== ACCESSORY SPECS ========== -->
+                            <div id="specs-accessories" class="specs-group hidden">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Type <span class="text-red-500">*</span></label>
+                                        <select name="accessoryType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
+                                            <option value="">Select</option>
+                                            <option value="grip" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'grip' ? 'selected' : '' %>>Grip / Overgrip</option>
+                                            <option value="string" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'string' ? 'selected' : '' %>>String</option>
+                                            <option value="towel" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'towel' ? 'selected' : '' %>>Towel</option>
+                                            <option value="wristband" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'wristband' ? 'selected' : '' %>>Wristband</option>
+                                            <option value="headband" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'headband' ? 'selected' : '' %>>Headband</option>
+                                            <option value="socks" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'socks' ? 'selected' : '' %>>Socks</option>
+                                            <option value="other" <%= product && product.accessorySpecs && product.accessorySpecs.accessoryType === 'other' ? 'selected' : '' %>>Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Pack Quantity</label>
+                                        <input type="number" name="packQuantity" value="<%= product && product.accessorySpecs ? product.accessorySpecs.packQuantity || '' : '' %>" min="1" placeholder="1" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button type="button" id="backToDetails" class="flex-1 py-3 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200">
+                                ← Back
+                            </button>
+                            <button type="button" id="nextToMedia" class="flex-1 py-3 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800">
+                                Continue →
+                            </button>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Step 4: Media Upload -->
+                    <div id="step-media" class="form-section">
+                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 bg-olive-100 rounded-full flex items-center justify-center text-sm font-bold text-olive-700">4</div>
+                                <h2 class="font-semibold text-brand-dark">Images & Video</h2>
+                            </div>
+                            
+                            <!-- Image Upload -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-stone-700 mb-2">Product Images <span class="text-red-500">*</span></label>
+                                <p class="text-xs text-stone-500 mb-3">Upload up to 5 images (max 2MB each). First image will be the main image.</p>
+                                
+                                <!-- Existing Images -->
+                                <% if (product && product.images && product.images.length > 0) { %>
+                                <div class="grid grid-cols-4 gap-2 mb-3" id="existingImagesGrid">
+                                    <% product.images.forEach((img, index) => { %>
+                                    <div class="relative aspect-square rounded-xl overflow-hidden bg-stone-100 border-2 border-olive-500" data-url="<%= img %>">
+                                        <img src="<%= img %>" alt="Product" class="w-full h-full object-cover">
+                                        <input type="hidden" name="existingImages" value="<%= img %>">
+                                        <button type="button" onclick="removeExistingImage(this)" class="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-500">×</button>
+                                        <% if (index === 0) { %><span class="absolute bottom-1 left-1 text-xxs bg-olive-700 text-white px-1.5 py-0.5 rounded">Main</span><% } %>
+                                    </div>
+                                    <% }) %>
+                                </div>
+                                <% } %>
+                                
+                                <div id="imageUploadArea" class="upload-area rounded-xl p-6 text-center cursor-pointer">
+                                    <input type="file" id="imageInput" name="images" multiple accept="image/jpeg,image/png,image/webp" class="hidden">
+                                    <i data-lucide="image-plus" class="w-10 h-10 text-stone-400 mx-auto mb-2"></i>
+                                    <p class="text-sm text-stone-600">Tap to upload images</p>
+                                    <p class="text-xs text-stone-400 mt-1">JPG, PNG, WebP • Max 2MB</p>
+                                </div>
+                                
+                                <div class="grid grid-cols-4 gap-2 mt-3" id="newImagesPreview"></div>
+                                <p class="text-xs text-stone-500 mt-2" id="imageCounter">0/5 images</p>
+                            </div>
+                            
+                            <!-- Video Upload -->
+                            <div>
+                                <label class="block text-sm font-medium text-stone-700 mb-2">Product Video (Optional)</label>
+                                <p class="text-xs text-stone-500 mb-3">Max 20 seconds. MP4, MOV, WebM supported.</p>
+                                
+                                <% if (product && product.video && product.video.url) { %>
+                                <div id="existingVideoContainer" class="mb-3">
+                                    <div class="relative rounded-xl overflow-hidden bg-stone-100 max-w-xs">
+                                        <video src="<%= product.video.url %>" controls class="w-full"></video>
+                                        <button type="button" onclick="removeExistingVideo()" class="absolute top-2 right-2 w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-500">×</button>
+                                    </div>
+                                    <p class="text-xs text-stone-500 mt-2">Upload new video to replace</p>
+                                </div>
+                                <input type="hidden" name="removeVideo" id="removeVideoInput" value="false">
+                                <% } %>
+                                
+                                <div id="videoUploadArea" class="upload-area rounded-xl p-6 text-center cursor-pointer">
+                                    <input type="file" id="videoInput" name="video" accept="video/mp4,video/quicktime,video/webm" class="hidden">
+                                    <i data-lucide="video" class="w-10 h-10 text-stone-400 mx-auto mb-2"></i>
+                                    <p class="text-sm text-stone-600">Tap to upload video</p>
+                                    <p class="text-xs text-stone-400 mt-1">Max 20 seconds</p>
+                                </div>
+                                
+                                <div id="newVideoPreview" class="hidden mt-3">
+                                    <div class="relative rounded-xl overflow-hidden bg-stone-100 max-w-xs">
+                                        <video id="videoPreviewElement" controls class="w-full"></video>
+                                        <button type="button" onclick="removeNewVideo()" class="absolute top-2 right-2 w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-500">×</button>
+                                    </div>
+                                    <p id="videoDurationWarning" class="hidden text-xs text-red-500 mt-2">⚠️ Video exceeds 20 seconds limit</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button type="button" id="backToSpecs" class="flex-1 py-3 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200">
+                                ← Back
+                            </button>
+                            <button type="submit" id="submitBtn" class="flex-1 py-3 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800">
+                                <%= product ? 'Update Product' : 'Add Product' %>
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
             </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
-                    <%= product ? 'Update Product' : 'Add Product' %>
-                </button>
-                <a href="/seller/products" class="btn btn-outline btn-large">Cancel</a>
-            </div>
-        </form>
-    </main>
-    
+        </main>
+    </div>
+
     <script>
-        // Track files and counts
-        let newImageFiles = [];
-        const existingImageCount = () => document.querySelectorAll('#existingImagesGrid .preview-item').length;
-        const MAX_IMAGES = 5;
-        const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-        const MAX_VIDEO_DURATION = 20; // seconds
+        lucide.createIcons();
         
-        // Update image counter
-        function updateImageCounter() {
-            const total = existingImageCount() + newImageFiles.length;
-            const counter = document.getElementById('imageCounter');
-            counter.textContent = `${total}/5 images`;
-            counter.classList.toggle('limit-reached', total >= MAX_IMAGES);
-            
-            // Disable upload area if limit reached
-            const uploadArea = document.getElementById('imageUploadArea');
-            if (total >= MAX_IMAGES) {
-                uploadArea.style.opacity = '0.5';
-                uploadArea.style.pointerEvents = 'none';
-            } else {
-                uploadArea.style.opacity = '1';
-                uploadArea.style.pointerEvents = 'auto';
-            }
+        // ========== Step Navigation ==========
+        const steps = ['category', 'details', 'specs', 'media'];
+        let currentStep = 0;
+        
+        // If editing, show all steps at once
+        const isEditing = <%= product ? 'true' : 'false' %>;
+        if (isEditing) {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.add('active'));
+            const existingCategory = document.querySelector('input[name="category"]:checked')?.value;
+            if (existingCategory) showCategorySpecs(existingCategory);
         }
         
-        // Image upload handling
-        const imageUploadArea = document.getElementById('imageUploadArea');
-        const imageInput = document.getElementById('imageInput');
-        const newImagesPreview = document.getElementById('newImagesPreview');
+        function showStep(stepName) {
+            if (isEditing) return;
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('step-' + stepName).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         
-        imageUploadArea.addEventListener('click', () => {
+        // Category selection
+        const categoryInputs = document.querySelectorAll('input[name="category"]');
+        const nextToDetailsBtn = document.getElementById('nextToDetails');
+        
+        categoryInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+                input.closest('.category-card').classList.add('selected');
+                nextToDetailsBtn.disabled = false;
+                showCategorySpecs(input.value);
+            });
+        });
+        
+        function showCategorySpecs(category) {
+            document.querySelectorAll('.specs-group').forEach(g => g.classList.add('hidden'));
+            const specsGroup = document.getElementById('specs-' + category);
+            if (specsGroup) specsGroup.classList.remove('hidden');
+        }
+        
+        // Navigation buttons
+        document.getElementById('nextToDetails')?.addEventListener('click', () => showStep('details'));
+        document.getElementById('backToCategory')?.addEventListener('click', () => showStep('category'));
+        document.getElementById('nextToSpecs')?.addEventListener('click', () => showStep('specs'));
+        document.getElementById('backToDetails')?.addEventListener('click', () => showStep('details'));
+        document.getElementById('nextToMedia')?.addEventListener('click', () => showStep('media'));
+        document.getElementById('backToSpecs')?.addEventListener('click', () => showStep('specs'));
+        
+        // Condition toggle
+        const conditionInputs = document.querySelectorAll('input[name="condition"]');
+        const conditionRatingField = document.getElementById('conditionRatingField');
+        
+        conditionInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                document.getElementById('condition-new-label').classList.toggle('border-olive-500', input.value === 'new');
+                document.getElementById('condition-new-label').classList.toggle('bg-olive-50', input.value === 'new');
+                document.getElementById('condition-used-label').classList.toggle('border-olive-500', input.value === 'used');
+                document.getElementById('condition-used-label').classList.toggle('bg-olive-50', input.value === 'used');
+                conditionRatingField.classList.toggle('hidden', input.value !== 'used');
+            });
+        });
+        
+        // ========== Image Upload ==========
+        let newImageFiles = [];
+        const MAX_IMAGES = 5;
+        const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+        
+        const existingImageCount = () => document.querySelectorAll('#existingImagesGrid > div').length;
+        
+        function updateImageCounter() {
+            const total = existingImageCount() + newImageFiles.length;
+            document.getElementById('imageCounter').textContent = `${total}/5 images`;
+            const uploadArea = document.getElementById('imageUploadArea');
+            uploadArea.style.opacity = total >= MAX_IMAGES ? '0.5' : '1';
+            uploadArea.style.pointerEvents = total >= MAX_IMAGES ? 'none' : 'auto';
+        }
+        
+        document.getElementById('imageUploadArea').addEventListener('click', () => {
             if (existingImageCount() + newImageFiles.length < MAX_IMAGES) {
-                imageInput.click();
+                document.getElementById('imageInput').click();
             }
         });
         
-        imageUploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            imageUploadArea.classList.add('dragover');
-        });
-        
-        imageUploadArea.addEventListener('dragleave', () => {
-            imageUploadArea.classList.remove('dragover');
-        });
-        
-        imageUploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            imageUploadArea.classList.remove('dragover');
-            handleImageFiles(e.dataTransfer.files);
-        });
-        
-        imageInput.addEventListener('change', (e) => {
+        document.getElementById('imageInput').addEventListener('change', (e) => {
             handleImageFiles(e.target.files);
         });
         
         function handleImageFiles(files) {
-            const currentTotal = existingImageCount() + newImageFiles.length;
-            const remainingSlots = MAX_IMAGES - currentTotal;
-            
-            Array.from(files).slice(0, remainingSlots).forEach(file => {
-                // Validate file type
-                if (!file.type.startsWith('image/')) {
-                    alert(`${file.name} is not an image file`);
-                    return;
-                }
-                
-                // Validate file size
-                if (file.size > MAX_IMAGE_SIZE) {
-                    alert(`${file.name} exceeds 2MB limit`);
-                    return;
-                }
-                
+            const remaining = MAX_IMAGES - existingImageCount() - newImageFiles.length;
+            Array.from(files).slice(0, remaining).forEach(file => {
+                if (!file.type.startsWith('image/')) return alert(file.name + ' is not an image');
+                if (file.size > MAX_IMAGE_SIZE) return alert(file.name + ' exceeds 2MB');
                 newImageFiles.push(file);
-                
-                // Create preview
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const div = document.createElement('div');
-                    div.className = 'preview-item';
-                    div.dataset.index = newImageFiles.length - 1;
+                    div.className = 'relative aspect-square rounded-xl overflow-hidden bg-stone-100';
                     div.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <button type="button" class="remove-btn" onclick="removeNewImage(${newImageFiles.length - 1})">×</button>
-                        <span class="file-info">${(file.size / 1024 / 1024).toFixed(2)}MB</span>
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <button type="button" onclick="removeNewImage(${newImageFiles.length - 1})" class="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-500">×</button>
                     `;
-                    newImagesPreview.appendChild(div);
+                    document.getElementById('newImagesPreview').appendChild(div);
                     updateImageCounter();
                 };
                 reader.readAsDataURL(file);
             });
-            
             updateFileInput();
         }
         
         function removeNewImage(index) {
             newImageFiles.splice(index, 1);
-            renderNewImagePreviews();
+            renderNewImages();
             updateFileInput();
             updateImageCounter();
         }
         
         function removeExistingImage(btn) {
-            btn.closest('.preview-item').remove();
+            btn.closest('div').remove();
             updateImageCounter();
         }
         
-        function renderNewImagePreviews() {
-            newImagesPreview.innerHTML = '';
-            newImageFiles.forEach((file, index) => {
+        function renderNewImages() {
+            const preview = document.getElementById('newImagesPreview');
+            preview.innerHTML = '';
+            newImageFiles.forEach((file, i) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const div = document.createElement('div');
-                    div.className = 'preview-item';
+                    div.className = 'relative aspect-square rounded-xl overflow-hidden bg-stone-100';
                     div.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <button type="button" class="remove-btn" onclick="removeNewImage(${index})">×</button>
-                        <span class="file-info">${(file.size / 1024 / 1024).toFixed(2)}MB</span>
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <button type="button" onclick="removeNewImage(${i})" class="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-500">×</button>
                     `;
-                    newImagesPreview.appendChild(div);
+                    preview.appendChild(div);
                 };
                 reader.readAsDataURL(file);
             });
         }
         
         function updateFileInput() {
-            // Create a new DataTransfer to update the file input
             const dt = new DataTransfer();
-            newImageFiles.forEach(file => dt.items.add(file));
-            imageInput.files = dt.files;
+            newImageFiles.forEach(f => dt.items.add(f));
+            document.getElementById('imageInput').files = dt.files;
         }
         
-        // Video upload handling
-        const videoUploadArea = document.getElementById('videoUploadArea');
-        const videoInput = document.getElementById('videoInput');
-        const newVideoPreview = document.getElementById('newVideoPreview');
-        const videoPreviewElement = document.getElementById('videoPreviewElement');
-        const videoDurationWarning = document.getElementById('videoDurationWarning');
+        // ========== Video Upload ==========
         let videoFile = null;
         let videoValid = true;
+        const MAX_VIDEO_DURATION = 20;
         
-        videoUploadArea.addEventListener('click', () => videoInput.click());
-        
-        videoUploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            videoUploadArea.classList.add('dragover');
+        document.getElementById('videoUploadArea').addEventListener('click', () => {
+            document.getElementById('videoInput').click();
         });
         
-        videoUploadArea.addEventListener('dragleave', () => {
-            videoUploadArea.classList.remove('dragover');
-        });
-        
-        videoUploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            videoUploadArea.classList.remove('dragover');
-            if (e.dataTransfer.files[0]) {
-                handleVideoFile(e.dataTransfer.files[0]);
-            }
-        });
-        
-        videoInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                handleVideoFile(e.target.files[0]);
-            }
+        document.getElementById('videoInput').addEventListener('change', (e) => {
+            if (e.target.files[0]) handleVideoFile(e.target.files[0]);
         });
         
         function handleVideoFile(file) {
-            if (!file.type.startsWith('video/')) {
-                alert('Please select a video file');
-                return;
-            }
-            
+            if (!file.type.startsWith('video/')) return alert('Please select a video file');
             videoFile = file;
-            
-            // Create object URL for preview
             const url = URL.createObjectURL(file);
-            videoPreviewElement.src = url;
-            newVideoPreview.style.display = 'block';
+            const videoEl = document.getElementById('videoPreviewElement');
+            videoEl.src = url;
+            document.getElementById('newVideoPreview').classList.remove('hidden');
             
-            // Check duration when metadata loads
-            videoPreviewElement.onloadedmetadata = () => {
-                const duration = videoPreviewElement.duration;
-                if (duration > MAX_VIDEO_DURATION) {
-                    videoDurationWarning.classList.add('show');
+            videoEl.onloadedmetadata = () => {
+                if (videoEl.duration > MAX_VIDEO_DURATION) {
+                    document.getElementById('videoDurationWarning').classList.remove('hidden');
                     videoValid = false;
                 } else {
-                    videoDurationWarning.classList.remove('show');
+                    document.getElementById('videoDurationWarning').classList.add('hidden');
                     videoValid = true;
                 }
             };
             
-            // Update file input
             const dt = new DataTransfer();
             dt.items.add(file);
-            videoInput.files = dt.files;
+            document.getElementById('videoInput').files = dt.files;
             
-            // Hide existing video if present
             const existingVideo = document.getElementById('existingVideoContainer');
-            if (existingVideo) {
-                existingVideo.style.display = 'none';
-            }
+            if (existingVideo) existingVideo.style.display = 'none';
         }
         
         function removeNewVideo() {
             videoFile = null;
             videoValid = true;
-            newVideoPreview.style.display = 'none';
-            videoInput.value = '';
-            videoDurationWarning.classList.remove('show');
-            
-            // Show existing video if present
+            document.getElementById('newVideoPreview').classList.add('hidden');
+            document.getElementById('videoInput').value = '';
+            document.getElementById('videoDurationWarning').classList.add('hidden');
             const existingVideo = document.getElementById('existingVideoContainer');
-            if (existingVideo) {
-                existingVideo.style.display = 'block';
-            }
+            if (existingVideo) existingVideo.style.display = 'block';
         }
         
         function removeExistingVideo() {
             const existingVideo = document.getElementById('existingVideoContainer');
-            if (existingVideo) {
-                existingVideo.style.display = 'none';
-            }
+            if (existingVideo) existingVideo.style.display = 'none';
             document.getElementById('removeVideoInput').value = 'true';
         }
         
-        // Form submission validation
+        // Form submission
         document.getElementById('productForm').addEventListener('submit', (e) => {
             if (!videoValid) {
                 e.preventDefault();
-                alert('Please select a video that is 20 seconds or shorter');
+                alert('Please select a video under 20 seconds');
                 return false;
             }
-            
-            // Show loading state
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.textContent = 'Uploading...';
             submitBtn.disabled = true;
         });
         
-        // Initialize counter
+        // Initialize
         updateImageCounter();
+        
+        // Init category if set
+        const checkedCategory = document.querySelector('input[name="category"]:checked');
+        if (checkedCategory) {
+            checkedCategory.closest('.category-card').classList.add('selected');
+            nextToDetailsBtn.disabled = false;
+        }
     </script>
 </body>
 </html>

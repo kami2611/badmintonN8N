@@ -31,8 +31,24 @@ function addToCart(productId, quantity = 1) {
             
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartCount();
-            renderCartDrawer();
-            openCartDrawer(); // Open drawer instead of alert
+            
+            // Update header cart count (from main-header partial)
+            if (typeof updateHeaderCartCount === 'function') {
+                updateHeaderCartCount();
+            }
+            
+            // Show popup modal (from main-header partial)
+            if (typeof showCartPopup === 'function') {
+                showCartPopup({
+                    name: product.name,
+                    price: product.price,
+                    image: product.images[0] || ''
+                }, quantity);
+            } else {
+                // Fallback to drawer if popup not available
+                renderCartDrawer();
+                openCartDrawer();
+            }
         })
         .catch(err => {
             console.error('Error adding to cart:', err);

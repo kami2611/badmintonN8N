@@ -1,155 +1,468 @@
-<%- include('partials/head') %>
+<%- include('partials/head', { pageClass: 'page-home' }) %>
 
-<!-- REPLACE the existing hero section (lines 3-15) with this carousel -->
-<section class="hero-carousel">
-    <div class="carousel-container">
-        <!-- Slide 1: Rackets -->
-        <div class="carousel-slide active" data-index="0">
-            <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1920&q=80');"></div>
-            <div class="slide-overlay"></div>
-            <div class="slide-content">
-                <span class="slide-badge">Pro Performance</span>
-                <h1>Premium Rackets</h1>
-                <p>Engineered for power, precision, and perfect control. Find your winning edge.</p>
-                <a href="/products?category=rackets" class="btn btn-primary btn-large">Shop Rackets</a>
+<!-- ================================ -->
+<!-- MOBILE-FIRST HOMEPAGE            -->
+<!-- RacketBazaar - Badminton E-Commerce -->
+<!-- ================================ -->
+
+<div class="min-h-screen bg-surface-bg font-sans">
+
+    <!-- ========== 1. STICKY HEADER ========== -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-100">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Left: Hamburger Menu -->
+            <button id="menu-toggle" class="p-2 -ml-2 rounded-lg hover:bg-stone-100 active:bg-stone-200 transition-colors" aria-label="Open menu">
+                <i data-lucide="menu" class="w-6 h-6 text-brand-dark"></i>
+            </button>
+            
+            <!-- Center: Logo -->
+            <a href="/" class="flex items-center gap-1">
+                <span class="text-xl font-bold text-olive-700 tracking-tight">Racket</span>
+                <span class="text-xl font-bold text-brand-dark">Bazaar</span>
+            </a>
+            
+            <!-- Right: Icons -->
+            <div class="flex items-center gap-1">
+                <button class="p-2 rounded-lg hover:bg-stone-100 active:bg-stone-200 transition-colors" aria-label="Search">
+                    <i data-lucide="search" class="w-5 h-5 text-brand-dark"></i>
+                </button>
+                <a href="/cart" class="relative p-2 rounded-lg hover:bg-stone-100 active:bg-stone-200 transition-colors" aria-label="Cart">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-brand-dark"></i>
+                    <!-- Cart notification dot -->
+                    <span class="cart-dot absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== MOBILE SLIDE-OUT MENU ========== -->
+    <div id="mobile-menu" class="fixed inset-0 z-50 pointer-events-none">
+        <!-- Backdrop -->
+        <div id="menu-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+        
+        <!-- Menu Panel -->
+        <div id="menu-panel" class="absolute top-0 left-0 h-full w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 ease-out">
+            <!-- Menu Header -->
+            <div class="flex items-center justify-between p-4 border-b border-stone-100">
+                <span class="text-lg font-bold text-olive-700">Menu</span>
+                <button id="menu-close" class="p-2 -mr-2 rounded-lg hover:bg-stone-100" aria-label="Close menu">
+                    <i data-lucide="x" class="w-5 h-5 text-brand-dark"></i>
+                </button>
+            </div>
+            
+            <!-- Menu Links -->
+            <nav class="p-4 space-y-1">
+                <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-olive-50 text-olive-700 font-medium">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    Home
+                </a>
+                <a href="/products" class="flex items-center gap-3 px-3 py-3 rounded-lg text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+                    All Products
+                </a>
+                <a href="/products?category=rackets" class="flex items-center gap-3 px-3 py-3 rounded-lg text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="swords" class="w-5 h-5"></i>
+                    Rackets
+                </a>
+                <a href="/products?category=shoes" class="flex items-center gap-3 px-3 py-3 rounded-lg text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="footprints" class="w-5 h-5"></i>
+                    Shoes
+                </a>
+                <a href="/stores" class="flex items-center gap-3 px-3 py-3 rounded-lg text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="store" class="w-5 h-5"></i>
+                    Stores
+                </a>
+                
+                <div class="pt-4 mt-4 border-t border-stone-100">
+                    <a href="/seller/signup" class="flex items-center gap-3 px-3 py-3 rounded-lg text-stone-600 hover:bg-stone-50">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        Become a Seller
+                    </a>
+                    <a href="/login" class="flex items-center gap-3 px-3 py-3 rounded-lg text-stone-600 hover:bg-stone-50">
+                        <i data-lucide="log-in" class="w-5 h-5"></i>
+                        Login
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ========== 2. HERO SECTION ========== -->
+    <section class="relative bg-olive-700 overflow-hidden">
+        <!-- Background Pattern/Image -->
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+        </div>
+        
+        <!-- Hero Content -->
+        <div class="relative px-6 pt-12 pb-20 text-center">
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 mb-6 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span class="text-xs font-medium text-white/90">Now Live in Pakistan</span>
+            </div>
+            
+            <!-- Headline -->
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-3">
+                Upgrade Your<br/>Game
+            </h1>
+            
+            <!-- Subheadline -->
+            <p class="text-base text-white/80 max-w-xs mx-auto mb-8">
+                Pakistan's Premier Marketplace for Badminton Gear
+            </p>
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="/products" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-olive-700 font-semibold rounded-xl shadow-lg hover:bg-stone-50 active:scale-95 transition-all">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    Shop Now
+                </a>
+                <a href="https://wa.me/923001234567?text=Hi!%20I%20want%20to%20sell%20my%20badminton%20gear" target="_blank" rel="noopener" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-xl border-2 border-white/40 hover:bg-white/10 active:scale-95 transition-all">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    Sell Gear
+                </a>
             </div>
         </div>
         
-        <!-- Slide 2: Shoes -->
-        <div class="carousel-slide" data-index="1">
-            <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=1920&q=80');"></div>
-            <div class="slide-overlay slide-overlay-blue"></div>
-            <div class="slide-content">
-                <span class="slide-badge">Court Ready</span>
-                <h1>Performance Shoes</h1>
-                <p>Superior grip, lightweight comfort, and agility for every move on the court.</p>
-                <a href="/products?category=shoes" class="btn btn-primary btn-large">Shop Shoes</a>
-            </div>
-        </div>
-        
-        <!-- Slide 3: Accessories -->
-        <div class="carousel-slide" data-index="2">
-            <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=1920&q=80');"></div>
-            <div class="slide-overlay slide-overlay-green"></div>
-            <div class="slide-content">
-                <span class="slide-badge">Complete Your Kit</span>
-                <h1>Accessories</h1>
-                <p>Shuttlecocks, bags, grips, and everything you need to play your best game.</p>
-                <a href="/products?category=accessories" class="btn btn-primary btn-large">Shop Accessories</a>
+        <!-- Bottom Curve -->
+        <div class="absolute bottom-0 left-0 right-0 h-6 bg-surface-bg rounded-t-[2rem]"></div>
+    </section>
+
+    <!-- ========== 3. FLOATING SEARCH BAR ========== -->
+    <div class="relative z-10 px-4 -mt-8">
+        <div class="bg-white rounded-2xl shadow-float p-1">
+            <div class="flex items-center gap-3 px-4 py-3">
+                <i data-lucide="search" class="w-5 h-5 text-stone-400 flex-shrink-0"></i>
+                <input 
+                    type="text" 
+                    placeholder="Search rackets, shoes, shuttles..." 
+                    class="flex-1 text-sm text-stone-700 placeholder:text-stone-400 bg-transparent outline-none"
+                >
+                <button class="p-2 bg-olive-700 rounded-xl hover:bg-olive-800 active:scale-95 transition-all">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-white"></i>
+                </button>
             </div>
         </div>
     </div>
-    
-    <!-- Navigation Arrows -->
-    <button class="carousel-arrow carousel-prev" aria-label="Previous slide">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-    </button>
-    <button class="carousel-arrow carousel-next" aria-label="Next slide">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-    </button>
-    
-    <!-- Dots Navigation -->
-    <div class="carousel-dots">
-        <button class="carousel-dot active" data-slide="0" aria-label="Go to slide 1"></button>
-        <button class="carousel-dot" data-slide="1" aria-label="Go to slide 2"></button>
-        <button class="carousel-dot" data-slide="2" aria-label="Go to slide 3"></button>
-    </div>
-    
-    <!-- Progress Bar -->
-    <div class="carousel-progress">
-        <div class="carousel-progress-bar"></div>
-    </div>
-</section>
 
-<section class="categories">
-    <div class="section-header">
-        <h2>Shop by Category</h2>
-        <p>Find the perfect gear for every aspect of your game</p>
-    </div>
-    <div class="category-cards">
-        <a href="/products?category=rackets" class="category-card">
-            <div class="category-image">
-                <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1920&q=80" alt="Badminton Rackets">
+    <!-- ========== 4. CATEGORY PILLS ========== -->
+    <section class="mt-6 px-4">
+        <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
+            <!-- Rackets -->
+            <a href="/products?category=rackets" class="category-pill flex flex-col items-center gap-2 min-w-[72px] p-3 bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+                <div class="w-12 h-12 flex items-center justify-center bg-olive-50 rounded-xl">
+                    <i data-lucide="swords" class="w-6 h-6 text-olive-700"></i>
+                </div>
+                <span class="text-xs font-medium text-stone-700">Rackets</span>
+            </a>
+            
+            <!-- Shoes -->
+            <a href="/products?category=shoes" class="category-pill flex flex-col items-center gap-2 min-w-[72px] p-3 bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+                <div class="w-12 h-12 flex items-center justify-center bg-olive-50 rounded-xl">
+                    <i data-lucide="footprints" class="w-6 h-6 text-olive-700"></i>
+                </div>
+                <span class="text-xs font-medium text-stone-700">Shoes</span>
+            </a>
+            
+            <!-- Kitbags -->
+            <a href="/products?category=bags" class="category-pill flex flex-col items-center gap-2 min-w-[72px] p-3 bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+                <div class="w-12 h-12 flex items-center justify-center bg-olive-50 rounded-xl">
+                    <i data-lucide="briefcase" class="w-6 h-6 text-olive-700"></i>
+                </div>
+                <span class="text-xs font-medium text-stone-700">Kitbags</span>
+            </a>
+            
+            <!-- Apparel -->
+            <a href="/products?category=apparel" class="category-pill flex flex-col items-center gap-2 min-w-[72px] p-3 bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+                <div class="w-12 h-12 flex items-center justify-center bg-olive-50 rounded-xl">
+                    <i data-lucide="shirt" class="w-6 h-6 text-olive-700"></i>
+                </div>
+                <span class="text-xs font-medium text-stone-700">Apparel</span>
+            </a>
+            
+            <!-- Accessories -->
+            <a href="/products?category=accessories" class="category-pill flex flex-col items-center gap-2 min-w-[72px] p-3 bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+                <div class="w-12 h-12 flex items-center justify-center bg-olive-50 rounded-xl">
+                    <i data-lucide="puzzle" class="w-6 h-6 text-olive-700"></i>
+                </div>
+                <span class="text-xs font-medium text-stone-700">Extras</span>
+            </a>
+            
+            <!-- Shuttles -->
+            <a href="/products?category=shuttles" class="category-pill flex flex-col items-center gap-2 min-w-[72px] p-3 bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+                <div class="w-12 h-12 flex items-center justify-center bg-olive-50 rounded-xl">
+                    <i data-lucide="circle-dot" class="w-6 h-6 text-olive-700"></i>
+                </div>
+                <span class="text-xs font-medium text-stone-700">Shuttles</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- ========== 5. FRESH DROPS - PRODUCT GRID ========== -->
+    <section class="mt-8 px-4">
+        <!-- Section Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-bold text-brand-dark">Just In</h2>
+                <p class="text-sm text-stone-500">Fresh drops from our sellers</p>
             </div>
-            <div class="category-overlay">
-                <h3>Rackets</h3>
-                <span class="category-cta">Shop Now →</span>
-            </div>
-        </a>
+            <a href="/products" class="text-sm font-medium text-olive-700 hover:text-olive-800">
+                View All →
+            </a>
+        </div>
         
-        <a href="/products?category=shoes" class="category-card">
-            <div class="category-image">
-                <img src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600&h=400&fit=crop" alt="Court Shoes">
+        <!-- Product Grid (2 columns) -->
+        <div class="grid grid-cols-2 gap-3">
+            
+            <% if (typeof featuredProducts !== 'undefined' && featuredProducts && featuredProducts.length > 0) { %>
+                <% featuredProducts.slice(0, 6).forEach((product, index) => { %>
+                <!-- Dynamic Product Card -->
+                <a href="/product/<%= product._id %>" class="product-card-new block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all">
+                    <!-- Image Container -->
+                    <div class="relative aspect-square bg-stone-100">
+                        <% if (product.images && product.images.length > 0) { %>
+                        <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="w-full h-full object-cover">
+                        <% } else { %>
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i data-lucide="image" class="w-12 h-12 text-stone-300"></i>
+                        </div>
+                        <% } %>
+                        <!-- Badge -->
+                        <span class="absolute top-2 left-2 px-2 py-0.5 text-xxs font-semibold rounded-md <%= product.condition === 'new' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' %>">
+                            <%= product.condition === 'new' ? 'New' : 'Used ' + (product.conditionRating || '9') + '/10' %>
+                        </span>
+                    </div>
+                    <!-- Product Info -->
+                    <div class="p-3">
+                        <h3 class="text-sm font-medium text-stone-800 truncate"><%= product.name %></h3>
+                        <p class="text-base font-bold text-brand-dark mt-1">Rs. <%= product.price ? product.price.toLocaleString() : '0' %></p>
+                        <% if (product.specs) { %>
+                        <p class="text-xxs text-stone-500 mt-1"><%= product.specs %></p>
+                        <% } %>
+                    </div>
+                </a>
+                <% }) %>
+            <% } else { %>
+            
+            <!-- Static Demo Product Cards (when no products in DB) -->
+            
+            <!-- Product 1 -->
+            <a href="/products" class="product-card-new block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all">
+                <div class="relative aspect-square bg-stone-100">
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+                        <i data-lucide="swords" class="w-16 h-16 text-stone-300"></i>
+                    </div>
+                    <span class="absolute top-2 left-2 px-2 py-0.5 text-xxs font-semibold bg-amber-100 text-amber-700 rounded-md">Used 9/10</span>
+                </div>
+                <div class="p-3">
+                    <h3 class="text-sm font-medium text-stone-800 truncate">Yonex Astrox 77 Pro...</h3>
+                    <p class="text-base font-bold text-brand-dark mt-1">Rs. 24,500</p>
+                    <p class="text-xxs text-stone-500 mt-1">4U G5 • Unstrung</p>
+                </div>
+            </a>
+            
+            <!-- Product 2 -->
+            <a href="/products" class="product-card-new block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all">
+                <div class="relative aspect-square bg-stone-100">
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+                        <i data-lucide="footprints" class="w-16 h-16 text-stone-300"></i>
+                    </div>
+                    <span class="absolute top-2 left-2 px-2 py-0.5 text-xxs font-semibold bg-green-100 text-green-700 rounded-md">New</span>
+                </div>
+                <div class="p-3">
+                    <h3 class="text-sm font-medium text-stone-800 truncate">Victor A960 Court...</h3>
+                    <p class="text-base font-bold text-brand-dark mt-1">Rs. 18,900</p>
+                    <p class="text-xxs text-stone-500 mt-1">Size 42 • White/Blue</p>
+                </div>
+            </a>
+            
+            <!-- Product 3 -->
+            <a href="/products" class="product-card-new block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all">
+                <div class="relative aspect-square bg-stone-100">
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+                        <i data-lucide="swords" class="w-16 h-16 text-stone-300"></i>
+                    </div>
+                    <span class="absolute top-2 left-2 px-2 py-0.5 text-xxs font-semibold bg-green-100 text-green-700 rounded-md">New</span>
+                </div>
+                <div class="p-3">
+                    <h3 class="text-sm font-medium text-stone-800 truncate">Li-Ning Axforce 80...</h3>
+                    <p class="text-base font-bold text-brand-dark mt-1">Rs. 32,000</p>
+                    <p class="text-xxs text-stone-500 mt-1">3U G5 • Strung</p>
+                </div>
+            </a>
+            
+            <!-- Product 4 -->
+            <a href="/products" class="product-card-new block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all">
+                <div class="relative aspect-square bg-stone-100">
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+                        <i data-lucide="briefcase" class="w-16 h-16 text-stone-300"></i>
+                    </div>
+                    <span class="absolute top-2 left-2 px-2 py-0.5 text-xxs font-semibold bg-amber-100 text-amber-700 rounded-md">Used 8/10</span>
+                </div>
+                <div class="p-3">
+                    <h3 class="text-sm font-medium text-stone-800 truncate">Yonex Pro Racquet...</h3>
+                    <p class="text-base font-bold text-brand-dark mt-1">Rs. 8,500</p>
+                    <p class="text-xxs text-stone-500 mt-1">6 Racket • Navy Blue</p>
+                </div>
+            </a>
+            
+            <% } %>
+        </div>
+    </section>
+
+    <!-- ========== 6. SELLER CTA BANNER (WhatsApp Hook) ========== -->
+    <section class="mt-10 mx-4">
+        <div class="relative bg-gradient-to-br from-brand-light/30 to-olive-100 rounded-3xl p-6 overflow-hidden">
+            <!-- Background decoration -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-olive-200/30 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="absolute bottom-0 left-0 w-24 h-24 bg-olive-200/20 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+            
+            <!-- Content -->
+            <div class="relative">
+                <!-- Icon -->
+                <div class="inline-flex items-center gap-2 mb-4">
+                    <div class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm">
+                        <i data-lucide="camera" class="w-5 h-5 text-olive-700"></i>
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center bg-green-500 rounded-xl shadow-sm">
+                        <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+                    </div>
+                </div>
+                
+                <!-- Text -->
+                <h3 class="text-lg font-bold text-brand-dark mb-2">
+                    Got a racket gathering dust?
+                </h3>
+                <p class="text-sm text-stone-600 mb-5">
+                    Sell it in 30 seconds via WhatsApp. Take a photo, send it, and we'll list it for you!
+                </p>
+                
+                <!-- CTA Button -->
+                <a 
+                    href="https://wa.me/923001234567?text=Hi!%20I%20want%20to%20sell%20my%20badminton%20gear.%20Here's%20a%20photo:" 
+                    target="_blank" 
+                    rel="noopener" 
+                    class="inline-flex items-center gap-2 px-5 py-3 bg-green-500 text-white font-semibold rounded-xl shadow-lg hover:bg-green-600 active:scale-95 transition-all"
+                >
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    Start Selling
+                </a>
             </div>
-            <div class="category-overlay">
-                <h3>Court Shoes</h3>
-                <span class="category-cta">Shop Now →</span>
+        </div>
+    </section>
+
+    <!-- ========== FEATURED SELLERS (if available) ========== -->
+    <% if (typeof featuredSellers !== 'undefined' && featuredSellers && featuredSellers.length > 0) { %>
+    <section class="mt-10 px-4">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-bold text-brand-dark">Top Sellers</h2>
+                <p class="text-sm text-stone-500">Trusted stores on RacketBazaar</p>
             </div>
-        </a>
+            <a href="/stores" class="text-sm font-medium text-olive-700 hover:text-olive-800">
+                View All →
+            </a>
+        </div>
         
-        <a href="/products?category=accessories" class="category-card">
-            <div class="category-image">
-                <img src="https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=600&h=400&fit=crop" alt="Accessories">
-            </div>
-            <div class="category-overlay">
-                <h3>Accessories</h3>
-                <span class="category-cta">Shop Now →</span>
-            </div>
-        </a>
-    </div>
-</section>
+        <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
+            <% featuredSellers.forEach(seller => { %>
+            <a href="/store/<%= seller._id %>" class="flex-shrink-0 w-36 bg-white rounded-2xl shadow-card p-4 text-center hover:shadow-card-hover transition-all">
+                <div class="w-14 h-14 mx-auto mb-3 flex items-center justify-center bg-olive-100 rounded-full">
+                    <span class="text-xl font-bold text-olive-700"><%= seller.storeName.charAt(0).toUpperCase() %></span>
+                </div>
+                <h3 class="text-sm font-semibold text-stone-800 truncate"><%= seller.storeName %></h3>
+                <p class="text-xs text-stone-500 mt-1"><%= seller.productCount || 0 %> Products</p>
+            </a>
+            <% }) %>
+        </div>
+    </section>
+    <% } %>
 
-<% if (featuredProducts && featuredProducts.length > 0) { %>
-<section class="featured">
-    <div class="section-header">
-        <h2>Featured Products</h2>
-        <p>Handpicked favorites from our collection</p>
-    </div>
-    <div class="products-grid">
-        <% featuredProducts.forEach(product => { %>
-            <%- include('partials/product-card', { product }) %>
-        <% }) %>
-    </div>
-    <div class="featured-cta">
-        <a href="/products" class="btn btn-outline btn-large">View All Products</a>
-    </div>
-</section>
-<% } %>
-
-<% if (featuredSellers && featuredSellers.length > 0) { %>
-<section class="featured-sellers">
-    <div class="section-header">
-        <h2>Featured Sellers</h2>
-        <p>Trusted stores handpicked for quality and service</p>
-    </div>
-    <div class="sellers-grid">
-        <% featuredSellers.forEach(seller => { %>
-        <a href="/store/<%= seller._id %>" class="seller-card">
-            <div class="seller-avatar">
-                <span class="avatar-letter"><%= seller.storeName.charAt(0).toUpperCase() %></span>
-            </div>
-            <div class="seller-info">
-                <h3 class="seller-store-name"><%= seller.storeName %></h3>
-                <p class="seller-owner">by <%= seller.name %></p>
-                <div class="seller-stats">
-                    <span class="seller-stat">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                        <%= seller.productCount %> Products
-                    </span>
+    <!-- ========== 7. TRUST FOOTER ========== -->
+    <section class="mt-10 px-4 pb-6">
+        <!-- Trust Badges -->
+        <div class="bg-white rounded-2xl shadow-card p-5">
+            <div class="grid grid-cols-3 gap-4">
+                <!-- Verified Sellers -->
+                <div class="text-center">
+                    <div class="w-10 h-10 mx-auto mb-2 flex items-center justify-center bg-olive-50 rounded-full">
+                        <i data-lucide="badge-check" class="w-5 h-5 text-olive-700"></i>
+                    </div>
+                    <p class="text-xs font-medium text-stone-700">Verified<br/>Sellers</p>
+                </div>
+                
+                <!-- Nationwide Delivery -->
+                <div class="text-center">
+                    <div class="w-10 h-10 mx-auto mb-2 flex items-center justify-center bg-olive-50 rounded-full">
+                        <i data-lucide="truck" class="w-5 h-5 text-olive-700"></i>
+                    </div>
+                    <p class="text-xs font-medium text-stone-700">Nationwide<br/>Delivery</p>
+                </div>
+                
+                <!-- 3-Day Check -->
+                <div class="text-center">
+                    <div class="w-10 h-10 mx-auto mb-2 flex items-center justify-center bg-olive-50 rounded-full">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-olive-700"></i>
+                    </div>
+                    <p class="text-xs font-medium text-stone-700">3-Day<br/>Check</p>
                 </div>
             </div>
-            <div class="seller-badge">⭐ Featured</div>
-        </a>
-        <% }) %>
-    </div>
-    <div class="featured-cta">
-        <a href="/stores" class="btn btn-outline btn-large">View All Stores</a>
-    </div>
-</section>
-<% } %>
+        </div>
+        
+        <!-- Footer Links -->
+        <div class="mt-6 text-center">
+            <div class="flex items-center justify-center gap-4 mb-4">
+                <a href="/products" class="text-xs text-stone-500 hover:text-olive-700">Products</a>
+                <span class="text-stone-300">•</span>
+                <a href="/stores" class="text-xs text-stone-500 hover:text-olive-700">Stores</a>
+                <span class="text-stone-300">•</span>
+                <a href="#" class="text-xs text-stone-500 hover:text-olive-700">Contact</a>
+            </div>
+            <p class="text-xs text-stone-400">
+                © 2026 RacketBazaar. All rights reserved.
+            </p>
+        </div>
+    </section>
 
-<%- include('partials/tail') %>
+</div>
+
+<!-- ========== MOBILE MENU SCRIPT ========== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const menuClose = document.getElementById('menu-close');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuBackdrop = document.getElementById('menu-backdrop');
+    const menuPanel = document.getElementById('menu-panel');
+    
+    function openMenu() {
+        mobileMenu.classList.remove('pointer-events-none');
+        menuBackdrop.classList.remove('opacity-0');
+        menuPanel.classList.remove('-translate-x-full');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+        menuBackdrop.classList.add('opacity-0');
+        menuPanel.classList.add('-translate-x-full');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            mobileMenu.classList.add('pointer-events-none');
+        }, 300);
+    }
+    
+    if (menuToggle) menuToggle.addEventListener('click', openMenu);
+    if (menuClose) menuClose.addEventListener('click', closeMenu);
+    if (menuBackdrop) menuBackdrop.addEventListener('click', closeMenu);
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+
+<%- include('partials/tail', { pageClass: 'page-home' }) %>

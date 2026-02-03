@@ -3,69 +3,384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | BadmintonStore</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/seller.css">
+    <title><%= title %> | RacketBazaar Seller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        olive: {
+                            50: '#f7f8f3',
+                            100: '#eef0e6',
+                            200: '#dde1cc',
+                            300: '#c4cba8',
+                            400: '#a7b27e',
+                            500: '#8a9960',
+                            600: '#6b7a4a',
+                            700: '#556B2F',
+                            800: '#465a28',
+                            900: '#3b4c23',
+                            950: '#1a2e1a'
+                        },
+                        brand: {
+                            primary: '#556B2F',
+                            dark: '#1a2e1a',
+                            light: '#8FBC8F',
+                            warm: '#FAFAF9'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #f7f8f3;
+        }
+        .order-card {
+            transition: all 0.2s ease;
+        }
+        .order-card:active {
+            transform: scale(0.98);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
-<body>
-    <%- include('partials/sidebar') %>
-    
-    <main class="admin-main">
-        <header class="admin-header">
-            <h1>My Orders</h1>
-        </header>
-        
-        <p class="results-count"><%= orders.length %> order(s) containing your products</p>
-        
-        <% if (orders.length > 0) { %>
-            <% orders.forEach(order => { %>
-                <div class="order-card">
-                    <div class="order-card-header">
-                        <div>
-                            <strong>Order #<%= order._id.toString().slice(-8).toUpperCase() %></strong>
-                            <span class="order-date"><%= new Date(order.createdAt).toLocaleDateString() %></span>
-                        </div>
-                        <span class="status-badge status-<%= order.status %>"><%= order.status %></span>
-                    </div>
-                    
-                    <div class="order-card-body">
-                        <div class="order-customer">
-                            <strong>Customer:</strong> <%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %>
-                        </div>
-                        
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Qty</th>
-                                    <th>Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% order.sellerItems.forEach(item => { %>
-                                    <tr>
-                                        <td><%= item.name %></td>
-                                        <td>$<%= item.price.toFixed(2) %></td>
-                                        <td><%= item.quantity %></td>
-                                        <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
-                                    </tr>
-                                <% }) %>
-                            </tbody>
-                        </table>
-                        
-                        <div class="order-card-footer">
-                            <strong>Your Earnings: $<%= order.sellerTotal.toFixed(2) %></strong>
-                        </div>
-                    </div>
+<body class="bg-olive-50 min-h-screen pb-20 md:pb-0">
+    <!-- Mobile Header -->
+    <header class="sticky top-0 z-50 bg-olive-950 text-white">
+        <div class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center gap-3">
+                <a href="/seller/dashboard" class="p-1 -ml-1 rounded-lg hover:bg-white/10 transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <h1 class="text-lg font-semibold">Orders</h1>
+                    <p class="text-xs text-olive-300"><%= storeName %></p>
                 </div>
-            <% }) %>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSearch()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+                <button onclick="toggleFilters()" class="p-2 rounded-lg hover:bg-white/10 transition-colors relative">
+                    <i data-lucide="filter" class="w-5 h-5"></i>
+                    <span id="filterBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">1</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Search Bar (Hidden by default) -->
+        <div id="searchBar" class="hidden px-4 pb-3">
+            <div class="relative">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-400"></i>
+                <input type="text" id="orderSearch" placeholder="Search by order ID, customer..."
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/50 text-sm focus:outline-none focus:border-olive-400 focus:bg-white/15">
+            </div>
+        </div>
+    </header>
+    
+    <!-- Filter Pills -->
+    <div id="filterSection" class="hidden bg-white border-b border-olive-100 px-4 py-3">
+        <div class="flex gap-2 overflow-x-auto hide-scrollbar">
+            <button onclick="filterByStatus('')" class="filter-pill active whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-olive-700 text-white">
+                All
+            </button>
+            <button onclick="filterByStatus('pending')" class="filter-pill whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-olive-100 text-olive-700 hover:bg-olive-200">
+                Pending
+            </button>
+            <button onclick="filterByStatus('confirmed')" class="filter-pill whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-olive-100 text-olive-700 hover:bg-olive-200">
+                Confirmed
+            </button>
+            <button onclick="filterByStatus('shipped')" class="filter-pill whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-olive-100 text-olive-700 hover:bg-olive-200">
+                Shipped
+            </button>
+            <button onclick="filterByStatus('delivered')" class="filter-pill whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-olive-100 text-olive-700 hover:bg-olive-200">
+                Delivered
+            </button>
+            <button onclick="filterByStatus('cancelled')" class="filter-pill whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-olive-100 text-olive-700 hover:bg-olive-200">
+                Cancelled
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stats Summary -->
+    <div class="bg-white border-b border-olive-100">
+        <div class="grid grid-cols-3 divide-x divide-olive-100">
+            <div class="p-4 text-center">
+                <p class="text-2xl font-bold text-olive-950"><%= orders.length %></p>
+                <p class="text-xs text-olive-500 mt-0.5">Total Orders</p>
+            </div>
+            <div class="p-4 text-center">
+                <p class="text-2xl font-bold text-amber-600"><%= orders.filter(o => o.status === 'pending').length %></p>
+                <p class="text-xs text-olive-500 mt-0.5">Pending</p>
+            </div>
+            <div class="p-4 text-center">
+                <p class="text-2xl font-bold text-emerald-600">$<%= orders.reduce((sum, o) => sum + (o.sellerTotal || 0), 0).toFixed(0) %></p>
+                <p class="text-xs text-olive-500 mt-0.5">Total Earnings</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="p-4">
+        <% if (orders.length > 0) { %>
+            <div id="ordersList" class="space-y-3">
+                <% orders.forEach((order, index) => { %>
+                    <div class="order-card bg-white rounded-2xl shadow-sm border border-olive-100 overflow-hidden" 
+                         data-status="<%= order.status %>"
+                         data-order-id="<%= order._id.toString() %>"
+                         data-customer="<%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %>">
+                        
+                        <!-- Order Header -->
+                        <div class="p-4 border-b border-olive-50">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="font-semibold text-olive-950">#<%= order._id.toString().slice(-8).toUpperCase() %></p>
+                                    <p class="text-xs text-olive-500 mt-0.5">
+                                        <%= new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                        • <%= new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                                    </p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium
+                                    <% if (order.status === 'pending') { %>
+                                        bg-amber-100 text-amber-700
+                                    <% } else if (order.status === 'confirmed') { %>
+                                        bg-blue-100 text-blue-700
+                                    <% } else if (order.status === 'shipped') { %>
+                                        bg-purple-100 text-purple-700
+                                    <% } else if (order.status === 'delivered') { %>
+                                        bg-emerald-100 text-emerald-700
+                                    <% } else if (order.status === 'cancelled') { %>
+                                        bg-red-100 text-red-700
+                                    <% } else { %>
+                                        bg-olive-100 text-olive-700
+                                    <% } %>
+                                ">
+                                    <% if (order.status === 'pending') { %>
+                                        <i data-lucide="clock" class="w-3 h-3 inline mr-1"></i>
+                                    <% } else if (order.status === 'confirmed') { %>
+                                        <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>
+                                    <% } else if (order.status === 'shipped') { %>
+                                        <i data-lucide="truck" class="w-3 h-3 inline mr-1"></i>
+                                    <% } else if (order.status === 'delivered') { %>
+                                        <i data-lucide="package-check" class="w-3 h-3 inline mr-1"></i>
+                                    <% } else if (order.status === 'cancelled') { %>
+                                        <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>
+                                    <% } %>
+                                    <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Customer Info -->
+                        <div class="px-4 py-3 bg-olive-50/50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-olive-200 flex items-center justify-center">
+                                <i data-lucide="user" class="w-4 h-4 text-olive-600"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-olive-900 truncate">
+                                    <%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %>
+                                </p>
+                                <p class="text-xs text-olive-500 truncate">
+                                    <%= order.shippingAddress.city %>, <%= order.shippingAddress.state || order.shippingAddress.country %>
+                                </p>
+                            </div>
+                            <a href="tel:<%= order.shippingAddress.phone || '' %>" class="p-2 rounded-lg bg-olive-100 hover:bg-olive-200 transition-colors">
+                                <i data-lucide="phone" class="w-4 h-4 text-olive-600"></i>
+                            </a>
+                        </div>
+                        
+                        <!-- Order Items -->
+                        <div class="p-4 space-y-3">
+                            <% order.sellerItems.forEach(item => { %>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-lg bg-olive-100 flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="package" class="w-5 h-5 text-olive-400"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-olive-900 truncate"><%= item.name %></p>
+                                        <p class="text-xs text-olive-500">Qty: <%= item.quantity %> × $<%= item.price.toFixed(2) %></p>
+                                    </div>
+                                    <p class="text-sm font-semibold text-olive-900">$<%= (item.price * item.quantity).toFixed(2) %></p>
+                                </div>
+                            <% }) %>
+                        </div>
+                        
+                        <!-- Order Footer -->
+                        <div class="px-4 py-3 bg-olive-700 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-olive-200">Your Earnings</p>
+                                <p class="text-lg font-bold text-white">$<%= order.sellerTotal.toFixed(2) %></p>
+                            </div>
+                            <button onclick="toggleOrderDetails(<%= index %>)" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2">
+                                <span>Details</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Expandable Details -->
+                        <div id="orderDetails<%= index %>" class="hidden bg-olive-50 p-4 space-y-3 border-t border-olive-100">
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <p class="text-olive-500 text-xs">Payment Method</p>
+                                    <p class="font-medium text-olive-900"><%= order.paymentMethod || 'COD' %></p>
+                                </div>
+                                <div>
+                                    <p class="text-olive-500 text-xs">Payment Status</p>
+                                    <p class="font-medium text-olive-900"><%= order.paymentStatus || 'Pending' %></p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-olive-500 text-xs mb-1">Shipping Address</p>
+                                <p class="text-sm text-olive-900">
+                                    <%= order.shippingAddress.address %><br>
+                                    <%= order.shippingAddress.city %>, <%= order.shippingAddress.state || '' %> <%= order.shippingAddress.postalCode %><br>
+                                    <%= order.shippingAddress.country %>
+                                </p>
+                            </div>
+                            <% if (order.shippingAddress.phone) { %>
+                                <div>
+                                    <p class="text-olive-500 text-xs mb-1">Phone</p>
+                                    <a href="tel:<%= order.shippingAddress.phone %>" class="text-sm text-olive-700 font-medium hover:underline">
+                                        <%= order.shippingAddress.phone %>
+                                    </a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
         <% } else { %>
-            <div class="no-data">
-                <p>No orders yet for your products.</p>
-                <a href="/seller/products" class="btn btn-primary">Manage Products</a>
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div class="w-20 h-20 mx-auto bg-olive-100 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="shopping-bag" class="w-10 h-10 text-olive-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-olive-900 mb-2">No orders yet</h3>
+                <p class="text-olive-500 text-sm mb-6 max-w-xs mx-auto">
+                    When customers purchase your products, their orders will appear here.
+                </p>
+                <a href="/seller/products" class="inline-flex items-center gap-2 px-6 py-3 bg-olive-700 text-white rounded-xl font-medium hover:bg-olive-800 transition-colors">
+                    <i data-lucide="package" class="w-5 h-5"></i>
+                    <span>Manage Products</span>
+                </a>
             </div>
         <% } %>
     </main>
+    
+    <!-- Mobile Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-olive-100 md:hidden z-50">
+        <div class="grid grid-cols-4 gap-1 px-2 py-2">
+            <a href="/seller/dashboard" class="flex flex-col items-center gap-1 py-2 px-3 rounded-xl text-olive-400 hover:bg-olive-50 transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Dashboard</span>
+            </a>
+            <a href="/seller/products" class="flex flex-col items-center gap-1 py-2 px-3 rounded-xl text-olive-400 hover:bg-olive-50 transition-colors">
+                <i data-lucide="package" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Products</span>
+            </a>
+            <a href="/seller/orders" class="flex flex-col items-center gap-1 py-2 px-3 rounded-xl bg-olive-100 text-olive-700">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Orders</span>
+            </a>
+            <a href="/seller/logout" class="flex flex-col items-center gap-1 py-2 px-3 rounded-xl text-olive-400 hover:bg-olive-50 transition-colors">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Logout</span>
+            </a>
+        </div>
+    </nav>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Toggle search bar
+        function toggleSearch() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                document.getElementById('orderSearch').focus();
+            }
+        }
+        
+        // Toggle filters
+        function toggleFilters() {
+            const filterSection = document.getElementById('filterSection');
+            filterSection.classList.toggle('hidden');
+        }
+        
+        // Filter by status
+        let currentFilter = '';
+        function filterByStatus(status) {
+            currentFilter = status;
+            
+            // Update active pill
+            document.querySelectorAll('.filter-pill').forEach(pill => {
+                pill.classList.remove('bg-olive-700', 'text-white', 'active');
+                pill.classList.add('bg-olive-100', 'text-olive-700');
+            });
+            event.target.classList.remove('bg-olive-100', 'text-olive-700');
+            event.target.classList.add('bg-olive-700', 'text-white', 'active');
+            
+            // Update filter badge
+            const badge = document.getElementById('filterBadge');
+            if (status) {
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+            
+            // Filter orders
+            filterOrders();
+        }
+        
+        // Search functionality
+        document.getElementById('orderSearch')?.addEventListener('input', function(e) {
+            filterOrders();
+        });
+        
+        function filterOrders() {
+            const searchTerm = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+            const cards = document.querySelectorAll('.order-card');
+            
+            cards.forEach(card => {
+                const orderId = card.dataset.orderId.toLowerCase();
+                const customer = card.dataset.customer.toLowerCase();
+                const status = card.dataset.status;
+                
+                const matchesSearch = !searchTerm || orderId.includes(searchTerm) || customer.includes(searchTerm);
+                const matchesFilter = !currentFilter || status === currentFilter;
+                
+                card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+            });
+        }
+        
+        // Toggle order details
+        function toggleOrderDetails(index) {
+            const details = document.getElementById('orderDetails' + index);
+            details.classList.toggle('hidden');
+            
+            // Re-initialize icons in case they weren't rendered
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

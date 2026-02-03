@@ -3,42 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Login | BadmintonStore</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/seller.css">
+    <title>Seller Login | RacketBazaar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        olive: {
+                            50: '#f7f8f3',
+                            100: '#eef0e6',
+                            200: '#dde1cc',
+                            300: '#c4cba8',
+                            400: '#a7b27e',
+                            500: '#8a9960',
+                            600: '#6b7a4a',
+                            700: '#556B2F',
+                            800: '#465a28',
+                            900: '#3b4c23',
+                            950: '#1a2e1a'
+                        },
+                        brand: {
+                            primary: '#556B2F',
+                            dark: '#1a2e1a',
+                            light: '#8FBC8F',
+                            warm: '#FAFAF9'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .login-bg {
+            background: linear-gradient(135deg, #1a2e1a 0%, #556B2F 50%, #8FBC8F 100%);
+        }
+    </style>
 </head>
-<body>
-    <%- include('../partials/header') %>
+<body class="min-h-screen login-bg">
+    <!-- Back to Home -->
+    <a href="/" class="fixed top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors z-50">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </a>
     
-    <main class="main-content">
-        <div class="auth-page">
-            <div class="auth-box">
-                <h1>Seller Login</h1>
-                <p class="auth-subtitle">Access your seller dashboard</p>
-                
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <!-- Logo & Title -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 mx-auto bg-white rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                    <i data-lucide="store" class="w-8 h-8 text-olive-700"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-2">Seller Login</h1>
+                <p class="text-white/70">Access your RacketBazaar seller dashboard</p>
+            </div>
+            
+            <!-- Login Card -->
+            <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
                 <% if (error) { %>
-                    <div class="alert alert-error"><%= error %></div>
+                    <div class="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0"></i>
+                        <p class="text-sm text-red-700"><%= error %></p>
+                    </div>
                 <% } %>
                 
-                <form action="/seller/login" method="POST">
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                <form action="/seller/login" method="POST" class="space-y-5">
+                    <!-- Phone -->
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-olive-700 mb-2">Phone Number</label>
+                        <div class="relative">
+                            <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-olive-400"></i>
+                            <input type="tel" id="phone" name="phone" required
+                                placeholder="Enter your phone number"
+                                class="w-full pl-12 pr-4 py-3.5 border border-olive-200 rounded-xl text-olive-900 placeholder-olive-400 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-transparent transition-all">
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required>
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-olive-700 mb-2">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-olive-400"></i>
+                            <input type="password" id="password" name="password" required
+                                placeholder="Enter your password"
+                                class="w-full pl-12 pr-12 py-3.5 border border-olive-200 rounded-xl text-olive-900 placeholder-olive-400 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-transparent transition-all">
+                            <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-olive-400 hover:text-olive-600">
+                                <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary btn-large">Login</button>
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                        class="w-full py-4 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-olive-700/25">
+                        <i data-lucide="log-in" class="w-5 h-5"></i>
+                        <span>Login to Dashboard</span>
+                    </button>
                 </form>
                 
-                <p class="auth-link">Don't have a seller account? <a href="/seller/signup">Register as Seller</a></p>
+                <!-- Divider -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-olive-100"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs">
+                        <span class="px-4 bg-white text-olive-400">New to RacketBazaar?</span>
+                    </div>
+                </div>
+                
+                <!-- Register Link -->
+                <a href="/seller/signup" 
+                    class="block w-full py-3.5 border-2 border-olive-200 hover:border-olive-300 text-olive-700 font-medium rounded-xl transition-colors text-center">
+                    Create Seller Account
+                </a>
             </div>
+            
+            <!-- Help Text -->
+            <p class="text-center text-white/60 text-sm mt-6">
+                Need help? Contact us on 
+                <a href="https://wa.me/1234567890" class="text-white hover:underline">WhatsApp</a>
+            </p>
         </div>
-    </main>
+    </div>
     
-    <%- include('../partials/footer') %>
+    <script>
+        lucide.createIcons();
+        
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

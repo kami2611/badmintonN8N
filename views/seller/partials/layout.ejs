@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'Seller Panel' %> | RacketBazaar</title>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config with Design System -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'olive': {
+                            50: '#f7f8f5',
+                            100: '#eef0e9',
+                            200: '#dde1d3',
+                            300: '#c4ccb3',
+                            400: '#a6b18e',
+                            500: '#8a9970',
+                            600: '#6e7d58',
+                            700: '#556B2F',
+                            800: '#475a28',
+                            900: '#3c4b24',
+                            950: '#1f2812',
+                        },
+                        'brand': {
+                            'primary': '#556B2F',
+                            'dark': '#1a2e1a',
+                            'light': '#8FBC8F',
+                        },
+                        'surface': {
+                            'bg': '#FAFAF9',
+                            'card': '#FFFFFF',
+                            'muted': '#F5F5F4',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    fontSize: {
+                        'xxs': ['0.65rem', { lineHeight: '1rem' }],
+                    },
+                    boxShadow: {
+                        'card': '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04)',
+                        'card-hover': '0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 6px 16px -6px rgba(0, 0, 0, 0.08)',
+                        'float': '0 8px 32px -8px rgba(0, 0, 0, 0.16)',
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Scrollbar styling */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom scrollbar for sidebar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+        
+        /* Form focus states */
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #556B2F !important;
+            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1) !important;
+        }
+        
+        /* Smooth transitions */
+        * { transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        
+        /* Animation for mobile menu */
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        
+        /* Upload area */
+        .upload-area { border: 2px dashed #d4d4d4; }
+        .upload-area:hover { border-color: #556B2F; background-color: #f7f8f5; }
+        .upload-area.dragover { border-color: #556B2F; background-color: #eef0e9; }
+        
+        /* Active nav state */
+        .nav-active { background-color: #eef0e9; color: #556B2F; border-left: 3px solid #556B2F; }
+        
+        /* Card press effect */
+        .press-effect:active { transform: scale(0.98); }
+    </style>
+</head>
+<body class="bg-surface-bg font-sans min-h-screen">
+    <!-- Mobile Header -->
+    <header class="lg:hidden sticky top-0 z-40 bg-white border-b border-stone-200">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="mobile-menu-btn" class="p-2 -ml-2 rounded-lg hover:bg-stone-100" aria-label="Open menu">
+                <i data-lucide="menu" class="w-6 h-6 text-brand-dark"></i>
+            </button>
+            <a href="/seller/dashboard" class="flex items-center gap-1">
+                <span class="text-lg font-bold text-olive-700">Seller</span>
+                <span class="text-lg font-bold text-brand-dark">Panel</span>
+            </a>
+            <a href="/" class="p-2 -mr-2 rounded-lg hover:bg-stone-100" target="_blank">
+                <i data-lucide="external-link" class="w-5 h-5 text-stone-500"></i>
+            </a>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Desktop Sidebar -->
+        <aside id="sidebar" class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-stone-200">
+            <!-- Sidebar Header -->
+            <div class="flex items-center gap-3 px-6 py-5 border-b border-stone-100">
+                <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="store" class="w-5 h-5 text-olive-700"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-brand-dark truncate"><%= typeof storeName !== 'undefined' ? storeName : 'Seller' %></p>
+                    <p class="text-xs text-stone-500">Seller Panel</p>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+                <a href="/seller/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium <%= typeof title !== 'undefined' && title === 'Seller Dashboard' ? 'nav-active' : 'text-stone-600 hover:bg-stone-50' %>">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    Dashboard
+                </a>
+                <a href="/seller/products" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium <%= typeof title !== 'undefined' && (title === 'My Products' || title === 'Add Product' || title === 'Edit Product') ? 'nav-active' : 'text-stone-600 hover:bg-stone-50' %>">
+                    <i data-lucide="package" class="w-5 h-5"></i>
+                    Products
+                </a>
+                <a href="/seller/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium <%= typeof title !== 'undefined' && title === 'My Orders' ? 'nav-active' : 'text-stone-600 hover:bg-stone-50' %>">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    Orders
+                </a>
+            </nav>
+            
+            <!-- Sidebar Footer -->
+            <div class="px-3 py-4 border-t border-stone-100 space-y-1">
+                <a href="/" target="_blank" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                    View Store
+                </a>
+                <a href="/seller/logout" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobile-sidebar-overlay" class="hidden fixed inset-0 z-50 lg:hidden">
+            <div id="sidebar-backdrop" class="absolute inset-0 bg-black/50"></div>
+            <aside id="mobile-sidebar" class="absolute top-0 left-0 h-full w-72 bg-white shadow-xl transform -translate-x-full">
+                <!-- Mobile Sidebar Header -->
+                <div class="flex items-center justify-between px-4 py-4 border-b border-stone-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center">
+                            <i data-lucide="store" class="w-5 h-5 text-olive-700"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark"><%= typeof storeName !== 'undefined' ? storeName : 'Seller' %></p>
+                            <p class="text-xs text-stone-500">Seller Panel</p>
+                        </div>
+                    </div>
+                    <button id="close-sidebar-btn" class="p-2 -mr-2 rounded-lg hover:bg-stone-100">
+                        <i data-lucide="x" class="w-5 h-5 text-stone-500"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Navigation -->
+                <nav class="px-3 py-4 space-y-1">
+                    <a href="/seller/dashboard" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium <%= typeof title !== 'undefined' && title === 'Seller Dashboard' ? 'nav-active' : 'text-stone-600 hover:bg-stone-50' %>">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="/seller/products" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium <%= typeof title !== 'undefined' && (title === 'My Products' || title === 'Add Product' || title === 'Edit Product') ? 'nav-active' : 'text-stone-600 hover:bg-stone-50' %>">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                        Products
+                    </a>
+                    <a href="/seller/orders" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium <%= typeof title !== 'undefined' && title === 'My Orders' ? 'nav-active' : 'text-stone-600 hover:bg-stone-50' %>">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        Orders
+                    </a>
+                    
+                    <div class="pt-4 mt-4 border-t border-stone-100">
+                        <a href="/" target="_blank" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                            <i data-lucide="external-link" class="w-5 h-5"></i>
+                            View Store
+                        </a>
+                        <a href="/seller/logout" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                            Logout
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 lg:ml-64 min-h-screen">
+            <div class="p-4 lg:p-6 max-w-6xl mx-auto">
+                <%- body %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 z-40">
+        <div class="flex items-center justify-around py-2">
+            <a href="/seller/dashboard" class="flex flex-col items-center gap-1 px-4 py-2 <%= typeof title !== 'undefined' && title === 'Seller Dashboard' ? 'text-olive-700' : 'text-stone-500' %>">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Home</span>
+            </a>
+            <a href="/seller/products" class="flex flex-col items-center gap-1 px-4 py-2 <%= typeof title !== 'undefined' && (title === 'My Products' || title === 'Add Product' || title === 'Edit Product') ? 'text-olive-700' : 'text-stone-500' %>">
+                <i data-lucide="package" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Products</span>
+            </a>
+            <a href="/seller/products/add" class="flex flex-col items-center gap-1 px-4 py-2">
+                <div class="w-10 h-10 -mt-4 bg-olive-700 rounded-full flex items-center justify-center shadow-lg">
+                    <i data-lucide="plus" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xs font-medium text-olive-700 -mt-1">Add</span>
+            </a>
+            <a href="/seller/orders" class="flex flex-col items-center gap-1 px-4 py-2 <%= typeof title !== 'undefined' && title === 'My Orders' ? 'text-olive-700' : 'text-stone-500' %>">
+                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Orders</span>
+            </a>
+            <a href="/" target="_blank" class="flex flex-col items-center gap-1 px-4 py-2 text-stone-500">
+                <i data-lucide="external-link" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Store</span>
+            </a>
+        </div>
+    </nav>
+    
+    <!-- Bottom padding for mobile nav -->
+    <div class="lg:hidden h-20"></div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Mobile sidebar toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const mobileSidebarOverlay = document.getElementById('mobile-sidebar-overlay');
+        const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        
+        function openMobileSidebar() {
+            mobileSidebarOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                sidebarBackdrop.style.opacity = '1';
+                mobileSidebar.style.transform = 'translateX(0)';
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMobileSidebar() {
+            sidebarBackdrop.style.opacity = '0';
+            mobileSidebar.style.transform = 'translateX(-100%)';
+            setTimeout(() => {
+                mobileSidebarOverlay.classList.add('hidden');
+            }, 300);
+            document.body.style.overflow = '';
+        }
+        
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileSidebar);
+        if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+        if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+    </script>
+</body>
+</html>

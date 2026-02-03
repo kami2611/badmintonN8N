@@ -3,9 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %>Badminton Store</title>
+    <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %>RacketBazaar - Pakistan's Premier Badminton Marketplace</title>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config with Design System -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Primary Brand Colors
+                        'olive': {
+                            50: '#f7f8f5',
+                            100: '#eef0e9',
+                            200: '#dde1d3',
+                            300: '#c4ccb3',
+                            400: '#a6b18e',
+                            500: '#8a9970',
+                            600: '#6e7d58',
+                            700: '#556B2F', // Primary Brand
+                            800: '#475a28',
+                            900: '#3c4b24',
+                            950: '#1f2812',
+                        },
+                        'brand': {
+                            'primary': '#556B2F',    // Olive Green
+                            'dark': '#1a2e1a',       // Dark Green (CTA/Text)
+                            'light': '#8FBC8F',      // Sage Green (Accents)
+                        },
+                        'surface': {
+                            'bg': '#FAFAF9',         // Warm White Background
+                            'card': '#FFFFFF',       // Card Background
+                            'muted': '#F5F5F4',      // Muted Background
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    fontSize: {
+                        'xxs': ['0.65rem', { lineHeight: '1rem' }],
+                    },
+                    boxShadow: {
+                        'card': '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04)',
+                        'card-hover': '0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 6px 16px -6px rgba(0, 0, 0, 0.08)',
+                        'float': '0 8px 32px -8px rgba(0, 0, 0, 0.16)',
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Legacy CSS (for other pages) -->
     <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Custom Styles Override for Homepage -->
+    <style>
+        /* Hide legacy header/footer on homepage */
+        .page-home .header,
+        .page-home .footer,
+        .page-home .top-bar,
+        .page-home .main-content {
+            display: none !important;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Category pill hover effect */
+        .category-pill:active {
+            transform: scale(0.95);
+        }
+        
+        /* Product card hover */
+        .product-card-new:active {
+            transform: scale(0.98);
+        }
+        
+        /* Floating search animation */
+        @keyframes float-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+        
+        /* Badge pulse animation */
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        .cart-dot {
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+    </style>
 </head>
-<body>
+<body class="<%= typeof pageClass !== 'undefined' ? pageClass : '' %>">
+    <% if (typeof pageClass === 'undefined' || pageClass !== 'page-home') { %>
     <%- include('header') %>
     <main class="main-content">
+    <% } %>

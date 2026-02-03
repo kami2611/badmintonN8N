@@ -3,96 +3,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | BadmintonStore</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/seller.css">
-</head>
-<body>
-    <%- include('partials/sidebar') %>
+    <title><%= title %> | RacketBazaar</title>
     
-    <main class="admin-main">
-        <header class="admin-header">
-            <div>
-                <h1>Welcome, <%= sellerName %></h1>
-                <p class="store-name"><%= storeName %></p>
-            </div>
-            <a href="/" class="btn btn-outline" target="_blank">View Store</a>
-        </header>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Products</h3>
-                <p class="stat-number"><%= stats.totalProducts %></p>
-                <a href="/seller/products" class="stat-link">Manage Products →</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Orders Received</h3>
-                <p class="stat-number"><%= stats.totalOrders %></p>
-                <a href="/seller/orders" class="stat-link">View Orders →</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Total Revenue</h3>
-                <p class="stat-number">$<%= stats.totalRevenue.toFixed(2) %></p>
-                <span class="stat-detail">From your products</span>
-            </div>
-            
-            <div class="stat-card <%= stats.lowStock > 0 ? 'stat-warning' : '' %>">
-                <h3>Low Stock Alert</h3>
-                <p class="stat-number"><%= stats.lowStock %></p>
-                <span class="stat-detail">Products with stock < 5</span>
-            </div>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'olive': { 50: '#f7f8f5', 100: '#eef0e9', 200: '#dde1d3', 300: '#c4ccb3', 400: '#a6b18e', 500: '#8a9970', 600: '#6e7d58', 700: '#556B2F', 800: '#475a28', 900: '#3c4b24', 950: '#1f2812' },
+                        'brand': { 'primary': '#556B2F', 'dark': '#1a2e1a', 'light': '#8FBC8F' },
+                        'surface': { 'bg': '#FAFAF9', 'card': '#FFFFFF', 'muted': '#F5F5F4' },
+                    },
+                    fontFamily: { 'sans': ['Inter', 'system-ui', 'sans-serif'] },
+                    boxShadow: { 'card': '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04)', 'card-hover': '0 8px 24px -4px rgba(0, 0, 0, 0.12)' },
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .nav-active { background-color: #eef0e9; color: #556B2F; border-left: 3px solid #556B2F; }
+    </style>
+</head>
+<body class="bg-surface-bg font-sans min-h-screen">
+    
+    <!-- Mobile Header -->
+    <header class="lg:hidden sticky top-0 z-40 bg-white border-b border-stone-200">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="mobile-menu-btn" class="p-2 -ml-2 rounded-lg hover:bg-stone-100">
+                <i data-lucide="menu" class="w-6 h-6 text-brand-dark"></i>
+            </button>
+            <span class="text-lg font-bold text-olive-700">Dashboard</span>
+            <a href="/" class="p-2 -mr-2 rounded-lg hover:bg-stone-100" target="_blank">
+                <i data-lucide="external-link" class="w-5 h-5 text-stone-500"></i>
+            </a>
         </div>
-        
-        <section class="recent-orders">
-            <div class="section-header">
-                <h2>Recent Products</h2>
-                <a href="/seller/products/add" class="btn btn-primary">+ Add Product</a>
-            </div>
-            
-            <% if (recentProducts.length > 0) { %>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% recentProducts.forEach(product => { %>
-                            <tr>
-                                <td>
-                                    <img src="<%= product.images[0] || 'https://placehold.co/50x50/f5f5f5/333333?text=No+Img' %>" 
-                                         alt="<%= product.name %>" 
-                                         class="product-thumbnail">
-                                </td>
-                                <td><%= product.name %></td>
-                                <td><%= product.category %></td>
-                                <td>$<%= product.price.toFixed(2) %></td>
-                                <td>
-                                    <span class="<%= product.stock < 5 ? 'low-stock' : '' %>">
-                                        <%= product.stock %>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="/seller/products/edit/<%= product._id %>" class="btn btn-small">Edit</a>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <div class="no-data">
-                    <p>You haven't added any products yet.</p>
-                    <a href="/seller/products/add" class="btn btn-primary">Add Your First Product</a>
+    </header>
+
+    <div class="flex">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-stone-200">
+            <div class="flex items-center gap-3 px-6 py-5 border-b border-stone-100">
+                <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="store" class="w-5 h-5 text-olive-700"></i>
                 </div>
-            <% } %>
-        </section>
-    </main>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-brand-dark truncate"><%= storeName %></p>
+                    <p class="text-xs text-stone-500">Seller Panel</p>
+                </div>
+            </div>
+            <nav class="flex-1 px-3 py-4 space-y-1">
+                <a href="/seller/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium nav-active">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    Dashboard
+                </a>
+                <a href="/seller/products" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="package" class="w-5 h-5"></i>
+                    Products
+                </a>
+                <a href="/seller/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    Orders
+                </a>
+            </nav>
+            <div class="px-3 py-4 border-t border-stone-100 space-y-1">
+                <a href="/" target="_blank" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                    View Store
+                </a>
+                <a href="/seller/logout" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar -->
+        <div id="mobile-sidebar-overlay" class="hidden fixed inset-0 z-50 lg:hidden">
+            <div id="sidebar-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+            <aside id="mobile-sidebar" class="absolute top-0 left-0 h-full w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300">
+                <div class="flex items-center justify-between px-4 py-4 border-b border-stone-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center">
+                            <i data-lucide="store" class="w-5 h-5 text-olive-700"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark"><%= storeName %></p>
+                            <p class="text-xs text-stone-500">Seller Panel</p>
+                        </div>
+                    </div>
+                    <button id="close-sidebar-btn" class="p-2 rounded-lg hover:bg-stone-100">
+                        <i data-lucide="x" class="w-5 h-5 text-stone-500"></i>
+                    </button>
+                </div>
+                <nav class="px-3 py-4 space-y-1">
+                    <a href="/seller/dashboard" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium nav-active">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="/seller/products" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                        Products
+                    </a>
+                    <a href="/seller/orders" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        Orders
+                    </a>
+                    <div class="pt-4 mt-4 border-t border-stone-100">
+                        <a href="/" target="_blank" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50">
+                            <i data-lucide="external-link" class="w-5 h-5"></i>
+                            View Store
+                        </a>
+                        <a href="/seller/logout" class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                            Logout
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 min-h-screen">
+            <div class="p-4 lg:p-6 max-w-6xl mx-auto">
+                
+                <!-- Welcome Header -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-brand-dark">Welcome back, <%= sellerName %>!</h1>
+                    <p class="text-stone-500 mt-1">Here's what's happening with your store.</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+                    <!-- Total Products -->
+                    <div class="bg-white rounded-2xl p-4 shadow-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="package" class="w-5 h-5 text-olive-700"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark"><%= stats.totalProducts %></p>
+                        <p class="text-xs text-stone-500 mt-1">Total Products</p>
+                    </div>
+                    
+                    <!-- Orders -->
+                    <div class="bg-white rounded-2xl p-4 shadow-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="shopping-cart" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark"><%= stats.totalOrders %></p>
+                        <p class="text-xs text-stone-500 mt-1">Orders Received</p>
+                    </div>
+                    
+                    <!-- Revenue -->
+                    <div class="bg-white rounded-2xl p-4 shadow-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="banknote" class="w-5 h-5 text-green-600"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark">Rs. <%= stats.totalRevenue.toLocaleString() %></p>
+                        <p class="text-xs text-stone-500 mt-1">Total Revenue</p>
+                    </div>
+                    
+                    <!-- Low Stock -->
+                    <div class="bg-white rounded-2xl p-4 shadow-card <%= stats.lowStock > 0 ? 'border-l-4 border-amber-400' : '' %>">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark"><%= stats.lowStock %></p>
+                        <p class="text-xs text-stone-500 mt-1">Low Stock Items</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-2xl p-4 shadow-card mb-6">
+                    <h2 class="text-sm font-semibold text-stone-700 mb-3">Quick Actions</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="/seller/products/add" class="inline-flex items-center gap-2 px-4 py-2.5 bg-olive-700 text-white text-sm font-medium rounded-xl hover:bg-olive-800 transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Add Product
+                        </a>
+                        <a href="/seller/products" class="inline-flex items-center gap-2 px-4 py-2.5 bg-stone-100 text-stone-700 text-sm font-medium rounded-xl hover:bg-stone-200 transition-colors">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            Manage Products
+                        </a>
+                        <a href="/seller/orders" class="inline-flex items-center gap-2 px-4 py-2.5 bg-stone-100 text-stone-700 text-sm font-medium rounded-xl hover:bg-stone-200 transition-colors">
+                            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                            View Orders
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Products -->
+                <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-stone-100">
+                        <h2 class="font-semibold text-brand-dark">Recent Products</h2>
+                        <a href="/seller/products" class="text-sm text-olive-700 font-medium hover:text-olive-800">View All →</a>
+                    </div>
+                    
+                    <% if (recentProducts && recentProducts.length > 0) { %>
+                    <div class="divide-y divide-stone-100">
+                        <% recentProducts.forEach(product => { %>
+                        <div class="flex items-center gap-4 p-4 hover:bg-stone-50 transition-colors">
+                            <!-- Product Image -->
+                            <div class="w-14 h-14 bg-stone-100 rounded-xl overflow-hidden flex-shrink-0">
+                                <% if (product.images && product.images[0]) { %>
+                                <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="w-full h-full object-cover">
+                                <% } else { %>
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <i data-lucide="image" class="w-6 h-6 text-stone-300"></i>
+                                </div>
+                                <% } %>
+                            </div>
+                            
+                            <!-- Product Info -->
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-sm font-medium text-stone-800 truncate"><%= product.name %></h3>
+                                <p class="text-xs text-stone-500 mt-0.5"><%= product.category %> • Stock: <%= product.stock %></p>
+                            </div>
+                            
+                            <!-- Price & Action -->
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-bold text-brand-dark">Rs. <%= product.price.toLocaleString() %></p>
+                                <a href="/seller/products/edit/<%= product._id %>" class="text-xs text-olive-700 hover:underline">Edit</a>
+                            </div>
+                        </div>
+                        <% }) %>
+                    </div>
+                    <% } else { %>
+                    <div class="p-8 text-center">
+                        <div class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="package" class="w-8 h-8 text-stone-400"></i>
+                        </div>
+                        <p class="text-stone-500 mb-4">You haven't added any products yet.</p>
+                        <a href="/seller/products/add" class="inline-flex items-center gap-2 px-4 py-2 bg-olive-700 text-white text-sm font-medium rounded-xl hover:bg-olive-800">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Add Your First Product
+                        </a>
+                    </div>
+                    <% } %>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 z-40">
+        <div class="flex items-center justify-around py-2">
+            <a href="/seller/dashboard" class="flex flex-col items-center gap-1 px-4 py-2 text-olive-700">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Home</span>
+            </a>
+            <a href="/seller/products" class="flex flex-col items-center gap-1 px-4 py-2 text-stone-500">
+                <i data-lucide="package" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Products</span>
+            </a>
+            <a href="/seller/products/add" class="flex flex-col items-center gap-1 px-4 py-2">
+                <div class="w-12 h-12 -mt-5 bg-olive-700 rounded-full flex items-center justify-center shadow-lg">
+                    <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs font-medium text-olive-700">Add</span>
+            </a>
+            <a href="/seller/orders" class="flex flex-col items-center gap-1 px-4 py-2 text-stone-500">
+                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Orders</span>
+            </a>
+            <a href="/" target="_blank" class="flex flex-col items-center gap-1 px-4 py-2 text-stone-500">
+                <i data-lucide="external-link" class="w-5 h-5"></i>
+                <span class="text-xs font-medium">Store</span>
+            </a>
+        </div>
+    </nav>
+    <div class="lg:hidden h-20"></div>
+
+    <script>
+        lucide.createIcons();
+        
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const overlay = document.getElementById('mobile-sidebar-overlay');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const sidebar = document.getElementById('mobile-sidebar');
+        
+        function openSidebar() {
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                backdrop.style.opacity = '1';
+                sidebar.style.transform = 'translateX(0)';
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            backdrop.style.opacity = '0';
+            sidebar.style.transform = 'translateX(-100%)';
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            document.body.style.overflow = '';
+        }
+        
+        mobileMenuBtn?.addEventListener('click', openSidebar);
+        closeSidebarBtn?.addEventListener('click', closeSidebar);
+        backdrop?.addEventListener('click', closeSidebar);
+    </script>
 </body>
 </html>

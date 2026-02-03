@@ -1,179 +1,461 @@
-<%- include('partials/head') %>
+<%- include('partials/head', { pageClass: 'page-products' }) %>
 
-<div class="products-page">
-    <!-- Add this overlay before the aside -->
-    <div class="filters-overlay"></div>
-    <aside class="filters">
-        <!-- Replace the original h3 with this header -->
-        <div class="filters-header">
-            <h3>Filters</h3>
-            <button class="filters-close-btn" aria-label="Close filters">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+<!-- ================================ -->
+<!-- PRODUCTS LISTING PAGE            -->
+<!-- RacketBazaar - Mobile-First      -->
+<!-- ================================ -->
+
+<div class="min-h-screen bg-olive-50 font-sans">
+
+    <!-- ========== STICKY HEADER ========== -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-olive-100">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Left: Hamburger Menu -->
+            <button id="menu-toggle" class="p-2 -ml-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Open menu">
+                <i data-lucide="menu" class="w-6 h-6 text-olive-950"></i>
             </button>
-        </div>
-        <form action="/products" method="GET" id="filter-form">
-            <% if (search) { %>
-                <input type="hidden" name="search" value="<%= search %>">
-            <% } %>
             
-            <div class="filter-group">
-                <h4>Category</h4>
-                <label>
-                    <input type="radio" name="category" value="" <%= !category ? 'checked' : '' %>> All
-                </label>
-                <label>
-                    <input type="radio" name="category" value="rackets" <%= category === 'rackets' ? 'checked' : '' %>> Rackets
-                </label>
-                <label>
-                    <input type="radio" name="category" value="shoes" <%= category === 'shoes' ? 'checked' : '' %>> Shoes
-                </label>
-                <label>
-                    <input type="radio" name="category" value="accessories" <%= category === 'accessories' ? 'checked' : '' %>> Accessories
-                </label>
-            </div>
+            <!-- Center: Logo -->
+            <a href="/" class="flex items-center gap-1">
+                <span class="text-xl font-bold text-olive-700 tracking-tight">Racket</span>
+                <span class="text-xl font-bold text-olive-950">Bazaar</span>
+            </a>
             
-            <div class="filter-group">
-                <h4>Brand</h4>
-                <% brands.forEach(b => { %>
-                    <label>
-                        <input type="checkbox" name="brand" value="<%= b %>" <%= selectedBrands.includes(b) ? 'checked' : '' %>> <%= b %>
-                    </label>
-                <% }) %>
-            </div>
-            
-            <div class="filter-group">
-                <h4>Price Range</h4>
-                <label>
-                    <input type="number" name="minPrice" placeholder="Min" value="<%= minPrice || '' %>" class="price-input">
-                </label>
-                <span>to</span>
-                <label>
-                    <input type="number" name="maxPrice" placeholder="Max" value="<%= maxPrice || '' %>" class="price-input">
-                </label>
-            </div>
-            
-            <div class="filter-group">
-                <h4>Sort By</h4>
-                <select name="sort">
-                    <option value="" <%= !sort ? 'selected' : '' %>>Default</option>
-                    <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
-                    <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
-                    <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name: A to Z</option>
-                    <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Name: Z to A</option>
-                </select>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Apply Filters</button>
-            <a href="/products" class="btn btn-outline">Clear All</a>
-        </form>
-    </aside>
-    
-    <section class="products-section">
-        <div class="products-header">
-            <div class="products-header-top">
-                <!-- Filter button for mobile -->
-                <button class="btn btn-outline" id="filter-toggle-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    <span>Filters</span>
+            <!-- Right: Icons -->
+            <div class="flex items-center gap-1">
+                <button id="search-toggle" class="p-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Search">
+                    <i data-lucide="search" class="w-5 h-5 text-olive-950"></i>
                 </button>
-                
-                <div class="products-title-section">
-                    <h1>
-                        <% if (category) { %>
-                            <%= category.charAt(0).toUpperCase() + category.slice(1) %>
-                        <% } else if (search) { %>
-                            Search Results for "<%= search %>"
-                        <% } else { %>
-                            All Products
-                        <% } %>
-                    </h1>
-                    <p><%= totalProducts %> product<%= totalProducts !== 1 ? 's' : '' %> found</p>
-                </div>
-                
-                <div class="products-sort">
-                    <label for="sort-select">Sort by:</label>
-                    <select id="sort-select" onchange="applySortFilter(this.value)">
-                        <option value="" <%= !sort ? 'selected' : '' %>>Newest</option>
-                        <option value="featured" <%= sort === 'featured' ? 'selected' : '' %>>Featured</option>
-                        <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name: A-Z</option>
-                        <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Name: Z-A</option>
-                        <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
-                        <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
-                    </select>
-                </div>
+                <a href="/cart" class="relative p-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Cart">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-olive-950"></i>
+                    <span class="cart-dot absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </a>
             </div>
         </div>
         
+        <!-- Search Bar (Hidden by default) -->
+        <div id="search-bar" class="hidden px-4 pb-3">
+            <form action="/products" method="GET" class="relative">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-olive-400"></i>
+                <input 
+                    type="text" 
+                    name="search"
+                    value="<%= search || '' %>"
+                    placeholder="Search products..." 
+                    class="w-full pl-12 pr-4 py-3 bg-olive-50 border border-olive-200 rounded-xl text-olive-900 placeholder-olive-400 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-transparent"
+                >
+            </form>
+        </div>
+    </header>
+
+    <!-- ========== MOBILE SLIDE-OUT MENU ========== -->
+    <div id="mobile-menu" class="fixed inset-0 z-50 pointer-events-none">
+        <div id="menu-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+        <div id="menu-panel" class="absolute top-0 left-0 h-full w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 ease-out">
+            <div class="flex items-center justify-between p-4 border-b border-olive-100">
+                <span class="text-lg font-bold text-olive-700">Menu</span>
+                <button id="menu-close" class="p-2 -mr-2 rounded-lg hover:bg-olive-100" aria-label="Close menu">
+                    <i data-lucide="x" class="w-5 h-5 text-olive-950"></i>
+                </button>
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-lg text-olive-600 hover:bg-olive-50">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    Home
+                </a>
+                <a href="/products" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-olive-50 text-olive-700 font-medium">
+                    <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+                    All Products
+                </a>
+                <a href="/products?category=rackets" class="flex items-center gap-3 px-3 py-3 rounded-lg text-olive-600 hover:bg-olive-50">
+                    <i data-lucide="swords" class="w-5 h-5"></i>
+                    Rackets
+                </a>
+                <a href="/products?category=shoes" class="flex items-center gap-3 px-3 py-3 rounded-lg text-olive-600 hover:bg-olive-50">
+                    <i data-lucide="footprints" class="w-5 h-5"></i>
+                    Shoes
+                </a>
+                <a href="/stores" class="flex items-center gap-3 px-3 py-3 rounded-lg text-olive-600 hover:bg-olive-50">
+                    <i data-lucide="store" class="w-5 h-5"></i>
+                    Stores
+                </a>
+                <div class="pt-4 mt-4 border-t border-olive-100">
+                    <a href="/seller/signup" class="flex items-center gap-3 px-3 py-3 rounded-lg text-olive-600 hover:bg-olive-50">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        Become a Seller
+                    </a>
+                    <a href="/login" class="flex items-center gap-3 px-3 py-3 rounded-lg text-olive-600 hover:bg-olive-50">
+                        <i data-lucide="log-in" class="w-5 h-5"></i>
+                        Login
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ========== BREADCRUMBS ========== -->
+    <nav class="px-4 py-3 bg-white border-b border-olive-100">
+        <ol class="flex items-center gap-2 text-sm text-olive-500 overflow-x-auto whitespace-nowrap">
+            <li><a href="/" class="hover:text-olive-700 transition-colors">Home</a></li>
+            <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+            <li><a href="/products" class="hover:text-olive-700 transition-colors">Products</a></li>
+            <% if (category) { %>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li class="text-olive-900 font-medium capitalize"><%= category %></li>
+            <% } %>
+            <% if (search) { %>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li class="text-olive-900 font-medium">Search: "<%= search %>"</li>
+            <% } %>
+        </ol>
+    </nav>
+
+    <!-- ========== CATEGORY PILLS (Horizontal Scroll) ========== -->
+    <div class="bg-white border-b border-olive-100 px-4 py-3">
+        <div class="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <a href="/products" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= !category ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                All
+            </a>
+            <a href="/products?category=rackets" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= category === 'rackets' ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                <i data-lucide="swords" class="w-4 h-4 inline mr-1"></i>Rackets
+            </a>
+            <a href="/products?category=shoes" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= category === 'shoes' ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                <i data-lucide="footprints" class="w-4 h-4 inline mr-1"></i>Shoes
+            </a>
+            <a href="/products?category=bags" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= category === 'bags' ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                <i data-lucide="briefcase" class="w-4 h-4 inline mr-1"></i>Bags
+            </a>
+            <a href="/products?category=apparel" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= category === 'apparel' ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                <i data-lucide="shirt" class="w-4 h-4 inline mr-1"></i>Apparel
+            </a>
+            <a href="/products?category=shuttles" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= category === 'shuttles' ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                <i data-lucide="circle-dot" class="w-4 h-4 inline mr-1"></i>Shuttles
+            </a>
+            <a href="/products?category=accessories" class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all <%= category === 'accessories' ? 'bg-olive-700 text-white' : 'bg-olive-100 text-olive-700 hover:bg-olive-200' %>">
+                <i data-lucide="puzzle" class="w-4 h-4 inline mr-1"></i>Accessories
+            </a>
+        </div>
+    </div>
+
+    <!-- ========== RESULTS BAR ========== -->
+    <div class="sticky top-[57px] z-40 bg-olive-50 border-b border-olive-100 px-4 py-3">
+        <div class="flex items-center justify-between gap-4">
+            <!-- Left: Filter Button & Count -->
+            <div class="flex items-center gap-3">
+                <button 
+                    id="filter-toggle-btn" 
+                    class="flex items-center gap-2 px-3 py-2 bg-white border border-olive-200 rounded-xl text-sm font-medium text-olive-700 hover:bg-olive-50 transition-colors"
+                >
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                    <span>Filters</span>
+                    <% 
+                    let activeFilters = 0;
+                    if (selectedBrands && selectedBrands.length) activeFilters += selectedBrands.length;
+                    if (minPrice || maxPrice) activeFilters++;
+                    %>
+                    <% if (activeFilters > 0) { %>
+                        <span class="w-5 h-5 bg-olive-700 text-white text-xs rounded-full flex items-center justify-center"><%= activeFilters %></span>
+                    <% } %>
+                </button>
+                <p class="text-sm text-olive-600">
+                    <span class="font-semibold text-olive-900"><%= totalProducts %></span> product<%= totalProducts !== 1 ? 's' : '' %>
+                </p>
+            </div>
+            
+            <!-- Right: Sort -->
+            <div class="relative">
+                <select 
+                    id="sort-select" 
+                    onchange="applySortFilter(this.value)"
+                    class="appearance-none pl-3 pr-8 py-2 bg-white border border-olive-200 rounded-xl text-sm font-medium text-olive-700 focus:outline-none focus:ring-2 focus:ring-olive-500 cursor-pointer"
+                >
+                    <option value="" <%= !sort ? 'selected' : '' %>>Newest</option>
+                    <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Price: Low → High</option>
+                    <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Price: High → Low</option>
+                    <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name: A → Z</option>
+                </select>
+                <i data-lucide="chevron-down" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-400 pointer-events-none"></i>
+            </div>
+        </div>
+        
+        <!-- Active Filters Tags -->
+        <% if (selectedBrands && selectedBrands.length || minPrice || maxPrice) { %>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <% if (selectedBrands) { selectedBrands.forEach(brand => { %>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-olive-200 text-olive-800 text-xs font-medium rounded-full">
+                        <%= brand %>
+                        <a href="javascript:void(0)" onclick="removeFilter('brand', '<%= brand %>')" class="hover:text-olive-950">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </a>
+                    </span>
+                <% }) } %>
+                <% if (minPrice || maxPrice) { %>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-olive-200 text-olive-800 text-xs font-medium rounded-full">
+                        $<%= minPrice || '0' %> - $<%= maxPrice || '∞' %>
+                        <a href="javascript:void(0)" onclick="removePriceFilter()" class="hover:text-olive-950">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </a>
+                    </span>
+                <% } %>
+                <a href="/products<%= category ? '?category=' + category : '' %>" class="text-xs text-olive-600 hover:text-olive-800 underline">
+                    Clear all
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- ========== FILTER DRAWER (Mobile) ========== -->
+    <div id="filter-drawer" class="fixed inset-0 z-50 pointer-events-none">
+        <div id="filter-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+        <div id="filter-panel" class="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white rounded-t-3xl shadow-xl transform translate-y-full transition-transform duration-300 ease-out overflow-hidden">
+            <!-- Handle -->
+            <div class="flex justify-center pt-3 pb-2">
+                <div class="w-10 h-1 bg-olive-200 rounded-full"></div>
+            </div>
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-3 border-b border-olive-100">
+                <h3 class="text-lg font-semibold text-olive-950">Filters</h3>
+                <button id="filter-close" class="p-2 -mr-2 rounded-lg hover:bg-olive-100">
+                    <i data-lucide="x" class="w-5 h-5 text-olive-600"></i>
+                </button>
+            </div>
+            
+            <!-- Filter Content -->
+            <form action="/products" method="GET" id="filter-form" class="overflow-y-auto max-h-[60vh] px-6 py-4">
+                <% if (search) { %>
+                    <input type="hidden" name="search" value="<%= search %>">
+                <% } %>
+                <% if (category) { %>
+                    <input type="hidden" name="category" value="<%= category %>">
+                <% } %>
+                
+                <!-- Brand Filter -->
+                <% if (brands && brands.length > 0) { %>
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-olive-900 mb-3">Brand</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <% brands.forEach(b => { %>
+                            <label class="flex items-center gap-2 p-3 bg-olive-50 rounded-xl cursor-pointer hover:bg-olive-100 transition-colors <%= selectedBrands && selectedBrands.includes(b) ? 'ring-2 ring-olive-500 bg-olive-100' : '' %>">
+                                <input type="checkbox" name="brand" value="<%= b %>" class="w-4 h-4 text-olive-700 rounded focus:ring-olive-500" <%= selectedBrands && selectedBrands.includes(b) ? 'checked' : '' %>>
+                                <span class="text-sm text-olive-700"><%= b %></span>
+                            </label>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <!-- Price Range -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-olive-900 mb-3">Price Range</h4>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <label class="text-xs text-olive-500 mb-1 block">Min ($)</label>
+                            <input 
+                                type="number" 
+                                name="minPrice" 
+                                placeholder="0" 
+                                value="<%= minPrice || '' %>"
+                                class="w-full px-3 py-2.5 border border-olive-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-olive-500"
+                            >
+                        </div>
+                        <span class="text-olive-400 mt-5">—</span>
+                        <div class="flex-1">
+                            <label class="text-xs text-olive-500 mb-1 block">Max ($)</label>
+                            <input 
+                                type="number" 
+                                name="maxPrice" 
+                                placeholder="Any" 
+                                value="<%= maxPrice || '' %>"
+                                class="w-full px-3 py-2.5 border border-olive-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-olive-500"
+                            >
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Condition (if exists) -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-olive-900 mb-3">Condition</h4>
+                    <div class="flex gap-2">
+                        <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-olive-50 rounded-xl cursor-pointer hover:bg-olive-100 transition-colors">
+                            <input type="radio" name="condition" value="" class="w-4 h-4 text-olive-700 focus:ring-olive-500" checked>
+                            <span class="text-sm text-olive-700">All</span>
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-olive-50 rounded-xl cursor-pointer hover:bg-olive-100 transition-colors">
+                            <input type="radio" name="condition" value="new" class="w-4 h-4 text-olive-700 focus:ring-olive-500">
+                            <span class="text-sm text-olive-700">New</span>
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-olive-50 rounded-xl cursor-pointer hover:bg-olive-100 transition-colors">
+                            <input type="radio" name="condition" value="used" class="w-4 h-4 text-olive-700 focus:ring-olive-500">
+                            <span class="text-sm text-olive-700">Pre-owned</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Sort (in drawer for mobile) -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-olive-900 mb-3">Sort By</h4>
+                    <select name="sort" class="w-full px-3 py-2.5 border border-olive-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-olive-500">
+                        <option value="" <%= !sort ? 'selected' : '' %>>Newest First</option>
+                        <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+                        <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
+                        <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name: A to Z</option>
+                        <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Name: Z to A</option>
+                    </select>
+                </div>
+            </form>
+            
+            <!-- Footer Actions -->
+            <div class="flex gap-3 px-6 py-4 border-t border-olive-100 bg-white">
+                <a href="/products<%= category ? '?category=' + category : '' %>" class="flex-1 py-3 border border-olive-200 text-olive-700 font-medium rounded-xl text-center hover:bg-olive-50 transition-colors">
+                    Clear All
+                </a>
+                <button type="submit" form="filter-form" class="flex-1 py-3 bg-olive-700 text-white font-medium rounded-xl hover:bg-olive-800 transition-colors">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="px-4 py-6">
         <% if (products.length > 0) { %>
-            <div class="products-grid">
+            <!-- Product Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <% products.forEach(product => { %>
                     <%- include('partials/product-card', { product }) %>
                 <% }) %>
             </div>
             
+            <!-- Pagination -->
             <% if (totalPages > 1) { %>
-            <nav class="pagination">
-                <div class="pagination-info">
-                    Showing <%= (currentPage - 1) * perPage + 1 %>-<%= Math.min(currentPage * perPage, totalProducts) %> of <%= totalProducts %> products
-                </div>
-                <div class="pagination-controls">
-                    <% if (currentPage > 1) { %>
-                        <a href="<%= buildPaginationUrl(1) %>" class="pagination-btn" title="First page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
-                        </a>
-                        <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="pagination-btn" title="Previous page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </a>
-                    <% } %>
+                <nav class="mt-8 flex flex-col items-center gap-4">
+                    <!-- Page Info -->
+                    <p class="text-sm text-olive-500">
+                        Showing <%= (currentPage - 1) * perPage + 1 %>-<%= Math.min(currentPage * perPage, totalProducts) %> of <%= totalProducts %>
+                    </p>
                     
-                    <div class="pagination-pages">
+                    <!-- Page Controls -->
+                    <div class="flex items-center gap-2">
+                        <% if (currentPage > 1) { %>
+                            <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="p-2 bg-white border border-olive-200 rounded-lg hover:bg-olive-50 transition-colors">
+                                <i data-lucide="chevron-left" class="w-5 h-5 text-olive-600"></i>
+                            </a>
+                        <% } %>
+                        
                         <% 
                         let startPage = Math.max(1, currentPage - 2);
                         let endPage = Math.min(totalPages, currentPage + 2);
                         
                         if (startPage > 1) { %>
-                            <a href="<%= buildPaginationUrl(1) %>" class="pagination-page">1</a>
+                            <a href="<%= buildPaginationUrl(1) %>" class="w-10 h-10 flex items-center justify-center text-sm font-medium text-olive-600 hover:bg-olive-100 rounded-lg transition-colors">1</a>
                             <% if (startPage > 2) { %>
-                                <span class="pagination-ellipsis">...</span>
+                                <span class="text-olive-400">...</span>
                             <% } %>
                         <% }
                         
                         for (let i = startPage; i <= endPage; i++) { %>
-                            <a href="<%= buildPaginationUrl(i) %>" class="pagination-page <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+                            <a href="<%= buildPaginationUrl(i) %>" class="w-10 h-10 flex items-center justify-center text-sm font-medium rounded-lg transition-colors <%= i === currentPage ? 'bg-olive-700 text-white' : 'text-olive-600 hover:bg-olive-100' %>"><%= i %></a>
                         <% }
                         
                         if (endPage < totalPages) { %>
                             <% if (endPage < totalPages - 1) { %>
-                                <span class="pagination-ellipsis">...</span>
+                                <span class="text-olive-400">...</span>
                             <% } %>
-                            <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-page"><%= totalPages %></a>
+                            <a href="<%= buildPaginationUrl(totalPages) %>" class="w-10 h-10 flex items-center justify-center text-sm font-medium text-olive-600 hover:bg-olive-100 rounded-lg transition-colors"><%= totalPages %></a>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <a href="<%= buildPaginationUrl(currentPage + 1) %>" class="p-2 bg-white border border-olive-200 rounded-lg hover:bg-olive-50 transition-colors">
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-olive-600"></i>
+                            </a>
                         <% } %>
                     </div>
-                    
-                    <% if (currentPage < totalPages) { %>
-                        <a href="<%= buildPaginationUrl(currentPage + 1) %>" class="pagination-btn" title="Next page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </a>
-                        <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-btn" title="Last page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
-                        </a>
-                    <% } %>
-                </div>
-            </nav>
+                </nav>
             <% } %>
+            
         <% } else { %>
-            <div class="no-products">
-                <p>No products found matching your criteria.</p>
-                <a href="/products" class="btn btn-primary">View All Products</a>
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div class="w-24 h-24 mx-auto bg-olive-100 rounded-full flex items-center justify-center mb-6">
+                    <i data-lucide="package-x" class="w-12 h-12 text-olive-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-olive-900 mb-2">No products found</h3>
+                <p class="text-olive-500 mb-6 max-w-sm mx-auto">
+                    We couldn't find any products matching your criteria. Try adjusting your filters or search terms.
+                </p>
+                <a href="/products" class="inline-flex items-center gap-2 px-6 py-3 bg-olive-700 text-white font-medium rounded-xl hover:bg-olive-800 transition-colors">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    View All Products
+                </a>
             </div>
         <% } %>
-    </section>
+    </main>
+
 </div>
 
 <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Mobile Menu Toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const menuClose = document.getElementById('menu-close');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuBackdrop = document.getElementById('menu-backdrop');
+    const menuPanel = document.getElementById('menu-panel');
+    
+    function openMenu() {
+        mobileMenu.classList.remove('pointer-events-none');
+        menuBackdrop.classList.remove('opacity-0');
+        menuPanel.classList.remove('-translate-x-full');
+    }
+    
+    function closeMenu() {
+        mobileMenu.classList.add('pointer-events-none');
+        menuBackdrop.classList.add('opacity-0');
+        menuPanel.classList.add('-translate-x-full');
+    }
+    
+    menuToggle?.addEventListener('click', openMenu);
+    menuClose?.addEventListener('click', closeMenu);
+    menuBackdrop?.addEventListener('click', closeMenu);
+    
+    // Search Toggle
+    const searchToggle = document.getElementById('search-toggle');
+    const searchBar = document.getElementById('search-bar');
+    
+    searchToggle?.addEventListener('click', () => {
+        searchBar.classList.toggle('hidden');
+        if (!searchBar.classList.contains('hidden')) {
+            searchBar.querySelector('input').focus();
+        }
+    });
+    
+    // Filter Drawer Toggle
+    const filterToggleBtn = document.getElementById('filter-toggle-btn');
+    const filterClose = document.getElementById('filter-close');
+    const filterDrawer = document.getElementById('filter-drawer');
+    const filterBackdrop = document.getElementById('filter-backdrop');
+    const filterPanel = document.getElementById('filter-panel');
+    
+    function openFilterDrawer() {
+        filterDrawer.classList.remove('pointer-events-none');
+        filterBackdrop.classList.remove('opacity-0');
+        filterPanel.classList.remove('translate-y-full');
+    }
+    
+    function closeFilterDrawer() {
+        filterDrawer.classList.add('pointer-events-none');
+        filterBackdrop.classList.add('opacity-0');
+        filterPanel.classList.add('translate-y-full');
+    }
+    
+    filterToggleBtn?.addEventListener('click', openFilterDrawer);
+    filterClose?.addEventListener('click', closeFilterDrawer);
+    filterBackdrop?.addEventListener('click', closeFilterDrawer);
+    
+    // Sort Filter
     function applySortFilter(sortValue) {
         const url = new URL(window.location.href);
         if (sortValue) {
@@ -181,6 +463,27 @@
         } else {
             url.searchParams.delete('sort');
         }
+        window.location.href = url.toString();
+    }
+    
+    // Remove individual filter
+    function removeFilter(key, value) {
+        const url = new URL(window.location.href);
+        const params = url.searchParams.getAll(key);
+        url.searchParams.delete(key);
+        params.forEach(p => {
+            if (p !== value) {
+                url.searchParams.append(key, p);
+            }
+        });
+        window.location.href = url.toString();
+    }
+    
+    // Remove price filter
+    function removePriceFilter() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('minPrice');
+        url.searchParams.delete('maxPrice');
         window.location.href = url.toString();
     }
 </script>
