@@ -32,21 +32,21 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <div id="step1-indicator" class="w-8 h-8 rounded-full bg-olive-700 text-white flex items-center justify-center text-sm font-semibold">1</div>
-                    <span class="text-sm font-medium text-olive-700 hidden sm:inline">Shipping</span>
+                    <span class="text-sm font-medium text-olive-700">Shipping</span>
                 </div>
                 <div class="flex-1 h-0.5 bg-olive-200 mx-2">
                     <div id="progress-bar-1" class="h-full bg-olive-700 transition-all duration-300" style="width: 0%"></div>
                 </div>
                 <div class="flex items-center gap-2">
                     <div id="step2-indicator" class="w-8 h-8 rounded-full bg-olive-200 text-olive-500 flex items-center justify-center text-sm font-semibold">2</div>
-                    <span class="text-sm text-olive-400 hidden sm:inline">Review</span>
+                    <span class="text-sm text-olive-400">Review</span>
                 </div>
                 <div class="flex-1 h-0.5 bg-olive-200 mx-2">
                     <div id="progress-bar-2" class="h-full bg-olive-700 transition-all duration-300" style="width: 0%"></div>
                 </div>
                 <div class="flex items-center gap-2">
                     <div id="step3-indicator" class="w-8 h-8 rounded-full bg-olive-200 text-olive-500 flex items-center justify-center text-sm font-semibold">3</div>
-                    <span class="text-sm text-olive-400 hidden sm:inline">Payment</span>
+                    <span class="text-sm text-olive-400">Payment</span>
                 </div>
             </div>
         </div>
@@ -512,7 +512,7 @@
             </button>
             
             <!-- Step 3: Place Order Button -->
-            <button type="submit" id="place-order-btn" form="checkout-form" class="hidden flex items-center justify-center gap-2 w-full py-4 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-olive-700/25">
+            <button type="submit" id="place-order-btn" class="hidden flex items-center justify-center gap-2 w-full py-4 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-olive-700/25">
                 <i data-lucide="lock" class="w-5 h-5"></i>
                 <span>Place Order</span>
             </button>
@@ -679,10 +679,7 @@
                 const input = document.getElementById(field);
                 if (!input.value.trim()) {
                     input.focus();
-                    input.classList.add('border-red-500', 'ring-2', 'ring-red-200');
-                    setTimeout(() => {
-                        input.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
-                    }, 3000);
+                    input.classList.add('border-red-500');
                     return false;
                 }
                 input.classList.remove('border-red-500');
@@ -693,6 +690,7 @@
     
     // Update progress indicators
     function updateProgressIndicators(step) {
+        // Step 1
         const step1 = document.getElementById('step1-indicator');
         const step2 = document.getElementById('step2-indicator');
         const step3 = document.getElementById('step3-indicator');

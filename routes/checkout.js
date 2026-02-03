@@ -21,12 +21,16 @@ router.post('/', async (req, res) => {
             firstName,
             lastName,
             email,
+            phone,
             street,
+            apt,
             city,
             state,
             zipCode,
             country,
+            shipping,
             paymentMethod,
+            orderNotes,
             cartItems
         } = req.body;
         
@@ -55,26 +59,35 @@ router.post('/', async (req, res) => {
             return res.redirect('/checkout');
         }
         
-        // Add shipping if applicable
-        if (totalAmount < 100) {
-            totalAmount += 9.99;
+        // Add shipping cost based on selection
+        let shippingCost = 0;
+        if (shipping === 'express') {
+            shippingCost = 12.99;
+        } else if (shipping === 'standard' && totalAmount < 100) {
+            shippingCost = 5.99;
         }
+        // Free shipping if order >= $100 or if 'free' selected and qualified
+        totalAmount += shippingCost;
         
         // Create order
         const order = new Order({
             guestEmail: email,
+            guestPhone: phone,
             items,
             shippingAddress: {
                 firstName,
                 lastName,
                 street,
+                apt: apt || '',
                 city,
                 state,
                 zipCode,
                 country
             },
             totalAmount,
-            paymentMethod: paymentMethod || 'cod'
+            shippingCost,
+            paymentMethod: paymentMethod || 'cod',
+            orderNotes: orderNotes || ''
         });
         
         await order.save();

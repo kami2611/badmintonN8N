@@ -63,6 +63,17 @@ router.post('/signup', (req, res) => {
     res.redirect('/login');
 });
 
+// Cart page
+router.get('/cart', (req, res) => {
+    res.render('cart', { 
+        title: 'Shopping Cart',
+        cartCount: 0,
+        user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
+              req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 
+              null
+    });
+});
+
 // All Stores page
 router.get('/stores', async (req, res) => {
     try {

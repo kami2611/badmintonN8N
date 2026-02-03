@@ -370,32 +370,38 @@ document.addEventListener('DOMContentLoaded', () => {
         clearCart();
     }
     
+    // Old header search - only run if elements exist
     const searchForm = document.querySelector('.header-search-expandable');
     const searchBtn = document.querySelector('.search-toggle-btn');
-    const searchInput = searchForm.querySelector('.search-input');
     
-    searchBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        searchForm.classList.toggle('active');
+    if (searchForm && searchBtn) {
+        const searchInput = searchForm.querySelector('.search-input');
         
-        if (searchForm.classList.contains('active')) {
-            searchInput.focus();
+        if (searchInput) {
+            searchBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                searchForm.classList.toggle('active');
+                
+                if (searchForm.classList.contains('active')) {
+                    searchInput.focus();
+                }
+            });
+            
+            // Close when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchForm.contains(e.target)) {
+                    searchForm.classList.remove('active');
+                }
+            });
+            
+            // Submit on Enter
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && searchInput.value.trim()) {
+                    searchForm.submit();
+                }
+            });
         }
-    });
-    
-    // Close when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!searchForm.contains(e.target)) {
-            searchForm.classList.remove('active');
-        }
-    });
-    
-    // Submit on Enter
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && searchInput.value.trim()) {
-            searchForm.submit();
-        }
-    });
+    }
     
     // Mobile Menu Toggle
     const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');

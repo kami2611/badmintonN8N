@@ -1,0 +1,461 @@
+<%- include('partials/head', { pageClass: 'page-cart' }) %>
+
+<!-- ================================ -->
+<!-- SHOPPING CART PAGE               -->
+<!-- RacketBazaar - Mobile-First      -->
+<!-- ================================ -->
+
+<div class="min-h-screen bg-olive-50 font-sans">
+
+    <!-- ========== STICKY HEADER ========== -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-olive-100">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Left: Back Button -->
+            <a href="javascript:history.back()" class="p-2 -ml-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Go back">
+                <i data-lucide="arrow-left" class="w-6 h-6 text-olive-950"></i>
+            </a>
+            
+            <!-- Center: Title -->
+            <h1 class="text-lg font-semibold text-olive-950">Shopping Cart</h1>
+            
+            <!-- Right: Clear Cart -->
+            <button id="clear-cart-btn" class="p-2 -mr-2 rounded-lg hover:bg-red-50 text-olive-400 hover:text-red-500 transition-colors" aria-label="Clear cart">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="pb-48">
+        
+        <!-- Cart Items Container -->
+        <div id="cart-container">
+            <!-- Empty State (shown when cart is empty) -->
+            <div id="empty-cart" class="hidden text-center py-20 px-4">
+                <div class="w-24 h-24 mx-auto bg-olive-100 rounded-full flex items-center justify-center mb-6">
+                    <i data-lucide="shopping-bag" class="w-12 h-12 text-olive-400"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-olive-900 mb-2">Your cart is empty</h2>
+                <p class="text-olive-500 mb-8 max-w-sm mx-auto">
+                    Looks like you haven't added any items to your cart yet. Start shopping and find something you love!
+                </p>
+                <a href="/products" class="inline-flex items-center gap-2 px-6 py-3 bg-olive-700 text-white font-medium rounded-xl hover:bg-olive-800 transition-colors">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    Start Shopping
+                </a>
+            </div>
+            
+            <!-- Cart Items (shown when cart has items) -->
+            <div id="cart-items-wrapper" class="hidden">
+                <!-- Free Shipping Progress -->
+                <div class="bg-white px-4 py-4 border-b border-olive-100">
+                    <div id="shipping-progress" class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-olive-600">Free shipping progress</span>
+                            <span id="shipping-remaining" class="font-medium text-olive-900">$50 away</span>
+                        </div>
+                        <div class="h-2 bg-olive-100 rounded-full overflow-hidden">
+                            <div id="shipping-bar" class="h-full bg-gradient-to-r from-olive-500 to-olive-700 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-olive-400">
+                            <i data-lucide="truck" class="w-3 h-3 inline mr-1"></i>
+                            Free shipping on orders over $100
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Cart Count -->
+                <div class="px-4 py-3 bg-olive-50 border-b border-olive-100">
+                    <p class="text-sm text-olive-600">
+                        <span id="cart-item-count" class="font-semibold text-olive-900">0</span> item(s) in your cart
+                    </p>
+                </div>
+                
+                <!-- Cart Items List -->
+                <div id="cart-items-list" class="divide-y divide-olive-100 bg-white">
+                    <!-- Items will be dynamically inserted here -->
+                </div>
+                
+                <!-- Promo Code -->
+                <div class="bg-white mt-2 p-4">
+                    <div class="flex gap-2">
+                        <div class="flex-1 relative">
+                            <i data-lucide="ticket" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-olive-400"></i>
+                            <input 
+                                type="text" 
+                                id="promo-code" 
+                                placeholder="Enter promo code"
+                                class="w-full pl-10 pr-4 py-3 border border-olive-200 rounded-xl text-olive-900 placeholder-olive-400 focus:outline-none focus:ring-2 focus:ring-olive-500"
+                            >
+                        </div>
+                        <button id="apply-promo" class="px-5 py-3 bg-olive-100 text-olive-700 font-medium rounded-xl hover:bg-olive-200 transition-colors">
+                            Apply
+                        </button>
+                    </div>
+                    <p id="promo-message" class="hidden text-sm mt-2 text-emerald-600"></p>
+                </div>
+                
+                <!-- Recently Viewed (Optional) -->
+                <div class="mt-2 bg-white py-6">
+                    <div class="px-4 mb-4 flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-olive-950">You May Also Like</h2>
+                        <a href="/products" class="text-sm text-olive-600 hover:text-olive-800">View All</a>
+                    </div>
+                    <div class="flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide">
+                        <!-- Sample recommended products - in production, fetch from API -->
+                        <a href="/products" class="flex-shrink-0 w-32 text-center">
+                            <div class="aspect-square bg-olive-100 rounded-2xl mb-2 flex items-center justify-center">
+                                <i data-lucide="swords" class="w-10 h-10 text-olive-400"></i>
+                            </div>
+                            <p class="text-xs text-olive-500">Rackets</p>
+                            <p class="text-sm font-medium text-olive-900">From $49</p>
+                        </a>
+                        <a href="/products?category=shoes" class="flex-shrink-0 w-32 text-center">
+                            <div class="aspect-square bg-olive-100 rounded-2xl mb-2 flex items-center justify-center">
+                                <i data-lucide="footprints" class="w-10 h-10 text-olive-400"></i>
+                            </div>
+                            <p class="text-xs text-olive-500">Shoes</p>
+                            <p class="text-sm font-medium text-olive-900">From $79</p>
+                        </a>
+                        <a href="/products?category=bags" class="flex-shrink-0 w-32 text-center">
+                            <div class="aspect-square bg-olive-100 rounded-2xl mb-2 flex items-center justify-center">
+                                <i data-lucide="briefcase" class="w-10 h-10 text-olive-400"></i>
+                            </div>
+                            <p class="text-xs text-olive-500">Bags</p>
+                            <p class="text-sm font-medium text-olive-900">From $29</p>
+                        </a>
+                        <a href="/products?category=accessories" class="flex-shrink-0 w-32 text-center">
+                            <div class="aspect-square bg-olive-100 rounded-2xl mb-2 flex items-center justify-center">
+                                <i data-lucide="puzzle" class="w-10 h-10 text-olive-400"></i>
+                            </div>
+                            <p class="text-xs text-olive-500">Accessories</p>
+                            <p class="text-sm font-medium text-olive-900">From $9</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trust Badges -->
+        <div class="bg-white mt-2 py-6 px-4">
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <div class="w-10 h-10 mx-auto mb-2 bg-olive-100 rounded-xl flex items-center justify-center">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-olive-600"></i>
+                    </div>
+                    <p class="text-xs text-olive-600 font-medium">Secure</p>
+                    <p class="text-xs text-olive-400">Checkout</p>
+                </div>
+                <div>
+                    <div class="w-10 h-10 mx-auto mb-2 bg-olive-100 rounded-xl flex items-center justify-center">
+                        <i data-lucide="truck" class="w-5 h-5 text-olive-600"></i>
+                    </div>
+                    <p class="text-xs text-olive-600 font-medium">Fast</p>
+                    <p class="text-xs text-olive-400">Delivery</p>
+                </div>
+                <div>
+                    <div class="w-10 h-10 mx-auto mb-2 bg-olive-100 rounded-xl flex items-center justify-center">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5 text-olive-600"></i>
+                    </div>
+                    <p class="text-xs text-olive-600 font-medium">Easy</p>
+                    <p class="text-xs text-olive-400">Returns</p>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <!-- ========== STICKY BOTTOM SUMMARY ========== -->
+    <div id="cart-summary" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-olive-100 z-40">
+        <!-- Summary Details -->
+        <div class="px-4 py-4 space-y-2 border-b border-olive-50">
+            <div class="flex justify-between text-sm">
+                <span class="text-olive-500">Subtotal</span>
+                <span id="subtotal" class="text-olive-900">$0.00</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-olive-500">Shipping</span>
+                <span id="shipping-cost" class="text-olive-900">Calculated at checkout</span>
+            </div>
+            <div id="discount-row" class="hidden flex justify-between text-sm">
+                <span class="text-emerald-600">Discount</span>
+                <span id="discount-amount" class="text-emerald-600">-$0.00</span>
+            </div>
+            <div class="flex justify-between pt-2 border-t border-olive-100">
+                <span class="font-semibold text-olive-900">Total</span>
+                <span id="total" class="text-xl font-bold text-olive-900">$0.00</span>
+            </div>
+        </div>
+        
+        <!-- Checkout Button -->
+        <div class="px-4 py-4">
+            <a href="/checkout" id="checkout-btn" class="flex items-center justify-center gap-2 w-full py-4 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-olive-700/25">
+                <i data-lucide="lock" class="w-5 h-5"></i>
+                <span>Proceed to Checkout</span>
+            </a>
+            <p class="text-center text-xs text-olive-400 mt-3">
+                <i data-lucide="shield-check" class="w-3 h-3 inline mr-1"></i>
+                Secure checkout powered by SSL encryption
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========== ADD TO CART SUCCESS MODAL ========== -->
+<div id="cart-modal" class="fixed inset-0 z-[100] pointer-events-none">
+    <div id="cart-modal-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+    <div id="cart-modal-content" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] overflow-hidden">
+        <!-- Handle -->
+        <div class="flex justify-center pt-3 pb-2">
+            <div class="w-10 h-1 bg-olive-200 rounded-full"></div>
+        </div>
+        
+        <!-- Success Header -->
+        <div class="px-6 py-4 bg-emerald-50 border-b border-emerald-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <i data-lucide="check" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-emerald-800">Added to Cart!</p>
+                    <p class="text-sm text-emerald-600">Item successfully added</p>
+                </div>
+                <button id="cart-modal-close" class="ml-auto p-2 rounded-lg hover:bg-emerald-100">
+                    <i data-lucide="x" class="w-5 h-5 text-emerald-600"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Product Info -->
+        <div class="px-6 py-4">
+            <div class="flex gap-4">
+                <div class="w-20 h-20 bg-olive-50 rounded-xl overflow-hidden flex-shrink-0">
+                    <img id="modal-product-image" src="" alt="" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="modal-product-brand" class="text-xs text-olive-500 uppercase tracking-wide"></p>
+                    <h3 id="modal-product-name" class="font-semibold text-olive-900 line-clamp-2"></h3>
+                    <p id="modal-product-price" class="text-lg font-bold text-olive-700 mt-1"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Summary in Modal -->
+        <div class="px-6 py-3 bg-olive-50 border-t border-olive-100">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-olive-600">Cart Total (<span id="modal-cart-count">0</span> items)</span>
+                <span id="modal-cart-total" class="font-bold text-olive-900">$0.00</span>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="px-6 py-4 space-y-3">
+            <a href="/cart" class="flex items-center justify-center gap-2 w-full py-3.5 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span>View Cart & Checkout</span>
+            </a>
+            <button id="continue-shopping-btn" class="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-olive-200 text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                <span>Continue Shopping</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Cart data from localStorage
+    let cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    // DOM Elements
+    const emptyCart = document.getElementById('empty-cart');
+    const cartItemsWrapper = document.getElementById('cart-items-wrapper');
+    const cartItemsList = document.getElementById('cart-items-list');
+    const cartSummary = document.getElementById('cart-summary');
+    const cartItemCount = document.getElementById('cart-item-count');
+    const subtotalEl = document.getElementById('subtotal');
+    const totalEl = document.getElementById('total');
+    const shippingBar = document.getElementById('shipping-bar');
+    const shippingRemaining = document.getElementById('shipping-remaining');
+    const clearCartBtn = document.getElementById('clear-cart-btn');
+    
+    // Free shipping threshold
+    const FREE_SHIPPING_THRESHOLD = 100;
+    
+    // Render cart
+    function renderCartPage() {
+        if (cartItems.length === 0) {
+            emptyCart.classList.remove('hidden');
+            cartItemsWrapper.classList.add('hidden');
+            cartSummary.classList.add('hidden');
+        } else {
+            emptyCart.classList.add('hidden');
+            cartItemsWrapper.classList.remove('hidden');
+            cartSummary.classList.remove('hidden');
+            
+            // Update item count
+            const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            cartItemCount.textContent = totalItems;
+            
+            // Render items
+            cartItemsList.innerHTML = cartItems.map(item => {
+                const price = parseFloat(item.price) || 0;
+                return `
+                <div class="cart-item flex gap-4 p-4" data-id="${item._id}">
+                    <a href="/products/${item._id}" class="w-24 h-24 bg-olive-50 rounded-xl overflow-hidden flex-shrink-0">
+                        <img src="${item.image || 'https://placehold.co/200x200/f7f8f3/556B2F?text=No+Image'}" alt="${item.name}" class="w-full h-full object-cover">
+                    </a>
+                    <div class="flex-1 min-w-0">
+                        <a href="/products/${item._id}">
+                            <h3 class="font-semibold text-olive-900 line-clamp-2 hover:text-olive-700">${item.name}</h3>
+                        </a>
+                        <p class="text-lg font-bold text-olive-700 mt-1">$${price.toFixed(2)}</p>
+                        
+                        <div class="flex items-center justify-between mt-3">
+                            <!-- Quantity Controls -->
+                            <div class="flex items-center border border-olive-200 rounded-lg overflow-hidden">
+                                <button class="qty-btn decrease w-8 h-8 flex items-center justify-center text-olive-600 hover:bg-olive-100" data-id="${item._id}">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <span class="w-10 text-center text-sm font-medium text-olive-900">${item.quantity}</span>
+                                <button class="qty-btn increase w-8 h-8 flex items-center justify-center text-olive-600 hover:bg-olive-100" data-id="${item._id}">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Remove Button -->
+                            <button class="remove-item p-2 text-olive-400 hover:text-red-500 transition-colors" data-id="${item._id}">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+            
+            // Reinitialize icons for dynamically added content
+            lucide.createIcons();
+            
+            // Calculate totals
+            updateTotals();
+            
+            // Attach event listeners
+            attachCartEventListeners();
+        }
+    }
+    
+    // Update totals
+    function updateTotals() {
+        const subtotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+        subtotalEl.textContent = '$' + subtotal.toFixed(2);
+        totalEl.textContent = '$' + subtotal.toFixed(2);
+        
+        // Update shipping progress
+        const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+        shippingBar.style.width = progress + '%';
+        
+        if (subtotal >= FREE_SHIPPING_THRESHOLD) {
+            shippingRemaining.textContent = 'Free shipping!';
+            shippingRemaining.classList.add('text-emerald-600');
+            shippingBar.classList.add('bg-emerald-500');
+        } else {
+            const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+            shippingRemaining.textContent = '$' + remaining.toFixed(2) + ' away';
+            shippingRemaining.classList.remove('text-emerald-600');
+            shippingBar.classList.remove('bg-emerald-500');
+        }
+    }
+    
+    // Attach event listeners to cart items
+    function attachCartEventListeners() {
+        // Quantity decrease
+        document.querySelectorAll('.qty-btn.decrease').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const item = cartItems.find(i => i._id === id);
+                if (item && item.quantity > 1) {
+                    item.quantity--;
+                    saveCart();
+                    renderCartPage();
+                }
+            });
+        });
+        
+        // Quantity increase
+        document.querySelectorAll('.qty-btn.increase').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const item = cartItems.find(i => i._id === id);
+                if (item) {
+                    item.quantity++;
+                    saveCart();
+                    renderCartPage();
+                }
+            });
+        });
+        
+        // Remove item
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                cartItems = cartItems.filter(i => i._id !== id);
+                saveCart();
+                renderCartPage();
+            });
+        });
+    }
+    
+    // Save cart to localStorage
+    function saveCart() {
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+        updateHeaderCartCount();
+    }
+    
+    // Update header cart count (if exists)
+    function updateHeaderCartCount() {
+        const cartCountEl = document.getElementById('cart-count');
+        if (cartCountEl) {
+            const count = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            cartCountEl.textContent = count;
+        }
+    }
+    
+    // Clear entire cart
+    clearCartBtn?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear your cart?')) {
+            cartItems = [];
+            saveCart();
+            renderCartPage();
+        }
+    });
+    
+    // Promo code (mock functionality)
+    const applyPromoBtn = document.getElementById('apply-promo');
+    const promoInput = document.getElementById('promo-code');
+    const promoMessage = document.getElementById('promo-message');
+    
+    applyPromoBtn?.addEventListener('click', function() {
+        const code = promoInput.value.trim().toUpperCase();
+        if (code === 'RACKET10') {
+            promoMessage.textContent = '✓ Code applied! 10% discount';
+            promoMessage.classList.remove('hidden', 'text-red-500');
+            promoMessage.classList.add('text-emerald-600');
+            // In production, apply actual discount
+        } else if (code === '') {
+            promoMessage.textContent = 'Please enter a promo code';
+            promoMessage.classList.remove('hidden', 'text-emerald-600');
+            promoMessage.classList.add('text-red-500');
+        } else {
+            promoMessage.textContent = 'Invalid promo code';
+            promoMessage.classList.remove('hidden', 'text-emerald-600');
+            promoMessage.classList.add('text-red-500');
+        }
+    });
+    
+    // Initialize cart page
+    renderCartPage();
+</script>
+
+<%- include('partials/tail') %>
