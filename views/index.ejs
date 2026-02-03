@@ -311,6 +311,65 @@
         </div>
     </section>
 
+    <!-- ========== VERIFIED STORES SECTION ========== -->
+    <section class="mt-10 px-4">
+        <!-- Section Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-bold text-brand-dark">Verified Stores</h2>
+                <p class="text-sm text-stone-500">Trusted sellers on RacketBazaar</p>
+            </div>
+            <% if (typeof totalSellerCount !== 'undefined' && totalSellerCount > 8) { %>
+            <a href="/stores" class="text-sm font-medium text-olive-700 hover:text-olive-800">
+                All Stores →
+            </a>
+            <% } %>
+        </div>
+        
+        <!-- Stores Grid (Horizontal Scroll) -->
+        <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
+            <% if (typeof featuredSellers !== 'undefined' && featuredSellers && featuredSellers.length > 0) { %>
+                <% featuredSellers.slice(0, 8).forEach(seller => { %>
+                <a href="/store/<%= seller._id %>" class="flex-shrink-0 w-40 bg-white rounded-2xl shadow-card p-4 hover:shadow-card-hover transition-all group">
+                    <!-- Store Avatar -->
+                    <div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-gradient-to-br from-olive-100 to-olive-200 rounded-2xl group-hover:scale-105 transition-transform">
+                        <span class="text-2xl font-bold text-olive-700"><%= seller.storeName.charAt(0).toUpperCase() %></span>
+                    </div>
+                    
+                    <!-- Store Info -->
+                    <div class="text-center">
+                        <h3 class="text-sm font-semibold text-stone-800 truncate"><%= seller.storeName %></h3>
+                        <p class="text-xs text-stone-500 mt-1"><%= seller.productCount || 0 %> Products</p>
+                        
+                        <!-- Verified Badge -->
+                        <div class="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-green-50 rounded-full">
+                            <i data-lucide="badge-check" class="w-3 h-3 text-green-600"></i>
+                            <span class="text-xxs font-medium text-green-700">Verified</span>
+                        </div>
+                    </div>
+                </a>
+                <% }) %>
+            <% } else { %>
+                <!-- Demo Store Cards when no sellers -->
+                <% for(let i = 0; i < 4; i++) { %>
+                <a href="/stores" class="flex-shrink-0 w-40 bg-white rounded-2xl shadow-card p-4 hover:shadow-card-hover transition-all group">
+                    <div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-gradient-to-br from-olive-100 to-olive-200 rounded-2xl group-hover:scale-105 transition-transform">
+                        <span class="text-2xl font-bold text-olive-700"><%= ['R', 'S', 'B', 'Y'][i] %></span>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-sm font-semibold text-stone-800 truncate"><%= ['Racket Hub', 'Smash Store', 'Badminton Pro', 'Yonex World'][i] %></h3>
+                        <p class="text-xs text-stone-500 mt-1"><%= [12, 8, 15, 24][i] %> Products</p>
+                        <div class="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-green-50 rounded-full">
+                            <i data-lucide="badge-check" class="w-3 h-3 text-green-600"></i>
+                            <span class="text-xxs font-medium text-green-700">Verified</span>
+                        </div>
+                    </div>
+                </a>
+                <% } %>
+            <% } %>
+        </div>
+    </section>
+
     <!-- ========== 6. SELLER CTA BANNER (WhatsApp Hook) ========== -->
     <section class="mt-10 mx-4">
         <div class="relative bg-gradient-to-br from-brand-light/30 to-olive-100 rounded-3xl p-6 overflow-hidden">
@@ -353,33 +412,6 @@
             </div>
         </div>
     </section>
-
-    <!-- ========== FEATURED SELLERS (if available) ========== -->
-    <% if (typeof featuredSellers !== 'undefined' && featuredSellers && featuredSellers.length > 0) { %>
-    <section class="mt-10 px-4">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h2 class="text-lg font-bold text-brand-dark">Top Sellers</h2>
-                <p class="text-sm text-stone-500">Trusted stores on RacketBazaar</p>
-            </div>
-            <a href="/stores" class="text-sm font-medium text-olive-700 hover:text-olive-800">
-                View All →
-            </a>
-        </div>
-        
-        <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
-            <% featuredSellers.forEach(seller => { %>
-            <a href="/store/<%= seller._id %>" class="flex-shrink-0 w-36 bg-white rounded-2xl shadow-card p-4 text-center hover:shadow-card-hover transition-all">
-                <div class="w-14 h-14 mx-auto mb-3 flex items-center justify-center bg-olive-100 rounded-full">
-                    <span class="text-xl font-bold text-olive-700"><%= seller.storeName.charAt(0).toUpperCase() %></span>
-                </div>
-                <h3 class="text-sm font-semibold text-stone-800 truncate"><%= seller.storeName %></h3>
-                <p class="text-xs text-stone-500 mt-1"><%= seller.productCount || 0 %> Products</p>
-            </a>
-            <% }) %>
-        </div>
-    </section>
-    <% } %>
 
     <!-- ========== 7. TRUST FOOTER ========== -->
     <section class="mt-10 px-4 pb-6">

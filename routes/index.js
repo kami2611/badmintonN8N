@@ -15,8 +15,8 @@ router.get('/', async (req, res) => {
             sellerInfo: p.seller
         }));
         
-        // Fetch featured sellers with their product counts
-        const featuredSellers = await Seller.find({ featured: true, isActive: true }).limit(6);
+        // Fetch featured sellers with their product counts (up to 8 for Verified Stores section)
+        const featuredSellers = await Seller.find({ featured: true, isActive: true }).limit(8);
         const sellersWithStats = await Promise.all(featuredSellers.map(async (seller) => {
             const productCount = await Product.countDocuments({ seller: seller._id });
             return {
@@ -25,11 +25,15 @@ router.get('/', async (req, res) => {
             };
         }));
         
+        // Get total seller count to determine if "All Stores" button should show
+        const totalSellerCount = await Seller.countDocuments({ isActive: true });
+        
         const cartCount = 0; // Will be handled by client-side JS
         res.render('index', { 
             title: 'Home',
             featuredProducts: productsWithSeller,
             featuredSellers: sellersWithStats,
+            totalSellerCount,
             cartCount,
             user: req.session.isAdmin ? { isAdmin: true, name: 'Admin' } : 
                   req.session.sellerId ? { isSeller: true, name: req.session.sellerName, storeName: req.session.storeName } : 

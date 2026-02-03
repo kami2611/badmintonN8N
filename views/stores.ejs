@@ -1,159 +1,312 @@
-<%- include('partials/head') %>
+<%- include('partials/head', { pageClass: 'page-home' }) %>
 
-<div class="stores-page">
-    <div class="stores-header">
-        <div class="stores-header-content">
-            <h1>All Stores</h1>
-            <p>Discover trusted sellers and their quality badminton products</p>
+<!-- ================================ -->
+<!-- ALL STORES PAGE                  -->
+<!-- RacketBazaar - Premium Store Directory -->
+<!-- ================================ -->
+
+<div class="min-h-screen bg-surface-bg font-sans">
+
+    <!-- ========== STICKY HEADER ========== -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-100">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Left: Back Button -->
+            <a href="/" class="p-2 -ml-2 rounded-lg hover:bg-stone-100 active:bg-stone-200 transition-colors" aria-label="Go back">
+                <i data-lucide="arrow-left" class="w-6 h-6 text-brand-dark"></i>
+            </a>
+            
+            <!-- Center: Page Title -->
+            <h1 class="text-lg font-bold text-brand-dark">All Stores</h1>
+            
+            <!-- Right: Search -->
+            <button id="search-toggle" class="p-2 -mr-2 rounded-lg hover:bg-stone-100 active:bg-stone-200 transition-colors" aria-label="Search">
+                <i data-lucide="search" class="w-5 h-5 text-brand-dark"></i>
+            </button>
         </div>
-    </div>
-    
-    <div class="stores-container">
-        <!-- Filters Section -->
-        <div class="stores-filters">
-            <form action="/stores" method="GET" class="stores-filter-form">
-                <div class="search-filter">
-                    <label for="search">Search Stores</label>
-                    <div class="search-input-wrapper">
-                        <input type="text" id="search" name="search" value="<%= search %>" placeholder="Store name or owner...">
-                        <button type="submit" class="search-submit-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        </button>
-                    </div>
+        
+        <!-- Expandable Search Bar -->
+        <div id="search-bar" class="hidden px-4 pb-3">
+            <form action="/stores" method="GET" class="flex items-center gap-2">
+                <div class="flex-1 flex items-center gap-3 px-4 py-2.5 bg-stone-100 rounded-xl">
+                    <i data-lucide="search" class="w-4 h-4 text-stone-400 flex-shrink-0"></i>
+                    <input 
+                        type="text" 
+                        name="search"
+                        value="<%= search %>"
+                        placeholder="Search stores..." 
+                        class="flex-1 text-sm text-stone-700 placeholder:text-stone-400 bg-transparent outline-none"
+                    >
+                    <% if (search) { %>
+                    <a href="/stores" class="text-stone-400 hover:text-stone-600">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </a>
+                    <% } %>
                 </div>
-                
-                <div class="sort-filter">
-                    <label for="sort">Sort By</label>
-                    <select id="sort" name="sort" onchange="this.form.submit()">
-                        <option value="" <%= !sort ? 'selected' : '' %>>Featured First</option>
-                        <option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Name (A-Z)</option>
-                        <option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Name (Z-A)</option>
-                        <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest First</option>
-                        <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
-                    </select>
-                </div>
-                
-                <% if (search) { %>
-                    <a href="/stores" class="clear-filters-btn">Clear Search</a>
-                <% } %>
+                <button type="submit" class="px-4 py-2.5 bg-olive-700 text-white text-sm font-medium rounded-xl hover:bg-olive-800 transition-colors">
+                    Search
+                </button>
             </form>
         </div>
-        
-        <!-- Results Info -->
-        <div class="stores-results-info">
-            <p>
-                <% if (search) { %>
-                    Showing <%= totalStores %> store<%= totalStores !== 1 ? 's' : '' %> for "<strong><%= search %></strong>"
-                <% } else { %>
-                    <%= totalStores %> store<%= totalStores !== 1 ? 's' : '' %> available
-                <% } %>
-            </p>
+    </header>
+
+    <!-- ========== HERO SECTION ========== -->
+    <section class="relative bg-gradient-to-br from-olive-700 via-olive-600 to-olive-800 overflow-hidden">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2.5a2.5 2.5 0 1 1 0-5V6H0V4h20V0h2v4h18v2H22v2.5a2.5 2.5 0 1 1 0 5V16h18v2H22v2.5a2.5 2.5 0 1 1 0 5V28H0v-2h20v-2.5a2.5 2.5 0 1 1 0-5z\' fill=\'%23ffffff\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'/%3E%3C/svg%3E');"></div>
         </div>
         
-        <!-- Stores Grid -->
-        <% if (stores.length > 0) { %>
-            <div class="stores-grid">
-                <% stores.forEach(store => { %>
-                    <a href="/store/<%= store._id %>" class="store-card">
-                        <div class="store-card-header">
-                            <div class="store-avatar-wrapper">
-                                <div class="store-avatar">
-                                    <span><%= store.storeName.charAt(0).toUpperCase() %></span>
-                                </div>
-                                <% if (store.featured) { %>
-                                    <span class="featured-indicator" title="Featured Store">⭐</span>
-                                <% } %>
-                            </div>
-                        </div>
-                        <div class="store-card-body">
-                            <h3 class="store-name"><%= store.storeName %></h3>
-                            <p class="store-owner">by <%= store.name %></p>
-                            <div class="store-stats">
-                                <span class="store-stat">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                                    <strong><%= store.productCount %></strong> Products
-                                </span>
-                                <span class="store-stat">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                    Since <%= new Date(store.createdAt).getFullYear() %>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="store-card-footer">
-                            <span class="visit-store-btn">Visit Store →</span>
-                        </div>
-                    </a>
-                <% }) %>
+        <div class="relative px-6 py-12 text-center">
+            <!-- Store Icon -->
+            <div class="inline-flex items-center justify-center w-16 h-16 mb-4 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20">
+                <i data-lucide="store" class="w-8 h-8 text-white"></i>
             </div>
             
-            <!-- Pagination -->
-            <% if (totalPages > 1) { %>
-            <nav class="pagination">
-                <div class="pagination-info">
-                    Showing <%= (currentPage - 1) * perPage + 1 %>-<%= Math.min(currentPage * perPage, totalStores) %> of <%= totalStores %> stores
+            <h2 class="text-2xl font-bold text-white mb-2">Discover Sellers</h2>
+            <p class="text-white/80 text-sm max-w-xs mx-auto">
+                Browse verified stores from trusted badminton gear sellers across Pakistan
+            </p>
+            
+            <!-- Stats -->
+            <div class="flex items-center justify-center gap-6 mt-6">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-white"><%= totalStores %></p>
+                    <p class="text-xs text-white/70">Stores</p>
                 </div>
-                <div class="pagination-controls">
-                    <% if (currentPage > 1) { %>
-                        <a href="<%= buildPaginationUrl(1) %>" class="pagination-btn" title="First page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
-                        </a>
-                        <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="pagination-btn" title="Previous page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </a>
+                <div class="w-px h-8 bg-white/20"></div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-white">100%</p>
+                    <p class="text-xs text-white/70">Verified</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Curve -->
+        <div class="absolute bottom-0 left-0 right-0 h-4 bg-surface-bg rounded-t-[1.5rem]"></div>
+    </section>
+
+    <!-- ========== FILTER/SORT BAR ========== -->
+    <section class="px-4 pt-2 pb-4">
+        <div class="flex items-center justify-between">
+            <p class="text-sm text-stone-500">
+                <% if (search) { %>
+                    Results for "<span class="font-medium text-stone-700"><%= search %></span>"
+                <% } else { %>
+                    <span class="font-medium text-stone-700"><%= totalStores %></span> verified stores
+                <% } %>
+            </p>
+            
+            <!-- Sort Dropdown -->
+            <div class="relative">
+                <button id="sort-toggle" class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-card text-sm font-medium text-stone-700 hover:shadow-card-hover transition-all">
+                    <i data-lucide="arrow-up-down" class="w-4 h-4 text-stone-400"></i>
+                    Sort
+                </button>
+                
+                <!-- Sort Dropdown Menu -->
+                <div id="sort-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-float border border-stone-100 py-2 z-20">
+                    <a href="/stores?<%= search ? 'search=' + search + '&' : '' %>sort=" class="block px-4 py-2 text-sm <%= !sort ? 'text-olive-700 bg-olive-50 font-medium' : 'text-stone-600 hover:bg-stone-50' %>">
+                        Featured First
+                    </a>
+                    <a href="/stores?<%= search ? 'search=' + search + '&' : '' %>sort=newest" class="block px-4 py-2 text-sm <%= sort === 'newest' ? 'text-olive-700 bg-olive-50 font-medium' : 'text-stone-600 hover:bg-stone-50' %>">
+                        Newest First
+                    </a>
+                    <a href="/stores?<%= search ? 'search=' + search + '&' : '' %>sort=name_asc" class="block px-4 py-2 text-sm <%= sort === 'name_asc' ? 'text-olive-700 bg-olive-50 font-medium' : 'text-stone-600 hover:bg-stone-50' %>">
+                        Name (A-Z)
+                    </a>
+                    <a href="/stores?<%= search ? 'search=' + search + '&' : '' %>sort=name_desc" class="block px-4 py-2 text-sm <%= sort === 'name_desc' ? 'text-olive-700 bg-olive-50 font-medium' : 'text-stone-600 hover:bg-stone-50' %>">
+                        Name (Z-A)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== STORES GRID ========== -->
+    <section class="px-4 pb-6">
+        <% if (stores.length > 0) { %>
+        <div class="grid grid-cols-2 gap-3">
+            <% stores.forEach((store, index) => { %>
+            <a href="/store/<%= store._id %>" class="store-card block bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all group">
+                <!-- Store Header with Gradient -->
+                <div class="relative h-20 bg-gradient-to-br <%= ['from-olive-500 to-olive-700', 'from-emerald-500 to-emerald-700', 'from-teal-500 to-teal-700', 'from-cyan-500 to-cyan-700'][index % 4] %>">
+                    <!-- Featured Badge -->
+                    <% if (store.featured) { %>
+                    <div class="absolute top-2 right-2 px-2 py-0.5 bg-amber-400 rounded-md">
+                        <span class="text-xxs font-semibold text-amber-900">⭐ Featured</span>
+                    </div>
                     <% } %>
                     
-                    <div class="pagination-pages">
-                        <% 
-                        let startPage = Math.max(1, currentPage - 2);
-                        let endPage = Math.min(totalPages, currentPage + 2);
-                        
-                        if (startPage > 1) { %>
-                            <a href="<%= buildPaginationUrl(1) %>" class="pagination-page">1</a>
-                            <% if (startPage > 2) { %>
-                                <span class="pagination-ellipsis">...</span>
-                            <% } %>
-                        <% }
-                        
-                        for (let i = startPage; i <= endPage; i++) { %>
-                            <a href="<%= buildPaginationUrl(i) %>" class="pagination-page <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
-                        <% }
-                        
-                        if (endPage < totalPages) { %>
-                            <% if (endPage < totalPages - 1) { %>
-                                <span class="pagination-ellipsis">...</span>
-                            <% } %>
-                            <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-page"><%= totalPages %></a>
-                        <% } %>
+                    <!-- Store Avatar -->
+                    <div class="absolute -bottom-6 left-1/2 -translate-x-1/2">
+                        <div class="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-card border-2 border-white group-hover:scale-105 transition-transform">
+                            <span class="text-xl font-bold text-olive-700"><%= store.storeName.charAt(0).toUpperCase() %></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Store Info -->
+                <div class="pt-8 pb-4 px-3 text-center">
+                    <h3 class="text-sm font-semibold text-stone-800 truncate"><%= store.storeName %></h3>
+                    <p class="text-xs text-stone-500 mt-0.5">by <%= store.name %></p>
+                    
+                    <!-- Stats Row -->
+                    <div class="flex items-center justify-center gap-3 mt-3">
+                        <div class="flex items-center gap-1 text-stone-600">
+                            <i data-lucide="package" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs font-medium"><%= store.productCount %></span>
+                        </div>
+                        <div class="w-1 h-1 bg-stone-300 rounded-full"></div>
+                        <div class="flex items-center gap-1 text-green-600">
+                            <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs font-medium">Verified</span>
+                        </div>
                     </div>
                     
-                    <% if (currentPage < totalPages) { %>
-                        <a href="<%= buildPaginationUrl(currentPage + 1) %>" class="pagination-btn" title="Next page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </a>
-                        <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-btn" title="Last page">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
-                        </a>
+                    <!-- Visit Button -->
+                    <div class="mt-3 pt-3 border-t border-stone-100">
+                        <span class="inline-flex items-center gap-1 text-xs font-medium text-olive-700 group-hover:text-olive-800">
+                            Visit Store
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"></i>
+                        </span>
+                    </div>
+                </div>
+            </a>
+            <% }) %>
+        </div>
+        
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+        <nav class="mt-6">
+            <div class="flex items-center justify-center gap-2">
+                <% if (currentPage > 1) { %>
+                <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all">
+                    <i data-lucide="chevron-left" class="w-5 h-5 text-stone-600"></i>
+                </a>
+                <% } %>
+                
+                <div class="flex items-center gap-1">
+                    <% 
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, currentPage + 2);
+                    
+                    for (let i = startPage; i <= endPage; i++) { %>
+                    <a href="<%= buildPaginationUrl(i) %>" class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all <%= i === currentPage ? 'bg-olive-700 text-white shadow-card' : 'bg-white text-stone-600 hover:bg-stone-50' %>">
+                        <%= i %>
+                    </a>
                     <% } %>
                 </div>
-            </nav>
-            <% } %>
-        <% } else { %>
-            <div class="no-stores">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                <h3>No stores found</h3>
-                <p>
-                    <% if (search) { %>
-                        No stores match your search "<%= search %>". Try a different search term.
-                    <% } else { %>
-                        There are no stores available at the moment.
-                    <% } %>
-                </p>
-                <% if (search) { %>
-                    <a href="/stores" class="btn btn-primary">View All Stores</a>
+                
+                <% if (currentPage < totalPages) { %>
+                <a href="<%= buildPaginationUrl(currentPage + 1) %>" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all">
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-stone-600"></i>
+                </a>
                 <% } %>
             </div>
+            
+            <p class="text-center text-xs text-stone-500 mt-3">
+                Page <%= currentPage %> of <%= totalPages %>
+            </p>
+        </nav>
         <% } %>
-    </div>
+        
+        <% } else { %>
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center bg-stone-100 rounded-full">
+                <i data-lucide="store" class="w-10 h-10 text-stone-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-stone-700 mb-2">No stores found</h3>
+            <p class="text-sm text-stone-500 mb-6">
+                <% if (search) { %>
+                    No stores match "<%= search %>". Try a different search.
+                <% } else { %>
+                    There are no stores available at the moment.
+                <% } %>
+            </p>
+            <% if (search) { %>
+            <a href="/stores" class="inline-flex items-center gap-2 px-5 py-2.5 bg-olive-700 text-white font-medium rounded-xl hover:bg-olive-800 transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+                Clear Search
+            </a>
+            <% } %>
+        </div>
+        <% } %>
+    </section>
+
+    <!-- ========== BECOME A SELLER CTA ========== -->
+    <section class="px-4 pb-8">
+        <div class="relative bg-gradient-to-br from-brand-light/30 to-olive-100 rounded-2xl p-5 overflow-hidden">
+            <!-- Decorative circles -->
+            <div class="absolute top-0 right-0 w-24 h-24 bg-olive-200/30 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            
+            <div class="relative flex items-center gap-4">
+                <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-green-500 rounded-xl shadow-sm">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-base font-bold text-brand-dark mb-1">Want to sell?</h3>
+                    <p class="text-xs text-stone-600">Start selling via WhatsApp in 30 seconds</p>
+                </div>
+                <a href="https://wa.me/923001234567?text=Hi!%20I%20want%20to%20become%20a%20seller" target="_blank" rel="noopener" class="flex-shrink-0 p-3 bg-green-500 rounded-xl shadow-sm hover:bg-green-600 active:scale-95 transition-all">
+                    <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="px-4 pb-6 text-center">
+        <div class="flex items-center justify-center gap-4 mb-3">
+            <a href="/" class="text-xs text-stone-500 hover:text-olive-700">Home</a>
+            <span class="text-stone-300">•</span>
+            <a href="/products" class="text-xs text-stone-500 hover:text-olive-700">Products</a>
+            <span class="text-stone-300">•</span>
+            <a href="/stores" class="text-xs text-stone-500 hover:text-olive-700">Stores</a>
+        </div>
+        <p class="text-xs text-stone-400">© 2026 RacketBazaar. All rights reserved.</p>
+    </footer>
+
 </div>
 
-<%- include('partials/tail') %>
+<!-- ========== SCRIPTS ========== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search toggle
+    const searchToggle = document.getElementById('search-toggle');
+    const searchBar = document.getElementById('search-bar');
+    
+    if (searchToggle && searchBar) {
+        searchToggle.addEventListener('click', () => {
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                searchBar.querySelector('input').focus();
+            }
+        });
+    }
+    
+    // Sort dropdown
+    const sortToggle = document.getElementById('sort-toggle');
+    const sortMenu = document.getElementById('sort-menu');
+    
+    if (sortToggle && sortMenu) {
+        sortToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sortMenu.classList.toggle('hidden');
+        });
+        
+        document.addEventListener('click', () => {
+            sortMenu.classList.add('hidden');
+        });
+    }
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+
+<%- include('partials/tail', { pageClass: 'page-home' }) %>
