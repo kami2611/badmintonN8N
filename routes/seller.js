@@ -4,6 +4,7 @@ const Seller = require('../models/Seller');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const { uploadProductMedia, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
+const { analyzeProductForForm } = require('../services/aiService');
 
 // Seller auth middleware
 const sellerAuth = (req, res, next) => {
@@ -13,6 +14,37 @@ const sellerAuth = (req, res, next) => {
         res.redirect('/seller/login');
     }
 };
+
+// Seller auth middleware for API (returns JSON)
+const sellerAuthApi = (req, res, next) => {
+    if (req.session && req.session.sellerId) {
+        next();
+    } else {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+};
+
+// ========== AI-Powered Product Form Fill (Text Only - No Vision) ==========
+router.post('/products/ai-fill', sellerAuthApi, async (req, res) => {
+    try {
+        const { productName, category } = req.body;
+        
+        if (!productName || !category) {
+            return res.status(400).json({ success: false, error: 'Product name and category are required' });
+        }
+        
+        const result = await analyzeProductForForm(productName, category);
+        
+        if (result.success) {
+            res.json({ success: true, data: result.data });
+        } else {
+            res.status(500).json({ success: false, error: result.error || 'AI analysis failed' });
+        }
+    } catch (error) {
+        console.error('AI Fill Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to generate product details' });
+    }
+});
 
 // Seller Logout
 router.get('/logout', (req, res) => {
@@ -295,14 +327,14 @@ router.post('/products/add', sellerAuth, (req, res) => {
             const imageUrls = [];
             if (req.files && req.files.images) {
                 for (const file of req.files.images) {
-                    // Validate file size (2MB for images)
-                    if (file.size > 2 * 1024 * 1024) {
+                    // Validate file size (5MB for images - increased for AI flow)
+                    if (file.size > 5 * 1024 * 1024) {
                         return res.render('seller/product-form', {
                             title: 'Add Product',
                             storeName: req.session.storeName,
                             product: null,
                             action: '/seller/products/add',
-                            error: `Image ${file.originalname} exceeds 2MB limit`
+                            error: `Image ${file.originalname} exceeds 5MB limit`
                         });
                     }
                     
@@ -313,6 +345,17 @@ router.post('/products/add', sellerAuth, (req, res) => {
                     });
                     imageUrls.push(result.secure_url);
                 }
+            }
+            
+            // Require at least one image
+            if (imageUrls.length === 0) {
+                return res.render('seller/product-form', {
+                    title: 'Add Product',
+                    storeName: req.session.storeName,
+                    product: null,
+                    action: '/seller/products/add',
+                    error: 'At least one product image is required'
+                });
             }
             
             // Upload video to Cloudinary if provided
@@ -363,8 +406,8 @@ router.post('/products/add', sellerAuth, (req, res) => {
                     capacity,
                     bagType,
                     compartments: compartments ? parseInt(compartments) : undefined,
-                    hasShoeCompartment: hasShoeCompartment === 'true' || hasShoeCompartment === true,
-                    hasThermalLining: hasThermalLining === 'true' || hasThermalLining === true
+                    hasShoeCompartment: hasShoeCompartment === 'true' || hasShoeCompartment === 'on' || hasShoeCompartment === true,
+                    hasThermalLining: hasThermalLining === 'true' || hasThermalLining === 'on' || hasThermalLining === true
                 };
             } else if (category === 'apparel') {
                 apparelSpecs = {
@@ -602,8 +645,8 @@ router.post('/products/edit/:id', sellerAuth, (req, res) => {
                     capacity,
                     bagType,
                     compartments: compartments ? parseInt(compartments) : undefined,
-                    hasShoeCompartment: hasShoeCompartment === 'true' || hasShoeCompartment === true,
-                    hasThermalLining: hasThermalLining === 'true' || hasThermalLining === true
+                    hasShoeCompartment: hasShoeCompartment === 'true' || hasShoeCompartment === 'on' || hasShoeCompartment === true,
+                    hasThermalLining: hasThermalLining === 'true' || hasThermalLining === 'on' || hasThermalLining === true
                 };
             } else if (category === 'apparel') {
                 apparelSpecs = {

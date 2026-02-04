@@ -3,6 +3,141 @@ require('dotenv').config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// ========== AI Product Analysis for Form Auto-Fill (Text Only - No Vision) ==========
+
+/**
+ * Generate product details based on product name and category
+ * @param {string} productName - Product name entered by seller
+ * @param {string} category - Product category
+ * @returns {Object} Suggested field values
+ */
+async function analyzeProductForForm(productName, category) {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        
+        // Build category-specific prompt
+        const prompt = buildCategoryPrompt(productName, category);
+        
+        const result = await model.generateContent(prompt);
+        
+        const response = result.response;
+        const text = response.text();
+        
+        // Parse JSON from response
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            return { success: true, data: parsed };
+        }
+        
+        return { success: false, error: 'Could not parse AI response' };
+        
+    } catch (error) {
+        console.error('AI Product Analysis Error:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function buildCategoryPrompt(productName, category) {
+    const basePrompt = `You are a badminton product expert. The seller has named this product: "${productName}".
+Category: ${category}
+
+Based on the product name, provide realistic product details in JSON format. Use your knowledge of badminton equipment to suggest appropriate specifications.
+
+IMPORTANT RULES:
+1. Return ONLY valid JSON, no markdown, no explanation
+2. For fields you cannot determine from the name, use empty string "" or leave as default
+3. Price should be in Pakistani Rupees (PKR) - estimate realistic market price
+4. Description should be 2-3 sentences, appealing for e-commerce
+5. Try to identify the brand from the product name if mentioned
+
+`;
+
+    const categoryFields = {
+        rackets: `Return this JSON structure:
+{
+    "brand": "brand name if visible, or guess from design",
+    "description": "product description",
+    "price": estimated price number,
+    "condition": "new" or "used",
+    "color": "main colors",
+    "weightClass": "2U" or "3U" or "4U" or "5U" or "",
+    "gripSize": "G4" or "G5" or "G6" or "G7" or "",
+    "flexibility": "extra-stiff" or "stiff" or "medium" or "flexible" or "",
+    "balance": "head-heavy" or "even" or "head-light" or "",
+    "stringStatus": "strung" or "unstrung" or "",
+    "frameMaterial": "material if known"
+}`,
+        
+        shoes: `Return this JSON structure:
+{
+    "brand": "brand name if visible",
+    "description": "product description",
+    "price": estimated price number,
+    "condition": "new" or "used",
+    "color": "main colors",
+    "sizeEU": "EU size if visible or common size",
+    "width": "narrow" or "standard" or "wide" or "",
+    "closureType": "lace-up" or "velcro" or "slip-on" or "",
+    "soleType": "sole description"
+}`,
+        
+        bags: `Return this JSON structure:
+{
+    "brand": "brand name if visible",
+    "description": "product description",
+    "price": estimated price number,
+    "condition": "new" or "used",
+    "color": "main colors",
+    "capacity": "3-racket" or "6-racket" or "9-racket" or "12-racket" or "",
+    "bagType": "backpack" or "duffel" or "thermal" or "tote" or "",
+    "compartments": estimated number or 0,
+    "hasShoeCompartment": true or false,
+    "hasThermalLining": true or false
+}`,
+        
+        apparel: `Return this JSON structure:
+{
+    "brand": "brand name if visible",
+    "description": "product description",
+    "price": estimated price number,
+    "condition": "new" or "used",
+    "color": "main colors",
+    "apparelType": "t-shirt" or "polo" or "shorts" or "skirt" or "jacket" or "tracksuit" or "",
+    "apparelSize": "XS" or "S" or "M" or "L" or "XL" or "2XL" or "3XL" or "",
+    "gender": "men" or "women" or "unisex" or "",
+    "fabricType": "fabric type"
+}`,
+        
+        shuttles: `Return this JSON structure:
+{
+    "brand": "brand name if visible",
+    "description": "product description",
+    "price": estimated price number,
+    "condition": "new",
+    "shuttleType": "feather" or "nylon" or "",
+    "speed": "75" or "76" or "77" or "78" or "79" or "",
+    "quantityPerTube": number (usually 12),
+    "grade": "grade if visible"
+}`,
+        
+        accessories: `Return this JSON structure:
+{
+    "brand": "brand name if visible",
+    "description": "product description",
+    "price": estimated price number,
+    "condition": "new" or "used",
+    "color": "main colors",
+    "accessoryType": "grip" or "string" or "towel" or "wristband" or "headband" or "socks" or "other" or "",
+    "packQuantity": number in pack
+}`
+    };
+    
+    return basePrompt + (categoryFields[category] || categoryFields.accessories);
+}
+
+// ========== Original AI Service Functions ==========
+
 // Define the tool (function) definition
 const tools = {
     functionDeclarations: [
@@ -219,4 +354,4 @@ async function processUserCommand(userText) {
     }
 }
 
-module.exports = { processUserCommand };
+module.exports = { processUserCommand, analyzeProductForForm };

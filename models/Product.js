@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: true
+        default: ''
     },
     price: {
         type: Number,
@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema({
     },
     brand: {
         type: String,
-        required: true
+        default: ''
     },
     images: [{
         type: String
@@ -33,7 +33,7 @@ const productSchema = new mongoose.Schema({
     },
     stock: {
         type: Number,
-        default: 0,
+        default: 1,
         min: 0
     },
     // Condition for used items
