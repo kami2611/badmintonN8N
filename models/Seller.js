@@ -32,9 +32,16 @@ const sellerSchema = new mongoose.Schema({
         enum: ['new', 'name_entered', 'complete'],
         default: 'complete' // Existing web users are already complete
     },
+    // Status: pending (awaiting admin approval), active (approved), deactivated (disabled by admin)
+    status: {
+        type: String,
+        enum: ['pending', 'active', 'deactivated'],
+        default: 'pending'
+    },
+    // Keep isActive for backward compatibility (computed from status)
     isActive: {
         type: Boolean,
-        default: true
+        default: false
     },
     featured: {
         type: Boolean,
@@ -46,10 +53,15 @@ const sellerSchema = new mongoose.Schema({
     }
 });
 
-// Hash password before saving
+// Pre-save hook to sync isActive with status
 sellerSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 10);
+    // Sync isActive based on status
+    this.isActive = this.status === 'active';
+    
+    // Hash password if modified
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
     next();
 });
 

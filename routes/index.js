@@ -6,7 +6,15 @@ const Seller = require('../models/Seller');
 // Landing page
 router.get('/', async (req, res) => {
     try {
-        const featuredProducts = await Product.find({ featured: true })
+        // Get IDs of active sellers only
+        const activeSellers = await Seller.find({ status: 'active' }).select('_id');
+        const activeSellerIds = activeSellers.map(s => s._id);
+        
+        // Only show featured products from active sellers
+        const featuredProducts = await Product.find({ 
+            featured: true,
+            seller: { $in: activeSellerIds }
+        })
             .populate('seller', 'storeName')
             .limit(8);
         
@@ -16,7 +24,8 @@ router.get('/', async (req, res) => {
         }));
         
         // Fetch featured sellers with their product counts (up to 8 for Verified Stores section)
-        const featuredSellers = await Seller.find({ featured: true, isActive: true }).limit(8);
+        // Only show active (approved) sellers
+        const featuredSellers = await Seller.find({ featured: true, status: 'active' }).limit(8);
         const sellersWithStats = await Promise.all(featuredSellers.map(async (seller) => {
             const productCount = await Product.countDocuments({ seller: seller._id });
             return {
@@ -26,7 +35,7 @@ router.get('/', async (req, res) => {
         }));
         
         // Get total seller count to determine if "All Stores" button should show
-        const totalSellerCount = await Seller.countDocuments({ isActive: true });
+        const totalSellerCount = await Seller.countDocuments({ status: 'active' });
         
         const cartCount = 0; // Will be handled by client-side JS
         res.render('index', { 
@@ -88,8 +97,8 @@ router.get('/stores', async (req, res) => {
         const perPage = 12;
         const skip = (currentPage - 1) * perPage;
         
-        // Build query
-        let query = { isActive: true };
+        // Build query - only show active (approved) stores
+        let query = { status: 'active' };
         
         if (search) {
             query.$or = [

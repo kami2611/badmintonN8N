@@ -3,8 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | BadmintonStore Admin</title>
+    <title><%= title %> | RacketBazaar Admin</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: 12px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-card h3 { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem; font-weight: 500; }
+        .stat-number { font-size: 2rem; font-weight: 700; color: #1f2937; }
+        .stat-detail { font-size: 0.75rem; color: #9ca3af; }
+        
+        .stat-card.highlight { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; }
+        .stat-card.highlight .stat-number { color: #b45309; }
+        .stat-card.success { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
+        .stat-card.success .stat-number { color: #047857; }
+        
+        .pending-section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .pending-section h2 { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+        .pending-badge { background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; }
+        
+        .pending-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .pending-item { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: #fffbeb; border-radius: 8px; border: 1px solid #fde68a; }
+        .pending-info { flex: 1; }
+        .pending-info h4 { font-weight: 600; color: #1f2937; margin-bottom: 0.25rem; }
+        .pending-info p { font-size: 0.875rem; color: #6b7280; }
+        .pending-actions { display: flex; gap: 0.5rem; }
+        
+        .btn-approve { background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject { background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-reject:hover { background: #dc2626; }
+        .btn-view { background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; text-decoration: none; }
+        .btn-view:hover { background: #4b5563; }
+        
+        .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 1024px) { .section-grid { grid-template-columns: 1fr; } }
+        
+        .recent-section { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .section-header h2 { font-size: 1.125rem; }
+    </style>
 </head>
 <body>
     <%- include('partials/sidebar') %>
@@ -12,88 +49,184 @@
     <main class="admin-main">
         <header class="admin-header">
             <h1>Dashboard</h1>
-            <a href="/" class="btn btn-outline" target="_blank">View Store</a>
+            <a href="/" class="btn btn-outline" target="_blank">View Store →</a>
         </header>
         
+        <!-- Pending Sellers Alert -->
+        <% if (stats.pendingSellers > 0) { %>
+        <div class="pending-section">
+            <h2>
+                <span>🔔 Pending Approvals</span>
+                <span class="pending-badge"><%= stats.pendingSellers %> waiting</span>
+            </h2>
+            
+            <div class="pending-list">
+                <% pendingSellersList.forEach(seller => { %>
+                <div class="pending-item" id="pending-<%= seller._id %>">
+                    <div class="pending-info">
+                        <h4><%= seller.storeName %></h4>
+                        <p><%= seller.name %> • <%= seller.phone %> • Applied <%= new Date(seller.createdAt).toLocaleDateString() %></p>
+                    </div>
+                    <div class="pending-actions">
+                        <button class="btn-approve" onclick="approveSeller('<%= seller._id %>')">✓ Approve</button>
+                        <button class="btn-reject" onclick="rejectSeller('<%= seller._id %>')">✕ Reject</button>
+                        <a href="/admin/sellers/<%= seller._id %>" class="btn-view">View</a>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+            
+            <% if (stats.pendingSellers > 5) { %>
+            <div style="margin-top: 1rem; text-align: center;">
+                <a href="/admin/sellers?status=pending" class="btn btn-outline">View All Pending (<%= stats.pendingSellers %>)</a>
+            </div>
+            <% } %>
+        </div>
+        <% } %>
+        
+        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>Total Products</h3>
+                <h3>📦 Total Products</h3>
                 <p class="stat-number"><%= stats.totalProducts %></p>
                 <span class="stat-detail">
-                    Rackets: <%= stats.rackets %> | 
-                    Shoes: <%= stats.shoes %> | 
-                    Accessories: <%= stats.accessories %>
+                    🏸 <%= stats.rackets %> Rackets • 👟 <%= stats.shoes %> Shoes • 🎒 <%= stats.accessories %> Accessories
                 </span>
             </div>
             
             <div class="stat-card">
-                <h3>Total Orders</h3>
+                <h3>📋 Total Orders</h3>
                 <p class="stat-number"><%= stats.totalOrders %></p>
-                <span class="stat-detail"><%= stats.pendingOrders %> pending</span>
+                <span class="stat-detail"><%= stats.pendingOrders %> pending orders</span>
             </div>
             
             <div class="stat-card">
-                <h3>Total Revenue</h3>
-                <p class="stat-number">$<%= stats.totalRevenue.toFixed(2) %></p>
-                <span class="stat-detail">All time</span>
+                <h3>💰 Total Revenue</h3>
+                <p class="stat-number">Rs. <%= stats.totalRevenue.toLocaleString() %></p>
+                <span class="stat-detail">All time earnings</span>
             </div>
             
-            <div class="stat-card">
-                <h3>⭐ Featured Products</h3>
-                <p class="stat-number"><%= stats.featuredProducts %></p>
-                <span class="stat-detail">of <%= stats.totalProducts %> products</span>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Total Sellers</h3>
+            <div class="stat-card <%= stats.pendingSellers > 0 ? 'highlight' : 'success' %>">
+                <h3>🏪 Sellers</h3>
                 <p class="stat-number"><%= stats.totalSellers %></p>
-                <span class="stat-detail">⭐ <%= stats.featuredSellers %> featured</span>
+                <span class="stat-detail">
+                    <% if (stats.pendingSellers > 0) { %>
+                        ⏳ <%= stats.pendingSellers %> pending • 
+                    <% } %>
+                    ✓ <%= stats.activeSellers %> active
+                    <% if (stats.deactivatedSellers > 0) { %>
+                        • ✕ <%= stats.deactivatedSellers %> deactivated
+                    <% } %>
+                </span>
+            </div>
+            
+            <div class="stat-card">
+                <h3>⭐ Featured</h3>
+                <p class="stat-number"><%= stats.featuredProducts %></p>
+                <span class="stat-detail"><%= stats.featuredSellers %> featured sellers</span>
             </div>
         </div>
         
-        <section class="recent-orders">
-            <div class="section-header">
-                <h2>Recent Orders</h2>
-                <a href="/admin/orders" class="btn btn-outline">View All</a>
-            </div>
-            
-            <% if (recentOrders.length > 0) { %>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% recentOrders.forEach(order => { %>
+        <!-- Recent Activity -->
+        <div class="section-grid">
+            <section class="recent-section">
+                <div class="section-header">
+                    <h2>📦 Recent Orders</h2>
+                    <a href="/admin/orders" class="btn btn-outline btn-small">View All</a>
+                </div>
+                
+                <% if (recentOrders.length > 0) { %>
+                    <table class="admin-table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <a href="/admin/orders/<%= order._id %>">
-                                        #<%= order._id.toString().slice(-8).toUpperCase() %>
-                                    </a>
-                                </td>
-                                <td><%= order.shippingAddress.firstName %> <%= order.shippingAddress.lastName %></td>
-                                <td><%= order.items.length %> item(s)</td>
-                                <td>$<%= order.totalAmount.toFixed(2) %></td>
-                                <td>
-                                    <span class="status-badge status-<%= order.status %>">
-                                        <%= order.status %>
-                                    </span>
-                                </td>
-                                <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
                             </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p class="no-data">No orders yet.</p>
-            <% } %>
-        </section>
+                        </thead>
+                        <tbody>
+                            <% recentOrders.forEach(order => { %>
+                                <tr>
+                                    <td>
+                                        <a href="/admin/orders/<%= order._id %>">
+                                            #<%= order._id.toString().slice(-8).toUpperCase() %>
+                                        </a>
+                                    </td>
+                                    <td><%= order.shippingAddress.firstName %></td>
+                                    <td>Rs. <%= order.totalAmount.toLocaleString() %></td>
+                                    <td>
+                                        <span class="status-badge status-<%= order.status %>">
+                                            <%= order.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <p class="no-data">No orders yet.</p>
+                <% } %>
+            </section>
+            
+            <section class="recent-section">
+                <div class="section-header">
+                    <h2>🏪 Quick Actions</h2>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="/admin/products/add" class="btn btn-primary" style="text-align: center;">+ Add New Product</a>
+                    <a href="/admin/sellers?status=pending" class="btn btn-outline" style="text-align: center;">
+                        Review Pending Sellers (<%= stats.pendingSellers %>)
+                    </a>
+                    <a href="/admin/orders?status=pending" class="btn btn-outline" style="text-align: center;">
+                        Process Pending Orders (<%= stats.pendingOrders %>)
+                    </a>
+                    <a href="/admin/sellers" class="btn btn-outline" style="text-align: center;">
+                        Manage All Sellers
+                    </a>
+                </div>
+            </section>
+        </div>
     </main>
+    
+    <script>
+        async function approveSeller(id) {
+            if (!confirm('Approve this seller? Their store and products will become visible.')) return;
+            
+            try {
+                const res = await fetch(`/admin/sellers/${id}/approve`, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(`pending-${id}`).remove();
+                    // Update counter or reload
+                    location.reload();
+                }
+            } catch (err) {
+                alert('Error approving seller');
+            }
+        }
+        
+        async function rejectSeller(id) {
+            if (!confirm('Reject and delete this seller? This cannot be undone.')) return;
+            
+            try {
+                const res = await fetch(`/admin/sellers/${id}/reject`, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(`pending-${id}`).remove();
+                    location.reload();
+                }
+            } catch (err) {
+                alert('Error rejecting seller');
+            }
+        }
+    </script>
 </body>
 </html>

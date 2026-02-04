@@ -1,41 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-const Seller = require('../models/Seller'); // Import Seller Model
-const bcrypt = require('bcrypt'); // Needed to generate dummy password
-const { processUserCommand } = require('../services/aiService'); // Import AI Service
-const Product = require('../models/Product'); // Import Product Model
+const Seller = require('../models/Seller');
+const bcrypt = require('bcrypt');
+const { processUserCommand } = require('../services/aiService');
+const Product = require('../models/Product');
 const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
 
-// In-memory store for pending media uploads (phone -> { productId, type, expiresAt })
+// In-memory store for pending media uploads
 const pendingMediaUploads = new Map();
 
 // Constants for media constraints
 const MAX_IMAGES = 5;
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-const MAX_VIDEO_DURATION = 20; // seconds
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const MAX_VIDEO_DURATION = 20;
 
-// 1. Verification Endpoint (GET) - Keep this as is
+// 1. Verification Endpoint (GET)
 router.get('/webhook', (req, res) => {
+    console.log('🔔 [WEBHOOK GET] Verification request received');
+    console.log('🔔 [WEBHOOK GET] Query params:', JSON.stringify(req.query, null, 2));
+    
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
     if (mode && token) {
         if (mode === 'subscribe' && token === process.env.WEBHOOK_VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
+            console.log('✅ [WEBHOOK GET] WEBHOOK_VERIFIED');
             res.status(200).send(challenge);
         } else {
+            console.log('❌ [WEBHOOK GET] Verification failed - token mismatch');
             res.sendStatus(403);
         }
+    } else {
+        console.log('❌ [WEBHOOK GET] Missing mode or token');
+        res.sendStatus(400);
     }
 });
 
 // 2. Message Receiver (POST)
 router.post('/webhook', async (req, res) => {
+    console.log('\n========== INCOMING WEBHOOK ==========');
+    console.log('📨 [WEBHOOK POST] Full body:', JSON.stringify(req.body, null, 2));
+    
     const body = req.body;
 
     if (body.object) {
+        console.log('📨 [WEBHOOK POST] Object type:', body.object);
+        
+        // Check if this is a status update (not a message)
+        if (body.entry?.[0]?.changes?.[0]?.value?.statuses) {
+            console.log('📊 [WEBHOOK POST] This is a STATUS update, not a message');
+            console.log('📊 [WEBHOOK POST] Status:', JSON.stringify(body.entry[0].changes[0].value.statuses, null, 2));
+            res.sendStatus(200);
+            return;
+        }
+        
         if (
             body.entry &&
             body.entry[0].changes &&
@@ -43,27 +63,44 @@ router.post('/webhook', async (req, res) => {
             body.entry[0].changes[0].value.messages[0]
         ) {
             const messageObj = body.entry[0].changes[0].value.messages[0];
-            const from = messageObj.from; // Phone number
+            const from = messageObj.from;
             const msgType = messageObj.type;
 
-            // Handle different message types
-            if (msgType === 'text') {
-                const msgBody = messageObj.text.body;
-                await handleIncomingMessage(from, msgBody);
-            } else if (msgType === 'image') {
-                const imageId = messageObj.image.id;
-                const mimeType = messageObj.image.mime_type;
-                await handleIncomingImage(from, imageId, mimeType);
-            } else if (msgType === 'video') {
-                const videoId = messageObj.video.id;
-                const mimeType = messageObj.video.mime_type;
-                await handleIncomingVideo(from, videoId, mimeType);
+            console.log('📱 [WEBHOOK POST] Message FROM:', from);
+            console.log('📱 [WEBHOOK POST] Message TYPE:', msgType);
+            console.log('📱 [WEBHOOK POST] Full message object:', JSON.stringify(messageObj, null, 2));
+
+            try {
+                if (msgType === 'text') {
+                    const msgBody = messageObj.text.body;
+                    console.log('💬 [WEBHOOK POST] Text message:', msgBody);
+                    await handleIncomingMessage(from, msgBody);
+                } else if (msgType === 'image') {
+                    const imageId = messageObj.image.id;
+                    const mimeType = messageObj.image.mime_type;
+                    console.log('🖼️ [WEBHOOK POST] Image received, ID:', imageId);
+                    await handleIncomingImage(from, imageId, mimeType);
+                } else if (msgType === 'video') {
+                    const videoId = messageObj.video.id;
+                    const mimeType = messageObj.video.mime_type;
+                    console.log('🎬 [WEBHOOK POST] Video received, ID:', videoId);
+                    await handleIncomingVideo(from, videoId, mimeType);
+                } else {
+                    console.log('⚠️ [WEBHOOK POST] Unhandled message type:', msgType);
+                }
+            } catch (error) {
+                console.error('❌ [WEBHOOK POST] Error processing message:', error);
             }
+        } else {
+            console.log('⚠️ [WEBHOOK POST] No messages in webhook payload');
+            console.log('⚠️ [WEBHOOK POST] Entry:', JSON.stringify(body.entry, null, 2));
         }
         res.sendStatus(200);
     } else {
+        console.log('❌ [WEBHOOK POST] Invalid webhook - no object field');
         res.sendStatus(404);
     }
+    console.log('========== END WEBHOOK ==========\n');
 });
 
 // Download media from WhatsApp
@@ -243,63 +280,70 @@ async function handleIncomingVideo(phone, videoId, mimeType) {
     }
 }
 
-// Core Logic Handler
+// Core Logic Handler - ADD LOGGING
 async function handleIncomingMessage(phone, text) {
+    console.log('\n---------- HANDLE MESSAGE ----------');
+    console.log('🔄 [HANDLER] Processing message from:', phone);
+    console.log('🔄 [HANDLER] Message text:', text);
+    
     try {
         // 1. Find the seller by phone
+        console.log('🔍 [HANDLER] Looking up seller with phone:', phone);
         let seller = await Seller.findOne({ phone: phone });
+        console.log('🔍 [HANDLER] Seller found:', seller ? `Yes - ${seller.name} (${seller.onboardingStep})` : 'No');
 
         // SCENARIO A: New User (Start Signup)
         if (!seller) {
-            // Create a placeholder account
-            // We generate a random password because the model requires it
+            console.log('👤 [HANDLER] New user - creating placeholder account');
             const dummyPassword = await bcrypt.hash(Date.now().toString(), 10);
             
             seller = new Seller({
                 phone: phone,
-                name: 'Pending', // Temporary
-                storeName: 'Pending', // Temporary
+                name: 'Pending',
+                storeName: 'Pending',
                 password: dummyPassword,
                 onboardingStep: 'new'
             });
             await seller.save();
+            console.log('👤 [HANDLER] New seller saved with ID:', seller._id);
 
+            console.log('📤 [HANDLER] Sending welcome message...');
             await sendMessage(phone, "Welcome to Badminton Store Manager! 🏸\n\nI see you are new here. Let's get you set up.\n\nFirst, what is your **Full Name**?");
             return;
         }
 
         // SCENARIO B: User is in Onboarding Flow
         if (seller.onboardingStep === 'new') {
-            // The user just sent their name
+            console.log('📝 [HANDLER] Onboarding step: new -> name_entered');
             seller.name = text;
             seller.onboardingStep = 'name_entered';
             await seller.save();
 
+            console.log('📤 [HANDLER] Sending name confirmation...');
             await sendMessage(phone, `Nice to meet you, ${text}! 👋\n\nNow, what is the name of your **Store**?`);
             return;
         }
 
         if (seller.onboardingStep === 'name_entered') {
-            // The user just sent their store name
+            console.log('📝 [HANDLER] Onboarding step: name_entered -> complete');
             seller.storeName = text;
             seller.onboardingStep = 'complete';
             await seller.save();
 
+            console.log('📤 [HANDLER] Sending registration complete message...');
             await sendMessage(phone, `Awesome! Your store **${text}** is now registered. 🎉\n\nYou can now manage your inventory here.\n\n(AI Integration coming next...)`);
             return;
         }
 
         // SCENARIO C: Fully Registered User
         if (seller.onboardingStep === 'complete') {
+            console.log('🤖 [HANDLER] Seller is complete, calling AI service...');
             
-            // 1. Send "Thinking..." indicator (Optional but good UX)
-            // await sendMessage(phone, "Thinking... 🤔");
-
-            // 2. Ask AI what to do
             const aiResult = await processUserCommand(text);
+            console.log('🤖 [HANDLER] AI Result:', JSON.stringify(aiResult, null, 2));
 
             if (aiResult.type === 'REPLY') {
-                // The AI just wants to chat (e.g., "Hello")
+                console.log('📤 [HANDLER] Sending AI reply...');
                 await sendMessage(phone, aiResult.text);
             } 
             // CREATE
@@ -601,30 +645,48 @@ async function handleIncomingMessage(phone, text) {
         }
 
     } catch (error) {
-        console.error('Error processing message:', error);
+        console.error('❌ [HANDLER] Error:', error.message);
+        console.error('❌ [HANDLER] Stack:', error.stack);
         await sendMessage(phone, "Sorry, I encountered an error processing your request.");
     }
+    console.log('---------- END HANDLE MESSAGE ----------\n');
 }
 
-// Helper function to send messages
+// Helper function to send messages - ADD DETAILED LOGGING
 async function sendMessage(to, text) {
+    console.log('\n>>>>>> SEND MESSAGE <<<<<<');
+    console.log('📤 [SEND] To:', to);
+    console.log('📤 [SEND] Text:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+    console.log('📤 [SEND] Phone Number ID:', process.env.WHATSAPP_PHONE_NUMBER_ID);
+    console.log('📤 [SEND] Access Token (first 20 chars):', process.env.WHATSAPP_ACCESS_TOKEN?.substring(0, 20) + '...');
+    
+    const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    console.log('📤 [SEND] URL:', url);
+    
+    const payload = {
+        messaging_product: 'whatsapp',
+        to: to,
+        text: { body: text },
+    };
+    console.log('📤 [SEND] Payload:', JSON.stringify(payload, null, 2));
+    
     try {
-        await axios({
+        const response = await axios({
             method: 'POST',
-            url: `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+            url: url,
             headers: {
                 'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
                 'Content-Type': 'application/json',
             },
-            data: {
-                messaging_product: 'whatsapp',
-                to: to,
-                text: { body: text },
-            },
+            data: payload,
         });
+        console.log('✅ [SEND] Success! Response:', JSON.stringify(response.data, null, 2));
     } catch (error) {
-        console.error('Error sending message:', error.response ? error.response.data : error.message);
+        console.error('❌ [SEND] Error status:', error.response?.status);
+        console.error('❌ [SEND] Error data:', JSON.stringify(error.response?.data, null, 2));
+        console.error('❌ [SEND] Error message:', error.message);
     }
+    console.log('>>>>>> END SEND MESSAGE <<<<<<\n');
 }
 
 module.exports = router;

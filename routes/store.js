@@ -13,7 +13,8 @@ router.get('/:id', async (req, res) => {
             return res.status(404).send('Store not found');
         }
         
-        if (!seller.isActive) {
+        // Only show store if seller is active (approved)
+        if (seller.status !== 'active') {
             return res.status(403).send('This store is currently unavailable');
         }
         

@@ -59,17 +59,20 @@ router.post('/login', async (req, res) => {
             });
         }
         
-        if (!seller.isActive) {
+        // Check seller status
+        if (seller.status === 'deactivated') {
             return res.render('seller/login', {
                 title: 'Seller Login',
-                error: 'Your account has been deactivated. Contact admin.',
+                error: 'Your account has been deactivated. Contact admin for support.',
                 cartCount: 0
             });
         }
         
+        // Allow pending sellers to login but they'll see pending notice in dashboard
         req.session.sellerId = seller._id;
         req.session.sellerName = seller.name;
         req.session.storeName = seller.storeName;
+        req.session.sellerStatus = seller.status;
         
         res.redirect('/seller/dashboard');
     } catch (error) {
@@ -122,15 +125,17 @@ router.post('/signup', async (req, res) => {
             phone,
             email: email || undefined,
             storeName,
-            password
+            password,
+            status: 'pending' // New sellers start as pending until admin approves
         });
         
         await seller.save();
         
-        // Auto login after signup
+        // Auto login after signup (seller can manage products but store not visible until approved)
         req.session.sellerId = seller._id;
         req.session.sellerName = seller.name;
         req.session.storeName = seller.storeName;
+        req.session.sellerStatus = seller.status;
         
         res.redirect('/seller/dashboard');
     } catch (error) {
@@ -153,6 +158,16 @@ router.get('/logout', (req, res) => {
 router.get('/dashboard', sellerAuth, async (req, res) => {
     try {
         const sellerId = req.session.sellerId;
+        
+        // Get current seller to check status
+        const seller = await Seller.findById(sellerId);
+        if (!seller) {
+            req.session.destroy();
+            return res.redirect('/seller/login');
+        }
+        
+        // Update session with latest status
+        req.session.sellerStatus = seller.status;
         
         const totalProducts = await Product.countDocuments({ seller: sellerId });
         const lowStock = await Product.countDocuments({ seller: sellerId, stock: { $lt: 5 } });
@@ -181,6 +196,7 @@ router.get('/dashboard', sellerAuth, async (req, res) => {
             title: 'Seller Dashboard',
             sellerName: req.session.sellerName,
             storeName: req.session.storeName,
+            sellerStatus: seller.status,
             stats: {
                 totalProducts,
                 totalOrders,

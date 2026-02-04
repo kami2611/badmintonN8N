@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Seller = require('../models/Seller');
 
-// Get all products with filters
+// Get all products with filters (only from active sellers)
 router.get('/', async (req, res) => {
     try {
         const { category, brand, minPrice, maxPrice, sort, search, page } = req.query;
@@ -12,8 +13,12 @@ router.get('/', async (req, res) => {
         const perPage = 12; // Products per page
         const skip = (currentPage - 1) * perPage;
         
-        // Build query
-        let query = {};
+        // Get IDs of active sellers only
+        const activeSellers = await Seller.find({ status: 'active' }).select('_id');
+        const activeSellerIds = activeSellers.map(s => s._id);
+        
+        // Build query - only show products from active sellers
+        let query = { seller: { $in: activeSellerIds } };
         
         if (category) {
             query.category = category;

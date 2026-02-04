@@ -134,6 +134,50 @@
         <main class="flex-1 lg:ml-64 min-h-screen">
             <div class="p-4 lg:p-6 max-w-6xl mx-auto">
                 
+                <% if (typeof sellerStatus !== 'undefined' && sellerStatus === 'pending') { %>
+                <!-- Pending Approval Notice -->
+                <div class="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 lg:p-6 mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="clock" class="w-6 h-6 text-amber-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-amber-800">Your Store is Pending Approval</h3>
+                            <p class="text-amber-700 mt-1">
+                                Thank you for signing up! Your store is currently under review by our admin team. 
+                                You can add products and set up your store while you wait.
+                            </p>
+                            <div class="mt-3 p-3 bg-amber-100/50 rounded-lg">
+                                <p class="text-sm text-amber-800">
+                                    <strong>What happens next?</strong>
+                                </p>
+                                <ul class="text-sm text-amber-700 mt-2 space-y-1">
+                                    <li>• Our team will review your store details</li>
+                                    <li>• You'll get access once approved</li>
+                                    <li>• Your products will then be visible on the website</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% } else if (typeof sellerStatus !== 'undefined' && sellerStatus === 'deactivated') { %>
+                <!-- Deactivated Notice -->
+                <div class="bg-red-50 border-2 border-red-400 rounded-2xl p-4 lg:p-6 mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="alert-circle" class="w-6 h-6 text-red-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-red-800">Your Store is Deactivated</h3>
+                            <p class="text-red-700 mt-1">
+                                Your store has been deactivated by an administrator. Your products are currently hidden from the website.
+                                Please contact support if you believe this is a mistake.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+                
                 <!-- Welcome Header -->
                 <div class="mb-6">
                     <h1 class="text-2xl font-bold text-brand-dark">Welcome back, <%= sellerName %>!</h1>

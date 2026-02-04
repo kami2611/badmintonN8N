@@ -75,8 +75,18 @@ router.get('/', adminAuth, async (req, res) => {
         
         // Featured counts
         const featuredProducts = await Product.countDocuments({ featured: true });
+        
+        // Seller stats by status
         const totalSellers = await Seller.countDocuments();
+        const pendingSellers = await Seller.countDocuments({ status: 'pending' });
+        const activeSellers = await Seller.countDocuments({ status: 'active' });
+        const deactivatedSellers = await Seller.countDocuments({ status: 'deactivated' });
         const featuredSellers = await Seller.countDocuments({ featured: true });
+        
+        // Get pending sellers for quick action
+        const pendingSellersList = await Seller.find({ status: 'pending' })
+            .sort({ createdAt: -1 })
+            .limit(5);
         
         res.render('admin/dashboard', {
             title: 'Admin Dashboard',
@@ -90,9 +100,13 @@ router.get('/', adminAuth, async (req, res) => {
                 accessories,
                 featuredProducts,
                 totalSellers,
+                pendingSellers,
+                activeSellers,
+                deactivatedSellers,
                 featuredSellers
             },
-            recentOrders
+            recentOrders,
+            pendingSellersList
         });
     } catch (error) {
         console.error(error);
@@ -308,8 +322,10 @@ router.get('/sellers', adminAuth, async (req, res) => {
             ];
         }
         
-        if (status === 'active') query.isActive = true;
-        if (status === 'inactive') query.isActive = false;
+        // Filter by status (pending, active, deactivated)
+        if (status && ['pending', 'active', 'deactivated'].includes(status)) {
+            query.status = status;
+        }
         
         const sellers = await Seller.find(query).sort({ createdAt: -1 });
         
@@ -322,11 +338,20 @@ router.get('/sellers', adminAuth, async (req, res) => {
             };
         }));
         
+        // Get counts for each status
+        const statusCounts = {
+            all: await Seller.countDocuments(),
+            pending: await Seller.countDocuments({ status: 'pending' }),
+            active: await Seller.countDocuments({ status: 'active' }),
+            deactivated: await Seller.countDocuments({ status: 'deactivated' })
+        };
+        
         res.render('admin/sellers', {
             title: 'Manage Sellers',
             sellers: sellersWithStats,
             search: search || '',
-            status: status || ''
+            status: status || '',
+            statusCounts
         });
     } catch (error) {
         console.error(error);
@@ -380,13 +405,100 @@ router.post('/sellers/:id/toggle-status', adminAuth, async (req, res) => {
             return res.status(404).send('Seller not found');
         }
         
-        seller.isActive = !seller.isActive;
+        // Toggle between active and deactivated
+        seller.status = seller.status === 'active' ? 'deactivated' : 'active';
         await seller.save();
         
         res.redirect(`/admin/sellers/${req.params.id}`);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error updating seller');
+    }
+});
+
+// Approve Seller (change from pending to active)
+router.post('/sellers/:id/approve', adminAuth, async (req, res) => {
+    try {
+        const seller = await Seller.findById(req.params.id);
+        if (!seller) {
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(404).json({ success: false, message: 'Seller not found' });
+            }
+            return res.status(404).send('Seller not found');
+        }
+        
+        seller.status = 'active';
+        await seller.save();
+        
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.json({ success: true, status: seller.status });
+        }
+        
+        res.redirect(req.get('Referer') || '/admin/sellers');
+    } catch (error) {
+        console.error(error);
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.status(500).json({ success: false, message: 'Error approving seller' });
+        }
+        res.status(500).send('Error approving seller');
+    }
+});
+
+// Reject/Delete Seller (remove pending seller)
+router.post('/sellers/:id/reject', adminAuth, async (req, res) => {
+    try {
+        const seller = await Seller.findById(req.params.id);
+        if (!seller) {
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(404).json({ success: false, message: 'Seller not found' });
+            }
+            return res.status(404).send('Seller not found');
+        }
+        
+        // Delete seller's products
+        await Product.deleteMany({ seller: req.params.id });
+        // Delete seller
+        await Seller.findByIdAndDelete(req.params.id);
+        
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.json({ success: true });
+        }
+        
+        res.redirect('/admin/sellers');
+    } catch (error) {
+        console.error(error);
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.status(500).json({ success: false, message: 'Error rejecting seller' });
+        }
+        res.status(500).send('Error rejecting seller');
+    }
+});
+
+// Deactivate Seller
+router.post('/sellers/:id/deactivate', adminAuth, async (req, res) => {
+    try {
+        const seller = await Seller.findById(req.params.id);
+        if (!seller) {
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(404).json({ success: false, message: 'Seller not found' });
+            }
+            return res.status(404).send('Seller not found');
+        }
+        
+        seller.status = 'deactivated';
+        await seller.save();
+        
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.json({ success: true, status: seller.status });
+        }
+        
+        res.redirect(req.get('Referer') || `/admin/sellers/${req.params.id}`);
+    } catch (error) {
+        console.error(error);
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.status(500).json({ success: false, message: 'Error deactivating seller' });
+        }
+        res.status(500).send('Error deactivating seller');
     }
 });
 

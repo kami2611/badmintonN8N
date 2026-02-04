@@ -3,28 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | BadmintonStore Admin</title>
+    <title><%= title %> | RacketBazaar Admin</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        .status-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .status-tab { padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; }
+        .status-tab.all { background: #f3f4f6; color: #374151; }
+        .status-tab.all.active, .status-tab.all:hover { background: #374151; color: white; }
+        .status-tab.pending { background: #fef3c7; color: #b45309; }
+        .status-tab.pending.active, .status-tab.pending:hover { background: #f59e0b; color: white; }
+        .status-tab.active-status { background: #d1fae5; color: #047857; }
+        .status-tab.active-status.active, .status-tab.active-status:hover { background: #10b981; color: white; }
+        .status-tab.deactivated { background: #fee2e2; color: #b91c1c; }
+        .status-tab.deactivated.active, .status-tab.deactivated:hover { background: #ef4444; color: white; }
+        .status-tab .count { margin-left: 0.5rem; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background: rgba(0,0,0,0.1); }
+        
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+        .status-badge.status-pending { background: #fef3c7; color: #b45309; }
+        .status-badge.status-active { background: #d1fae5; color: #047857; }
+        .status-badge.status-deactivated { background: #fee2e2; color: #b91c1c; }
+        
+        .action-btns { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+        .btn-action { padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer; text-decoration: none; }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject { background: #ef4444; color: white; }
+        .btn-reject:hover { background: #dc2626; }
+        .btn-deactivate { background: #f59e0b; color: white; }
+        .btn-deactivate:hover { background: #d97706; }
+        .btn-activate { background: #10b981; color: white; }
+        .btn-activate:hover { background: #059669; }
+        .btn-view { background: #6b7280; color: white; }
+        .btn-view:hover { background: #4b5563; }
+        
+        .featured-toggle-btn { background: none; border: 1px solid #e5e7eb; border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; }
+        .featured-toggle-btn.is-featured { background: #fef3c7; border-color: #f59e0b; }
+    </style>
 </head>
 <body>
     <%- include('partials/sidebar') %>
     
     <main class="admin-main">
         <header class="admin-header">
-            <h1>Sellers</h1>
+            <h1>Manage Sellers</h1>
         </header>
         
+        <!-- Status Tabs -->
+        <div class="status-tabs">
+            <a href="/admin/sellers" class="status-tab all <%= !status ? 'active' : '' %>">
+                All<span class="count"><%= statusCounts.all %></span>
+            </a>
+            <a href="/admin/sellers?status=pending" class="status-tab pending <%= status === 'pending' ? 'active' : '' %>">
+                ⏳ Pending<span class="count"><%= statusCounts.pending %></span>
+            </a>
+            <a href="/admin/sellers?status=active" class="status-tab active-status <%= status === 'active' ? 'active' : '' %>">
+                ✓ Active<span class="count"><%= statusCounts.active %></span>
+            </a>
+            <a href="/admin/sellers?status=deactivated" class="status-tab deactivated <%= status === 'deactivated' ? 'active' : '' %>">
+                ✕ Deactivated<span class="count"><%= statusCounts.deactivated %></span>
+            </a>
+        </div>
+        
+        <!-- Search/Filter -->
         <div class="filters-bar">
             <form action="/admin/sellers" method="GET" class="filter-form">
+                <input type="hidden" name="status" value="<%= status %>">
                 <input type="text" name="search" placeholder="Search by name, store, phone..." value="<%= search %>">
-                <select name="status">
-                    <option value="">All Status</option>
-                    <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
-                    <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
-                </select>
-                <button type="submit" class="btn btn-outline">Filter</button>
-                <% if (search || status) { %>
-                    <a href="/admin/sellers" class="btn btn-outline">Clear</a>
+                <button type="submit" class="btn btn-outline">Search</button>
+                <% if (search) { %>
+                    <a href="/admin/sellers<%= status ? '?status=' + status : '' %>" class="btn btn-outline">Clear</a>
                 <% } %>
             </form>
         </div>
@@ -36,9 +83,8 @@
                 <thead>
                     <tr>
                         <th>Store Name</th>
-                        <th>Seller Name</th>
+                        <th>Seller</th>
                         <th>Phone</th>
-                        <th>Email</th>
                         <th>Products</th>
                         <th>Featured</th>
                         <th>Status</th>
@@ -52,7 +98,6 @@
                             <td><strong><%= seller.storeName %></strong></td>
                             <td><%= seller.name %></td>
                             <td><%= seller.phone %></td>
-                            <td><%= seller.email || '-' %></td>
                             <td><%= seller.productCount %></td>
                             <td>
                                 <button class="featured-toggle-btn <%= seller.featured ? 'is-featured' : '' %>" 
@@ -62,13 +107,23 @@
                                 </button>
                             </td>
                             <td>
-                                <span class="status-badge status-<%= seller.isActive ? 'active' : 'inactive' %>">
-                                    <%= seller.isActive ? 'Active' : 'Inactive' %>
+                                <span class="status-badge status-<%= seller.status %>">
+                                    <%= seller.status === 'pending' ? '⏳ Pending' : seller.status === 'active' ? '✓ Active' : '✕ Deactivated' %>
                                 </span>
                             </td>
                             <td><%= new Date(seller.createdAt).toLocaleDateString() %></td>
                             <td>
-                                <a href="/admin/sellers/<%= seller._id %>" class="btn btn-small">View</a>
+                                <div class="action-btns">
+                                    <% if (seller.status === 'pending') { %>
+                                        <button class="btn-action btn-approve" onclick="approveSeller('<%= seller._id %>')">Approve</button>
+                                        <button class="btn-action btn-reject" onclick="rejectSeller('<%= seller._id %>')">Reject</button>
+                                    <% } else if (seller.status === 'active') { %>
+                                        <button class="btn-action btn-deactivate" onclick="deactivateSeller('<%= seller._id %>')">Deactivate</button>
+                                    <% } else { %>
+                                        <button class="btn-action btn-activate" onclick="approveSeller('<%= seller._id %>')">Activate</button>
+                                    <% } %>
+                                    <a href="/admin/sellers/<%= seller._id %>" class="btn-action btn-view">View</a>
+                                </div>
                             </td>
                         </tr>
                     <% }) %>
@@ -84,30 +139,49 @@
             try {
                 const response = await fetch(`/admin/sellers/${sellerId}/toggle-featured`, {
                     method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
                 });
-                
                 const data = await response.json();
-                
                 if (data.success) {
                     const starIcon = btn.querySelector('.star-icon');
                     if (data.featured) {
                         btn.classList.add('is-featured');
                         starIcon.textContent = '⭐';
-                        btn.title = 'Remove from featured';
                     } else {
                         btn.classList.remove('is-featured');
                         starIcon.textContent = '☆';
-                        btn.title = 'Make featured';
                     }
                 }
             } catch (error) {
-                console.error('Error toggling featured:', error);
                 alert('Failed to update featured status');
             }
+        }
+        
+        async function approveSeller(id) {
+            if (!confirm('Approve this seller? Their store will become visible on the website.')) return;
+            try {
+                const res = await fetch(`/admin/sellers/${id}/approve`, { method: 'POST', headers: { 'Accept': 'application/json' } });
+                const data = await res.json();
+                if (data.success) location.reload();
+            } catch (err) { alert('Error approving seller'); }
+        }
+        
+        async function rejectSeller(id) {
+            if (!confirm('Reject and DELETE this seller? This cannot be undone.')) return;
+            try {
+                const res = await fetch(`/admin/sellers/${id}/reject`, { method: 'POST', headers: { 'Accept': 'application/json' } });
+                const data = await res.json();
+                if (data.success) location.reload();
+            } catch (err) { alert('Error rejecting seller'); }
+        }
+        
+        async function deactivateSeller(id) {
+            if (!confirm('Deactivate this seller? Their store will be hidden from the website.')) return;
+            try {
+                const res = await fetch(`/admin/sellers/${id}/deactivate`, { method: 'POST', headers: { 'Accept': 'application/json' } });
+                const data = await res.json();
+                if (data.success) location.reload();
+            } catch (err) { alert('Error deactivating seller'); }
         }
     </script>
 </body>
