@@ -41,7 +41,14 @@ const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/seller');
 const storeRoutes = require('./routes/store');
-const whatsappRoutes = require('./routes/whatsapp');
+
+// WhatsApp Routes - Toggle between old and LangGraph versions
+// Set USE_LANGGRAPH=true in .env to use the new LangGraph agent
+const whatsappRoutes = process.env.USE_LANGGRAPH === 'true' 
+    ? require('./routes/whatsapp-langgraph')
+    : require('./routes/whatsapp');
+
+console.log(`📱 WhatsApp using: ${process.env.USE_LANGGRAPH === 'true' ? 'LangGraph Agent' : 'Legacy Agent'}`);
 
 app.use('/', indexRoutes);
 app.use('/products', productRoutes);

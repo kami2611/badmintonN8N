@@ -3,7 +3,18 @@ const router = express.Router();
 const axios = require('axios');
 const Seller = require('../models/Seller');
 const bcrypt = require('bcrypt');
-const { processUserCommand } = require('../services/aiService');
+const { 
+    processUserCommand, 
+    analyzeProductImage,
+    processFieldInput,
+    getConversationContext,
+    updateConversationContext,
+    clearConversationContext,
+    isCancel,
+    isSkip,
+    getFieldPrompt,
+    formatProductSummary
+} = require('../services/aiService');
 const Product = require('../models/Product');
 const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
 
@@ -148,11 +159,84 @@ async function handleIncomingImage(phone, imageId, mimeType) {
             return;
         }
 
+        // Check if user is in product creation mode - analyze image for product info
+        const context = getConversationContext(phone);
+        if (context.mode === 'creating_product') {
+            await sendMessage(phone, "🔍 Analyzing your product image...");
+            
+            try {
+                const { buffer } = await downloadWhatsAppMedia(imageId);
+                
+                // Analyze the image
+                const analysis = await analyzeProductImage(buffer, context.pendingProduct);
+                
+                if (analysis.success && analysis.data) {
+                    const imageData = analysis.data;
+                    
+                    // Merge analyzed data with pending product
+                    if (imageData.category && !context.pendingProduct.category) {
+                        context.pendingProduct.category = imageData.category;
+                    }
+                    if (imageData.brand && !context.pendingProduct.brand) {
+                        context.pendingProduct.brand = imageData.brand;
+                    }
+                    if (imageData.condition && !context.pendingProduct.condition) {
+                        context.pendingProduct.condition = imageData.condition;
+                    }
+                    if (imageData.color) {
+                        context.pendingProduct.specifications = context.pendingProduct.specifications || {};
+                        context.pendingProduct.specifications.color = imageData.color;
+                    }
+                    if (imageData.description && !context.pendingProduct.description) {
+                        context.pendingProduct.description = imageData.description;
+                    }
+                    if (imageData.suggestedName && !context.pendingProduct.name) {
+                        context.pendingProduct.name = imageData.suggestedName;
+                    }
+                    
+                    // Store image buffer temporarily for later upload
+                    context.pendingImageBuffer = buffer;
+                    
+                    // Recalculate missing fields
+                    const { getMissingRequiredFields } = require('../services/aiService');
+                    context.missingFields = getMissingRequiredFields(context.pendingProduct);
+                    
+                    updateConversationContext(phone, context);
+                    
+                    let responseMsg = `✨ *Image Analyzed!*\n\n`;
+                    responseMsg += `I detected:\n`;
+                    if (imageData.category) responseMsg += `• Category: ${imageData.category}\n`;
+                    if (imageData.brand) responseMsg += `• Brand: ${imageData.brand}\n`;
+                    if (imageData.condition) responseMsg += `• Condition: ${imageData.condition}\n`;
+                    if (imageData.color) responseMsg += `• Color: ${imageData.color}\n`;
+                    if (imageData.suggestedName) responseMsg += `• Suggested name: ${imageData.suggestedName}\n`;
+                    if (imageData.confidence) responseMsg += `\n(Confidence: ${imageData.confidence})`;
+                    
+                    if (context.missingFields.length > 0) {
+                        responseMsg += `\n\n${formatProductSummary(context.pendingProduct, context.missingFields)}`;
+                        responseMsg += `\n\n${getFieldPrompt(context.missingFields[0], context.pendingProduct.category)}`;
+                    } else {
+                        responseMsg += `\n\n✅ All required fields detected! Creating product...`;
+                        
+                        // Create the product
+                        await handleProductCreation(phone, seller, context.pendingProduct, buffer);
+                        return;
+                    }
+                    
+                    await sendMessage(phone, responseMsg);
+                    return;
+                }
+            } catch (analysisError) {
+                console.error('Image analysis error:', analysisError);
+                // Continue with regular image upload flow
+            }
+        }
+
         // Check if there's a pending image upload for this user
         const pending = pendingMediaUploads.get(phone);
         
         if (!pending || pending.type !== 'image' || Date.now() > pending.expiresAt) {
-            await sendMessage(phone, "📷 I received your image, but I don't know which product to add it to.\n\nSay something like:\n• \"Add images to [product name]\"\n• \"Upload photos for [product name]\"");
+            await sendMessage(phone, "📷 I received your image, but I don't know which product to add it to.\n\nSay something like:\n• \"Add images to [product name]\"\n• \"Upload photos for [product name]\"\n\nOr if you want to create a new product, say \"Create a new product\" and then send the image!");
             return;
         }
 
@@ -280,7 +364,77 @@ async function handleIncomingVideo(phone, videoId, mimeType) {
     }
 }
 
-// Core Logic Handler - ADD LOGGING
+// Helper function to handle product creation with all validations
+async function handleProductCreation(phone, seller, productData, imageBuffer = null) {
+    try {
+        console.log('📦 [CREATE] Creating product with data:', JSON.stringify(productData));
+        
+        // Set defaults for optional fields
+        const finalProductData = {
+            name: productData.name,
+            category: productData.category.toLowerCase(),
+            price: productData.price,
+            description: productData.description || `${productData.name} - Quality badminton equipment`,
+            brand: productData.brand || '',
+            stock: productData.stock || 1,
+            condition: productData.condition || 'new',
+            seller: seller._id,
+            images: [],
+            specifications: productData.specifications || {}
+        };
+        
+        // Add category-specific specs if provided
+        if (productData.category === 'rackets' && productData.racketSpecs) {
+            finalProductData.racketSpecs = productData.racketSpecs;
+        }
+        if (productData.category === 'shoes' && productData.shoeSpecs) {
+            finalProductData.shoeSpecs = productData.shoeSpecs;
+        }
+        // Add more category specs as needed
+        
+        // If there's a pending image, upload it
+        if (imageBuffer) {
+            try {
+                const result = await uploadToCloudinary(imageBuffer, {
+                    folder: 'badminton-store/products',
+                    transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
+                    resource_type: 'image'
+                });
+                finalProductData.images.push(result.secure_url);
+            } catch (uploadError) {
+                console.error('Image upload error:', uploadError);
+                // Continue without image
+            }
+        }
+        
+        // Save to MongoDB
+        const newProduct = new Product(finalProductData);
+        await newProduct.save();
+        
+        // Clear conversation context
+        clearConversationContext(phone);
+        
+        // Build success message
+        let successMsg = `✅ *Product Created Successfully!*\n\n`;
+        successMsg += `📦 *${finalProductData.name}*\n\n`;
+        successMsg += `• Category: ${finalProductData.category}\n`;
+        successMsg += `• Price: PKR ${finalProductData.price}\n`;
+        successMsg += `• Stock: ${finalProductData.stock}\n`;
+        if (finalProductData.brand) successMsg += `• Brand: ${finalProductData.brand}\n`;
+        if (finalProductData.condition) successMsg += `• Condition: ${finalProductData.condition}\n`;
+        if (finalProductData.images.length > 0) successMsg += `• Images: ${finalProductData.images.length}\n`;
+        
+        successMsg += `\n📸 To add images, say: "Add images to ${finalProductData.name}"`;
+        
+        await sendMessage(phone, successMsg);
+        
+    } catch (error) {
+        console.error('Product creation error:', error);
+        await sendMessage(phone, `❌ Failed to create product: ${error.message}\n\nPlease try again.`);
+    }
+}
+
+// Core Logic Handler - WITH CONTEXT AWARENESS
 async function handleIncomingMessage(phone, text) {
     console.log('\n---------- HANDLE MESSAGE ----------');
     console.log('🔄 [HANDLER] Processing message from:', phone);
@@ -331,38 +485,95 @@ async function handleIncomingMessage(phone, text) {
             await seller.save();
 
             console.log('📤 [HANDLER] Sending registration complete message...');
-            await sendMessage(phone, `Awesome! Your store **${text}** is now registered. 🎉\n\nYou can now manage your inventory here.\n\n(AI Integration coming next...)`);
+            await sendMessage(phone, `Awesome! Your store **${text}** is now registered. 🎉\n\nYou can now manage your inventory. Try:\n• "Add a new Yonex Astrox 88D racket for 25000"\n• "List my products"\n• "Update price of [product] to 20000"\n\nI'll help you every step of the way!`);
             return;
         }
 
         // SCENARIO C: Fully Registered User
         if (seller.onboardingStep === 'complete') {
-            console.log('🤖 [HANDLER] Seller is complete, calling AI service...');
+            console.log('🤖 [HANDLER] Seller is complete, checking conversation context...');
             
-            const aiResult = await processUserCommand(text);
+            // Check for cancel command
+            if (isCancel(text)) {
+                clearConversationContext(phone);
+                pendingMediaUploads.delete(phone);
+                await sendMessage(phone, "✅ Operation cancelled. How can I help you?");
+                return;
+            }
+            
+            // Get current conversation context
+            const context = getConversationContext(phone);
+            console.log('🔄 [HANDLER] Context mode:', context.mode);
+            console.log('🔄 [HANDLER] Pending product:', JSON.stringify(context.pendingProduct));
+            console.log('🔄 [HANDLER] Missing fields:', context.missingFields);
+            
+            // SCENARIO C1: User is in the middle of creating a product (providing missing fields)
+            if (context.mode === 'creating_product' && context.missingFields.length > 0) {
+                console.log('📝 [HANDLER] Processing field input for:', context.missingFields[0]);
+                
+                // Check for skip on optional fields
+                const currentField = context.missingFields[0];
+                const optionalFields = ['description', 'brand', 'stock', 'condition'];
+                
+                if (isSkip(text) && optionalFields.includes(currentField)) {
+                    // Skip this optional field
+                    context.missingFields.shift();
+                    updateConversationContext(phone, context);
+                    
+                    if (context.missingFields.length > 0) {
+                        const nextField = context.missingFields[0];
+                        await sendMessage(phone, `👍 Skipped.\n\n${getFieldPrompt(nextField, context.pendingProduct.category)}`);
+                    } else {
+                        // All done - create product
+                        await handleProductCreation(phone, seller, context.pendingProduct);
+                    }
+                    return;
+                }
+                
+                // Process the field input
+                const fieldResult = await processFieldInput(phone, text);
+                
+                if (fieldResult) {
+                    if (fieldResult.type === 'VALIDATION_ERROR') {
+                        await sendMessage(phone, fieldResult.error);
+                        return;
+                    }
+                    
+                    if (fieldResult.type === 'NEED_MORE_INFO') {
+                        let msg = `✅ Got it!\n\n${fieldResult.summary}\n\n${fieldResult.prompt}`;
+                        await sendMessage(phone, msg);
+                        return;
+                    }
+                    
+                    if (fieldResult.type === 'ACTION' && fieldResult.action === 'CREATE_PRODUCT') {
+                        await handleProductCreation(phone, seller, fieldResult.data);
+                        return;
+                    }
+                }
+            }
+            
+            // SCENARIO C2: Regular AI processing
+            console.log('🤖 [HANDLER] Calling AI service with context...');
+            const aiResult = await processUserCommand(text, phone);
             console.log('🤖 [HANDLER] AI Result:', JSON.stringify(aiResult, null, 2));
 
             if (aiResult.type === 'REPLY') {
                 console.log('📤 [HANDLER] Sending AI reply...');
                 await sendMessage(phone, aiResult.text);
-            } 
-            // CREATE
+            }
+            
+            // NEED MORE INFO - Start multi-turn product creation
+            else if (aiResult.type === 'NEED_MORE_INFO') {
+                let msg = `📦 *Let's create your product!*\n\n`;
+                msg += aiResult.summary;
+                msg += `\n\n${aiResult.prompt}`;
+                msg += `\n\n_(Say "cancel" anytime to abort)_`;
+                await sendMessage(phone, msg);
+            }
+            
+            // CREATE - All fields present
             else if (aiResult.type === 'ACTION' && aiResult.action === 'CREATE_PRODUCT') {
-                const productData = aiResult.data;
-
-                // 🛡️ No more guessing. We trust the AI has gathered everything.
-                const finalProductData = {
-                    ...productData,
-                    seller: seller._id,
-                    image: '/images/products/default-racket.jpg'
-                };
-
-                // Save to MongoDB
-                const newProduct = new Product(finalProductData);
-                await newProduct.save();
-
-                const successMsg = `✅ **Product Created!**\n\nName: ${finalProductData.name}\nPrice: $${finalProductData.price}\nStock: ${finalProductData.stock}\nCategory: ${finalProductData.category}\nBrand: ${finalProductData.brand}`;
-                await sendMessage(phone, successMsg);
+                await handleProductCreation(phone, seller, aiResult.data);
             }
 
             // UPDATE
@@ -377,17 +588,34 @@ async function handleIncomingMessage(phone, text) {
                 });
 
                 if (!product) {
-                    await sendMessage(phone, `❌ I couldn't find a product named "${searchName}".`);
+                    await sendMessage(phone, `❌ I couldn't find a product named "${searchName}".\n\nTry "List my products" to see your inventory.`);
                     return;
                 }
 
+                // Track what's being updated
+                const updates = [];
+                
                 // Apply updates
-                if (newPrice) product.price = newPrice;
-                if (newStock) product.stock = newStock;
-                if (newDescription) product.description = newDescription;
+                if (newPrice !== undefined && newPrice !== null) {
+                    product.price = newPrice;
+                    updates.push(`Price: PKR ${newPrice}`);
+                }
+                if (newStock !== undefined && newStock !== null) {
+                    product.stock = newStock;
+                    updates.push(`Stock: ${newStock}`);
+                }
+                if (newDescription) {
+                    product.description = newDescription;
+                    updates.push(`Description updated`);
+                }
+                
+                if (updates.length === 0) {
+                    await sendMessage(phone, `❌ No changes specified. What would you like to update?\n\nExamples:\n• "Update ${product.name} price to 15000"\n• "Set stock of ${product.name} to 5"`);
+                    return;
+                }
                 
                 await product.save();
-                await sendMessage(phone, `✅ Updated **${product.name}**.\nPrice: ${product.price}\nStock: ${product.stock}`);
+                await sendMessage(phone, `✅ Updated *${product.name}*!\n\n${updates.join('\n')}`);
             }
 
             // DELETE
@@ -400,9 +628,22 @@ async function handleIncomingMessage(phone, text) {
                 });
 
                 if (deleted) {
-                    await sendMessage(phone, `🗑️ Deleted **${deleted.name}** from inventory.`);
+                    // Also delete images from Cloudinary
+                    if (deleted.images && deleted.images.length > 0) {
+                        for (const imgUrl of deleted.images) {
+                            const publicId = getPublicIdFromUrl(imgUrl);
+                            if (publicId) {
+                                await deleteFromCloudinary(publicId, 'image').catch(() => {});
+                            }
+                        }
+                    }
+                    if (deleted.video && deleted.video.publicId) {
+                        await deleteFromCloudinary(deleted.video.publicId, 'video').catch(() => {});
+                    }
+                    
+                    await sendMessage(phone, `🗑️ Deleted *${deleted.name}* from inventory.`);
                 } else {
-                    await sendMessage(phone, `❌ I couldn't find "${productName}" to delete.`);
+                    await sendMessage(phone, `❌ I couldn't find "${productName}" to delete.\n\nTry "List my products" to see your inventory.`);
                 }
             }
 
@@ -412,17 +653,85 @@ async function handleIncomingMessage(phone, text) {
                 const query = { seller: seller._id };
                 if (category) query.category = category.toLowerCase();
 
-                const products = await Product.find(query).limit(10); // Limit to 10 to avoid spamming
+                const products = await Product.find(query).limit(15).sort({ createdAt: -1 });
 
                 if (products.length === 0) {
-                    await sendMessage(phone, "Your inventory is empty.");
+                    let msg = category 
+                        ? `No products found in the "${category}" category.` 
+                        : "Your inventory is empty.";
+                    msg += "\n\nTo add a product, say something like:\n• \"Add Yonex Astrox 99 racket for 28000\"";
+                    await sendMessage(phone, msg);
                 } else {
-                    let msg = "📋 **Your Inventory:**\n\n";
-                    products.forEach(p => {
-                        msg += `• ${p.name} - $${p.price} (${p.stock} left)\n`;
+                    let msg = category 
+                        ? `📋 *${category.charAt(0).toUpperCase() + category.slice(1)} Inventory:*\n\n`
+                        : "📋 *Your Inventory:*\n\n";
+                    
+                    products.forEach((p, i) => {
+                        const stockEmoji = p.stock > 5 ? '🟢' : p.stock > 0 ? '🟡' : '🔴';
+                        msg += `${i + 1}. *${p.name}*\n`;
+                        msg += `   💰 PKR ${p.price || 'N/A'} ${stockEmoji} ${p.stock} in stock\n\n`;
                     });
+                    
+                    if (products.length >= 15) {
+                        msg += `_(Showing first 15 products)_`;
+                    }
+                    
                     await sendMessage(phone, msg);
                 }
+            }
+            
+            // SHOW HELP
+            else if (aiResult.type === 'ACTION' && aiResult.action === 'SHOW_HELP') {
+                const helpMsg = `🏸 *Badminton Store Manager - Help*\n\n` +
+                    `Here's what I can do for you:\n\n` +
+                    `*📦 Product Management:*\n` +
+                    `• "Add a Yonex Astrox 99 racket for 25000" - Create product\n` +
+                    `• "Create new product" - Start guided creation\n` +
+                    `• "List my products" - View inventory\n` +
+                    `• "Show rackets" - List by category\n` +
+                    `• "Update price of [product] to 20000"\n` +
+                    `• "Delete [product name]"\n\n` +
+                    `*📸 Images & Video:*\n` +
+                    `• "Add images to [product]" - Then send photos\n` +
+                    `• "Delete image 1 from [product]"\n` +
+                    `• "Add video to [product]"\n` +
+                    `• "View media of [product]"\n\n` +
+                    `*🎯 Smart Features:*\n` +
+                    `• Send a product photo - I'll analyze it!\n` +
+                    `• Natural language - Just describe what you want\n` +
+                    `• "Cancel" - Abort current operation\n` +
+                    `• "Status" - See pending operations\n\n` +
+                    `*📁 Categories:*\n` +
+                    `rackets, shoes, bags, apparel, shuttles, accessories\n\n` +
+                    `Just type naturally - I'll understand! 🤖`;
+                
+                await sendMessage(phone, helpMsg);
+            }
+            
+            // SHOW STATUS
+            else if (aiResult.type === 'ACTION' && aiResult.action === 'SHOW_STATUS') {
+                const ctx = getConversationContext(phone);
+                let statusMsg = `📊 *Current Status*\n\n`;
+                
+                if (ctx.mode === 'creating_product') {
+                    statusMsg += `🔄 You're creating a product:\n\n`;
+                    statusMsg += formatProductSummary(ctx.pendingProduct, ctx.missingFields);
+                    statusMsg += `\n\nSay "cancel" to abort, or provide the missing info.`;
+                } else {
+                    statusMsg += `✅ No pending operations.\n\n`;
+                    statusMsg += `Ready for your next command! Say "help" for options.`;
+                }
+                
+                // Check for pending media uploads
+                const pending = pendingMediaUploads.get(phone);
+                if (pending && Date.now() < pending.expiresAt) {
+                    const product = await Product.findById(pending.productId);
+                    if (product) {
+                        statusMsg += `\n\n📸 Waiting for ${pending.type} upload for *${product.name}*`;
+                    }
+                }
+                
+                await sendMessage(phone, statusMsg);
             }
             
             // ADD PRODUCT IMAGES (prepare for upload)
