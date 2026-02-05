@@ -135,7 +135,7 @@ function formatProductSummary(product, missing = []) {
  */
 async function analyzeProductForForm(productName, category) {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-001" });
         
         // Build category-specific prompt
         const prompt = buildCategoryPrompt(productName, category);
@@ -435,7 +435,7 @@ async function processUserCommand(userText, phone = null, existingContext = null
             const systemPrompt = buildSystemPrompt(context);
             
             const model = genAI.getGenerativeModel({ 
-                model: "gemini-2.5-flash",
+                model: "gemini-2.0-flash-lite-001",
                 tools: [tools],
                 systemInstruction: {
                     parts: [{ text: systemPrompt }]
@@ -738,7 +738,7 @@ async function processFieldInput(phone, userText) {
  */
 async function analyzeProductImage(imageBuffer, pendingProduct = {}) {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-001" });
         
         // Convert buffer to base64
         const base64Image = imageBuffer.toString('base64');

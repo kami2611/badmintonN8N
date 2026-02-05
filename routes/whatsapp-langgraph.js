@@ -13,14 +13,19 @@ const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require
 
 // Import LangGraph agent
 const { processUserMessage, resetUserState } = require('../services/langgraph');
+const { createThreadConfig } = require('../services/langgraph/checkpointer');
 
 // In-memory store for pending media uploads (short-lived, OK to be in-memory)
 const pendingMediaUploads = new Map();
+
+// Message buffering system - wait for images after product descriptions
+const messageBuffer = new Map(); // Map<phone, { text, images: [], timer, timestamp }>
 
 // Constants
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 const MAX_VIDEO_DURATION = 20; // seconds
+const MESSAGE_BUFFER_DELAY = 3000; // Wait 3 seconds for images after product description
 
 // ============ Webhook Endpoints ============
 
@@ -79,7 +84,9 @@ router.post('/webhook', async (req, res) => {
                 if (msgType === 'text') {
                     await handleTextMessage(from, messageObj.text.body);
                 } else if (msgType === 'image') {
-                    await handleImageMessage(from, messageObj.image.id, messageObj.image.mime_type);
+                    // Extract caption if present - THIS IS THE KEY FIX
+                    const caption = messageObj.image.caption || null;
+                    await handleImageMessage(from, messageObj.image.id, messageObj.image.mime_type, caption);
                 } else if (msgType === 'video') {
                     await handleVideoMessage(from, messageObj.video.id, messageObj.video.mime_type);
                 }
@@ -97,13 +104,77 @@ router.post('/webhook', async (req, res) => {
 // ============ Message Handlers ============
 
 /**
+ * Check if message is about product creation/specs that might have images
+ */
+function isProductDescriptionMessage(text) {
+    const productKeywords = [
+        'create', 'add', 'new product', 'racket', 'shoe', 'shuttle',
+        'model', 'weight', 'price', 'rate', 'description', 'image',
+        'specification', 'spec', 'send you', 'upload', 'attach'
+    ];
+    
+    const lowerText = text.toLowerCase();
+    return productKeywords.some(keyword => lowerText.includes(keyword));
+}
+
+/**
+ * Process buffered message with collected images
+ * Passes inputType marker to agent for context-switch logic
+ */
+async function processBufferedMessage(phone, sellerId) {
+    const buffer = messageBuffer.get(phone);
+    if (!buffer) return;
+    
+    // Determine input type marker for agent
+    const inputType = buffer.inputType || (buffer.images?.length > 0 ? 'TEXT_WITH_IMAGE' : 'TEXT_ONLY');
+    
+    let fullMessage = `[INPUT_TYPE: ${inputType}]\n\n${buffer.text}`;
+    
+    // Append image descriptions if any
+    if (buffer.images && buffer.images.length > 0) {
+        fullMessage += `\n\n📸 [${buffer.images.length} image(s) attached]\n`;
+        buffer.images.forEach((img, i) => {
+            fullMessage += `Image ${i + 1} URL: ${img.url}\n`;
+        });
+    }
+    
+    console.log('📋 [BUFFER] Processing with inputType:', inputType, 'images:', buffer.images?.length || 0);
+    
+    // Process with agent
+    const result = await processUserMessage(phone, fullMessage, sellerId, createThreadConfig(phone));
+    
+    // Handle pending media if agent requests images
+    if (result.actionResult) {
+        if (result.actionResult.action === 'AWAIT_IMAGES') {
+            pendingMediaUploads.set(phone, {
+                type: 'image',
+                productId: result.actionResult.productId,
+                expiresAt: Date.now() + 5 * 60 * 1000
+            });
+        } else if (result.actionResult.action === 'AWAIT_VIDEO') {
+            pendingMediaUploads.set(phone, {
+                type: 'video',
+                productId: result.actionResult.productId,
+                expiresAt: Date.now() + 5 * 60 * 1000
+            });
+        }
+    }
+    
+    await sendMessage(phone, result.response);
+    
+    // Clear buffer
+    messageBuffer.delete(phone);
+}
+
+/**
  * Handle incoming text messages
  */
 async function handleTextMessage(phone, text) {
-    console.log('💬 [TEXT] Processing:', text);
+    console.log('💬 [TEXT] Processing:', text.substring(0, 50));
     
     try {
         // Find or create seller
+
         let seller = await Seller.findOne({ phone: phone });
         
         // New user - start onboarding
@@ -158,26 +229,61 @@ async function handleTextMessage(phone, text) {
         
         // Fully registered - use LangGraph agent
         if (seller.onboardingStep === 'complete') {
-            const result = await processUserMessage(phone, text, seller._id.toString());
-            
-            // Check if agent wants us to wait for images/video
-            if (result.actionResult) {
-                if (result.actionResult.action === 'AWAIT_IMAGES') {
-                    pendingMediaUploads.set(phone, {
-                        type: 'image',
-                        productId: result.actionResult.productId,
-                        expiresAt: Date.now() + 5 * 60 * 1000
-                    });
-                } else if (result.actionResult.action === 'AWAIT_VIDEO') {
-                    pendingMediaUploads.set(phone, {
-                        type: 'video',
-                        productId: result.actionResult.productId,
-                        expiresAt: Date.now() + 5 * 60 * 1000
-                    });
+            // Check if this is a product-related message that might have images coming
+            if (isProductDescriptionMessage(text)) {
+                console.log('📋 [BUFFER] Buffering message to wait for images');
+                
+                // Clear any existing buffer timer
+                const existingBuffer = messageBuffer.get(phone);
+                if (existingBuffer?.timer) {
+                    clearTimeout(existingBuffer.timer);
                 }
+                
+                // Create/update buffer
+                messageBuffer.set(phone, {
+                    text: text,
+                    images: existingBuffer?.images || [],
+                    timestamp: Date.now(),
+                    sellerId: seller._id.toString()
+                });
+                
+                // Set timer to process after delay
+                const timer = setTimeout(() => {
+                    processBufferedMessage(phone, seller._id.toString()).catch(error => {
+                        console.error('❌ [BUFFER] Processing error:', error);
+                        sendMessage(phone, "Sorry, I encountered an error. Please try again.");
+                    });
+                }, MESSAGE_BUFFER_DELAY);
+                
+                // Store timer reference
+                const buffer = messageBuffer.get(phone);
+                if (buffer) buffer.timer = timer;
+                
+                // Send acknowledgement
+                await sendMessage(phone, "⏳ Processing your message... (waiting for images if any)");
+            } else {
+                // Non-product message - process immediately
+                const result = await processUserMessage(phone, text, seller._id.toString(), createThreadConfig(phone));
+                
+                // Check if agent wants us to wait for images/video
+                if (result.actionResult) {
+                    if (result.actionResult.action === 'AWAIT_IMAGES') {
+                        pendingMediaUploads.set(phone, {
+                            type: 'image',
+                            productId: result.actionResult.productId,
+                            expiresAt: Date.now() + 5 * 60 * 1000
+                        });
+                    } else if (result.actionResult.action === 'AWAIT_VIDEO') {
+                        pendingMediaUploads.set(phone, {
+                            type: 'video',
+                            productId: result.actionResult.productId,
+                            expiresAt: Date.now() + 5 * 60 * 1000
+                        });
+                    }
+                }
+                
+                await sendMessage(phone, result.response);
             }
-            
-            await sendMessage(phone, result.response);
         }
         
     } catch (error) {
@@ -188,9 +294,10 @@ async function handleTextMessage(phone, text) {
 
 /**
  * Handle incoming image messages
+ * CONTEXT-SWITCH LOGIC: Captioned image = NEW product, Image-only = continue task
  */
-async function handleImageMessage(phone, imageId, mimeType) {
-    console.log('🖼️ [IMAGE] Processing image');
+async function handleImageMessage(phone, imageId, mimeType, caption = null) {
+    console.log('🖼️ [IMAGE] Processing image, caption:', caption ? caption.substring(0, 50) + '...' : 'NONE');
     
     try {
         const seller = await Seller.findOne({ phone: phone });
@@ -200,7 +307,113 @@ async function handleImageMessage(phone, imageId, mimeType) {
             return;
         }
         
-        // Check for pending image upload
+        // ============ CONTEXT SWITCH: Captioned Image = NEW Product ============
+        if (caption && caption.trim().length > 0) {
+            console.log('📋 [CONTEXT SWITCH] Captioned image detected - treating as NEW product');
+            
+            // CRITICAL: Clear any pending media uploads (prevents old product association)
+            pendingMediaUploads.delete(phone);
+            
+            // Clear existing buffer if any
+            const existingBuffer = messageBuffer.get(phone);
+            if (existingBuffer?.timer) {
+                clearTimeout(existingBuffer.timer);
+            }
+            
+            // Download and upload image first
+            const { buffer: imageBuffer, fileSize } = await downloadWhatsAppMedia(imageId);
+            
+            if (fileSize > MAX_IMAGE_SIZE) {
+                await sendMessage(phone, 
+                    `❌ Image is too large (${(fileSize / 1024 / 1024).toFixed(2)}MB).\n` +
+                    "Maximum allowed: 2MB"
+                );
+                return;
+            }
+            
+            const uploadResult = await uploadToCloudinary(imageBuffer, {
+                folder: 'badminton-store/products',
+                transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
+                resource_type: 'image'
+            });
+            
+            // Create buffer with caption as text and image attached
+            // Mark inputType as IMAGE_WITH_CAPTION for agent to know context
+            messageBuffer.set(phone, {
+                text: caption,
+                images: [{
+                    url: uploadResult.secure_url,
+                    publicId: uploadResult.public_id
+                }],
+                timestamp: Date.now(),
+                sellerId: seller._id.toString(),
+                inputType: 'IMAGE_WITH_CAPTION'  // KEY: Agent uses this to know it's a new product
+            });
+            
+            // Set timer to process (short delay in case more images come)
+            const timer = setTimeout(() => {
+                processBufferedMessage(phone, seller._id.toString()).catch(error => {
+                    console.error('❌ [BUFFER] Processing error:', error);
+                    sendMessage(phone, "Sorry, I encountered an error. Please try again.");
+                });
+            }, MESSAGE_BUFFER_DELAY);
+            
+            messageBuffer.get(phone).timer = timer;
+            
+            await sendMessage(phone, `📸 Got your product image and description! Processing...`);
+            return;
+        }
+        
+        // ============ IMAGE ONLY (No Caption) - Check for existing context ============
+        console.log('🖼️ [IMAGE ONLY] No caption - checking for existing buffer or pending upload');
+        
+        // Check if there's a buffered message waiting for images
+        const buffer = messageBuffer.get(phone);
+        if (buffer) {
+            console.log('📋 [BUFFER] Adding image to buffered message');
+            
+            // Download image
+            const { buffer: imageBuffer, fileSize } = await downloadWhatsAppMedia(imageId);
+            
+            if (fileSize > MAX_IMAGE_SIZE) {
+                await sendMessage(phone, 
+                    `❌ Image is too large (${(fileSize / 1024 / 1024).toFixed(2)}MB).\n` +
+                    "Maximum allowed: 2MB"
+                );
+                return;
+            }
+            
+            // Upload to Cloudinary
+            const uploadResult = await uploadToCloudinary(imageBuffer, {
+                folder: 'badminton-store/products',
+                transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
+                resource_type: 'image'
+            });
+            
+            // Add to buffer
+            if (!buffer.images) buffer.images = [];
+            buffer.images.push({
+                url: uploadResult.secure_url,
+                publicId: uploadResult.public_id
+            });
+            
+            console.log('✅ [BUFFER] Image added. Total images:', buffer.images.length);
+            
+            // Reset timer to wait more for additional images
+            if (buffer.timer) clearTimeout(buffer.timer);
+            buffer.timer = setTimeout(() => {
+                processBufferedMessage(phone, buffer.sellerId).catch(error => {
+                    console.error('❌ [BUFFER] Processing error:', error);
+                    sendMessage(phone, "Sorry, I encountered an error. Please try again.");
+                });
+            }, MESSAGE_BUFFER_DELAY);
+            
+            // Acknowledge receipt
+            await sendMessage(phone, `📸 Image ${buffer.images.length} received. Waiting for more... (or I'll process in a moment)`);
+            return;
+        }
+        
+        // Check for pending image upload (not buffered)
         const pending = pendingMediaUploads.get(phone);
         
         if (!pending || pending.type !== 'image' || Date.now() > pending.expiresAt) {
@@ -235,7 +448,7 @@ async function handleImageMessage(phone, imageId, mimeType) {
         await sendMessage(phone, "⏳ Uploading image...");
         
         // Download and upload image
-        const { buffer, fileSize } = await downloadWhatsAppMedia(imageId);
+        const { buffer: imgBuffer, fileSize } = await downloadWhatsAppMedia(imageId);
         
         if (fileSize > MAX_IMAGE_SIZE) {
             await sendMessage(phone, 
@@ -245,7 +458,7 @@ async function handleImageMessage(phone, imageId, mimeType) {
             return;
         }
         
-        const result = await uploadToCloudinary(buffer, {
+        const result = await uploadToCloudinary(imgBuffer, {
             folder: 'badminton-store/products',
             transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
             resource_type: 'image'

@@ -18,8 +18,10 @@ const {
     REQUIRED_FIELDS, 
     CATEGORY_OPTIONS,
     getMissingRequiredFields,
+    getNextMissingField,
     getFieldPrompt,
-    formatProductSummary 
+    formatProductSummary,
+    getResetTaskState
 } = require("./state");
 const { createSellerTools } = require("./tools");
 const { 
@@ -39,7 +41,7 @@ const SKIP_WORDS = ['skip', 'pass', 'next', 'no', 'none', "don't have", 'dont ha
 
 function createModel() {
     return new ChatGoogleGenerativeAI({
-        model: "gemini-2.5-flash",  // Changed from gemini-2.5-flash-preview-05-20
+        model: "gemini-2.0-flash-lite-001",
         apiKey: process.env.GEMINI_API_KEY,
         temperature: 0.3,
         maxOutputTokens: 1024,
@@ -49,31 +51,69 @@ function createModel() {
 // ============ System Prompt ============
 
 function buildSystemPrompt(state) {
-    let prompt = `You are an intelligent inventory assistant for a badminton equipment store on WhatsApp. You help sellers manage their products.
+    let prompt = `You are an intelligent, conversational inventory assistant for a badminton equipment store on WhatsApp. You help sellers manage products through multi-turn conversations.
+
+PRIMARY GOAL:
+Help sellers quickly create products by collecting required fields across multiple messages.
 
 CAPABILITIES:
 - Create, Update, Delete, and List products
+- Analyze product images to extract details
+- Guide sellers through interactive product creation
 - Manage product images and videos
-- Extract product details from natural language
+
+⚠️ CRITICAL CONTEXT-SWITCH RULES (INPUT_TYPE):
+1. If inputType is "IMAGE_WITH_CAPTION":
+   - This is a NEW product creation request. The caption IS the product description.
+   - DO NOT associate this image with any previous product or pending task.
+   - IGNORE any activeProductId from previous context.
+   - Extract product details from the caption and create a NEW product.
+
+2. If inputType is "IMAGE_ONLY" (no caption):
+   - Check if activeTask is "adding_images" and activeProductId exists.
+   - If YES and lastTaskAt was recent (within 5 minutes): Add image to that product.
+   - If NO or too old: Ask the user which product to add the image to.
+
+3. When a new product description arrives (even without image):
+   - Start FRESH product creation. Clear any previous pending product context.
 
 REQUIRED FIELDS for product creation:
 1. name (product name) - REQUIRED
 2. category (rackets/shoes/accessories/apparel/bags/shuttles) - REQUIRED  
 3. price (in PKR) - REQUIRED
-4. Other fields (brand, description, stock, condition) are optional
+Optional: brand, description, stock, condition, imageUrl
 
-RULES:
-1. Extract as much information as possible from user messages
-2. For prices: "5000", "5k", "5000 rupees", "PKR 5000" all mean 5000
-3. For categories: "racket"/"bat" → rackets; "shoe" → shoes; etc.
-4. Be conversational, friendly, and use emojis appropriately
-5. If user gives partial info for product creation, call create_product with what you have
-6. Always confirm actions with a summary
+MULTI-TURN CONVERSATION RULES:
+1. If user provides partial product info, ACKNOWLEDGE what you received and ASK for the next missing field
+2. Use conversational language with appropriate emojis
+3. Track context across multiple messages within same conversation
+4. When in product creation mode:
+   - Extract ALL data from user message
+   - If fields are still missing, use get_field_prompt tool to generate next question
+   - Confirm collected data before calling create_product
+   - Support user providing one field per message
+
+IMAGE ANALYSIS:
+- If images are provided, analyze them using analyze_product_image tool
+- Extract: product type, brand, condition, visible specs
+- Use analysis to suggest product details to user
+- Include image URL in final product creation
+
+CONVERSATION FLOW for Product Creation:
+1. User mentions product → Enter product creation mode
+2. Extract all available data from message
+3. If missing required fields:
+   - Get next missing field using get_field_prompt
+   - Send friendly prompt to user
+   - Wait for response
+4. Repeat step 3 until all required fields collected
+5. Call create_product with ALL collected data
+6. Confirm creation with summary
 
 PRICE PARSING:
 - "5k" or "5K" = 5000
 - "25,000" = 25000
-- "15k" = 15000
+- "Rate 9999/=" = 9999
 
 CATEGORY MAPPING:
 - racket, bat, racquette → rackets
@@ -82,16 +122,27 @@ CATEGORY MAPPING:
 - clothes, clothing, shirt → apparel
 - bag → bags
 - shuttle, shuttlecock, birdie → shuttles
+
+RESPONSE TYPES:
+- DIRECT_MESSAGE: Just respond conversationally
+- COLLECT_FIELD: Ask for a specific missing field
+- COLLECT_MORE_INFO: User is providing product info, extract and ask for next field
+- CREATE_PRODUCT: All fields ready, create the product
+- MULTIPLE_OPTIONS: Offer choices when ambiguous
 `;
 
-    // Add context if in product creation mode
-    if (state.mode === 'creating_product' && Object.keys(state.pendingProduct).length > 0) {
+    // Add multi-turn context if user is in product creation
+    if (state.conversationStep && state.conversationStep !== 'idle') {
         prompt += `
-CURRENT CONTEXT: User is creating a product.
-Pending data: ${JSON.stringify(state.pendingProduct)}
-Missing fields: ${state.missingFields.join(', ')}
+CURRENT CONVERSATION STATE:
+- Step: ${state.conversationStep}
+- Pending Product Data: ${JSON.stringify(state.pendingProduct || {})}
+- Product Image: ${state.pendingProductImage ? 'Yes (analyzing...)' : 'No'}
+- Session Duration: ${state.sessionStartTime ? Math.round((Date.now() - state.sessionStartTime) / 1000) + 's' : 'New'}
 
-The user's message is likely providing missing information. Extract the value and call create_product with all data combined.
+TASK: Continue from where we left off. Extract any new information from user message and either:
+1. Ask for the next missing field (use get_field_prompt tool)
+2. Create the product if all required fields are now available
 `;
     }
 
@@ -175,7 +226,36 @@ async function responseNode(state) {
         try {
             const toolResult = JSON.parse(lastMessage.content);
             
-            // Handle different action types
+            // Handle image analysis
+            if (toolResult.action === 'IMAGE_ANALYZED') {
+                const analysis = toolResult.analysis || {};
+                const updateState = {
+                    productImageAnalysis: analysis,
+                    conversationStep: 'analyzing_image',
+                };
+                
+                // Suggest next field to ask for
+                const nextField = getNextMissingField(state.pendingProduct || {});
+                if (nextField) {
+                    const fieldPrompt = getFieldPrompt(nextField, analysis.productType);
+                    updateState.response = `📸 *Image analyzed!*\n\nFound: ${analysis.visibleDetails || 'Product details'}\n\n${fieldPrompt}`;
+                    updateState.conversationStep = 'asking_' + nextField;
+                } else {
+                    updateState.response = `✅ Image analyzed! Product details ready. Creating...`;
+                }
+                
+                return updateState;
+            }
+            
+            // Handle field prompt generation
+            if (toolResult.action === 'FIELD_PROMPT_GENERATED') {
+                return {
+                    conversationStep: 'asking_' + toolResult.field,
+                    response: toolResult.prompt,
+                };
+            }
+            
+            // Handle show help
             if (toolResult.action === 'SHOW_HELP') {
                 return {
                     response: formatHelpMessage(),
@@ -190,7 +270,10 @@ async function responseNode(state) {
             
             if (toolResult.action === 'AWAIT_IMAGES') {
                 return {
-                    mode: 'adding_images',
+                    conversationStep: 'adding_images',
+                    activeTask: 'adding_images',
+                    activeProductId: toolResult.productId || null,
+                    lastTaskAt: Date.now(),
                     response: formatAwaitImagesMessage(toolResult),
                     actionResult: toolResult,
                 };
@@ -198,18 +281,25 @@ async function responseNode(state) {
             
             if (toolResult.action === 'AWAIT_VIDEO') {
                 return {
-                    mode: 'adding_video',
+                    conversationStep: 'adding_video',
+                    activeTask: 'adding_video',
+                    activeProductId: toolResult.productId || null,
+                    lastTaskAt: Date.now(),
                     response: formatAwaitVideoMessage(toolResult),
                     actionResult: toolResult,
                 };
             }
             
-            // Product created successfully
+            // Product created successfully - CLEAR all task state
             if (toolResult.success && toolResult.product) {
                 return {
-                    mode: null, // Reset mode
-                    pendingProduct: {}, // Clear pending
-                    missingFields: [],
+                    conversationStep: 'idle',
+                    activeTask: 'idle',
+                    activeProductId: null,
+                    pendingProduct: {},
+                    pendingProductImage: null,
+                    productImageAnalysis: {},
+                    inputType: null,
                     response: formatProductCreatedMessage(toolResult),
                 };
             }
@@ -224,7 +314,7 @@ async function responseNode(state) {
             // Generic success message
             if (toolResult.success && toolResult.message) {
                 return {
-                    mode: null,
+                    conversationStep: 'idle',
                     response: `✅ ${toolResult.message}`,
                 };
             }

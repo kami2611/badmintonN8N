@@ -18,6 +18,7 @@ const CreateProductSchema = z.object({
     brand: z.string().optional().default("").describe("Brand name"),
     description: z.string().optional().default("").describe("Product description"),
     condition: z.enum(['new', 'used']).optional().default('new').describe("Product condition"),
+    imageUrl: z.string().optional().describe("URL of product image from buffered message"),
 });
 
 const UpdateProductSchema = z.object({
@@ -44,6 +45,15 @@ const ProductMediaSchema = z.object({
 const DeleteImageSchema = z.object({
     productName: z.string().describe("Name of the product"),
     imageNumber: z.number().int().min(1).max(5).describe("Image number to delete (1-5)"),
+});
+
+const AnalyzeProductImageSchema = z.object({
+    imageUrl: z.string().describe("URL of the product image to analyze"),
+});
+
+const GetFieldPromptSchema = z.object({
+    fieldName: z.enum(['name', 'category', 'price', 'description', 'brand', 'stock', 'condition']).describe("The field to generate a prompt for"),
+    context: z.string().optional().describe("Additional context about the product (e.g., from image analysis)"),
 });
 
 // ============ Tool Factory Functions ============
@@ -582,6 +592,104 @@ const showStatusTool = new DynamicStructuredTool({
 });
 
 /**
+ * Analyze product image tool - Uses Gemini's vision to extract product info
+ */
+function analyzeProductImageTool() {
+    return new DynamicStructuredTool({
+        name: "analyze_product_image",
+        description: "Analyze a product image to extract information like name, category, condition, and brand. Returns extracted data.",
+        schema: AnalyzeProductImageSchema,
+        func: async (input) => {
+            try {
+                const { GoogleGenerativeAI } = require("@google/generative-ai");
+                const apiKey = process.env.GOOGLE_API_KEY;
+                
+                if (!apiKey) {
+                    return JSON.stringify({
+                        success: false,
+                        error: "Vision API not configured",
+                    });
+                }
+                
+                const client = new GoogleGenerativeAI(apiKey);
+                const model = client.getGenerativeModel({ model: "gemini-2.0-flash-lite-001" });
+                
+                const visionPrompt = `You are a badminton equipment expert. Analyze this product image and extract:
+1. Product type/name (racket, shoe, shuttle, bag, apparel, etc.)
+2. Brand if visible
+3. Estimated condition (new, like-new, good, fair, poor)
+4. Color/variant if notable
+5. Any visible damage or wear
+
+Return ONLY a JSON object with these fields: {
+    "productType": "category name",
+    "brand": "brand or 'unknown'",
+    "condition": "new/used assessment",
+    "estimatedPrice": "price range estimation or null",
+    "visibleDetails": "2-3 key observable features"
+}`;
+                
+                const response = await model.generateContent([
+                    {
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: Buffer.from(await fetch(input.imageUrl).then(r => r.arrayBuffer())).toString('base64'),
+                        },
+                    },
+                    visionPrompt,
+                ]);
+                
+                try {
+                    const responseText = response.response.text();
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    const analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                    
+                    return JSON.stringify({
+                        success: true,
+                        analysis,
+                        action: 'IMAGE_ANALYZED',
+                    });
+                } catch (parseError) {
+                    return JSON.stringify({
+                        success: true,
+                        analysis: { rawResponse: response.response.text() },
+                        action: 'IMAGE_ANALYZED',
+                    });
+                }
+            } catch (error) {
+                return JSON.stringify({
+                    success: false,
+                    error: `Image analysis failed: ${error.message}`,
+                });
+            }
+        },
+    });
+}
+
+/**
+ * Get field prompt tool - Generates contextual prompts for field collection
+ */
+function getFieldPromptTool() {
+    return new DynamicStructuredTool({
+        name: "get_field_prompt",
+        description: "Generate a user-friendly prompt for collecting a specific product field during multi-turn conversation.",
+        schema: GetFieldPromptSchema,
+        func: async (input) => {
+            const { getFieldPrompt } = require("./state");
+            const prompt = getFieldPrompt(input.fieldName);
+            
+            return JSON.stringify({
+                success: true,
+                field: input.fieldName,
+                prompt: prompt,
+                context: input.context || null,
+                action: 'FIELD_PROMPT_GENERATED',
+            });
+        },
+    });
+}
+
+/**
  * Create all tools for a seller
  * @param {string} sellerId - The seller's MongoDB ObjectId
  * @returns {Array} Array of tool instances
@@ -598,6 +706,8 @@ function createSellerTools(sellerId) {
         deleteProductImageTool(sellerId),
         deleteAllProductImagesTool(sellerId),
         deleteProductVideoTool(sellerId),
+        analyzeProductImageTool(),
+        getFieldPromptTool(),
         showHelpTool,
         showStatusTool,
     ];

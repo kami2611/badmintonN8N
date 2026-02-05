@@ -64,6 +64,58 @@ const SellerAgentState = Annotation.Root({
         reducer: (_, update) => update,
         default: () => null,
     }),
+    
+    // NEW: Current step in product creation conversation
+    // 'idle' | 'awaiting_image' | 'analyzing_image' | 'asking_name' | 'asking_price' | 'asking_category' | 'confirming'
+    conversationStep: Annotation({
+        reducer: (_, update) => update,
+        default: () => 'idle',
+    }),
+    
+    // NEW: Image URL being processed in current workflow
+    pendingProductImage: Annotation({
+        reducer: (_, update) => update,
+        default: () => null,
+    }),
+    
+    // NEW: AI analysis results from image (extracted fields)
+    // { category, brand, condition, suggestedName, confidence }
+    productImageAnalysis: Annotation({
+        reducer: (current, update) => ({ ...current, ...update }),
+        default: () => ({}),
+    }),
+    
+    // NEW: Timestamp of when current product creation started (for timeout)
+    sessionStartTime: Annotation({
+        reducer: (_, update) => update,
+        default: () => null,
+    }),
+    
+    // NEW: Active product ID when adding images/video to an existing product
+    activeProductId: Annotation({
+        reducer: (_, update) => update,
+        default: () => null,
+    }),
+    
+    // NEW: Current active task type
+    // 'idle' | 'creating_product' | 'adding_images' | 'adding_video'
+    activeTask: Annotation({
+        reducer: (_, update) => update,
+        default: () => 'idle',
+    }),
+    
+    // NEW: Timestamp of last task interaction (for "recent" checks)
+    lastTaskAt: Annotation({
+        reducer: (_, update) => update,
+        default: () => null,
+    }),
+    
+    // NEW: Input type marker from route (helps agent distinguish context)
+    // 'IMAGE_WITH_CAPTION' | 'IMAGE_ONLY' | 'TEXT_ONLY' | null
+    inputType: Annotation({
+        reducer: (_, update) => update,
+        default: () => null,
+    }),
 });
 
 // Required fields for product creation
@@ -92,28 +144,39 @@ function getMissingRequiredFields(pendingProduct) {
 }
 
 /**
+ * NEW: Get the next field to ask for during multi-turn collection
+ */
+function getNextMissingField(pendingProduct) {
+    const missing = getMissingRequiredFields(pendingProduct);
+    return missing.length > 0 ? missing[0] : null;
+}
+
+/**
  * Generate user-friendly prompt for a missing field
  */
 function getFieldPrompt(field, category = null) {
     const prompts = {
-        name: "📝 What would you like to *name* this product?",
-        category: `📦 What *category* does this product belong to?\n\nOptions:\n• rackets\n• shoes\n• accessories\n• apparel\n• bags\n• shuttles`,
-        price: "💰 What *price* (in PKR) would you like to set?",
-        description: "📄 Add a brief *description* for this product (or say 'skip'):",
-        brand: "🏷️ What *brand* is this product? (or say 'skip'):",
-        stock: "📊 How many units in *stock*? (default: 1)",
-        condition: "✨ Is this product *new* or *used*?"
+        name: "📝 What's the *product name*? (e.g., 'Yonex Astrox 77')",
+        category: "📦 What *category*?\n• rackets\n• shoes\n• accessories\n• apparel\n• bags\n• shuttles",
+        price: "💰 What's the *price* in PKR?",
+        description: "📄 Brief *description*? (or say 'skip')",
+        brand: "🏷️ What *brand*? (or say 'skip')",
+        stock: "📊 How many in *stock*? (default: 1)",
+        condition: "✨ Is it *new* or *used*?"
     };
     
     return prompts[field] || `Please provide the ${field}:`;
 }
 
 /**
- * Format a summary of collected product data
+ * Format a summary of collected product data with image info
  */
-function formatProductSummary(product, missing = []) {
+function formatProductSummary(product, missing = [], imageUrl = null) {
     let summary = "📋 *Product Details So Far:*\n\n";
     
+    if (imageUrl) {
+        summary += `📸 Image: Attached\n`;
+    }
     if (product.name) summary += `• Name: ${product.name}\n`;
     if (product.category) summary += `• Category: ${product.category}\n`;
     if (product.price) summary += `• Price: PKR ${product.price}\n`;
@@ -129,11 +192,26 @@ function formatProductSummary(product, missing = []) {
     return summary;
 }
 
+// Helper to reset task state (for context switch)
+function getResetTaskState() {
+    return {
+        activeProductId: null,
+        activeTask: 'idle',
+        pendingProduct: {},
+        pendingProductImage: null,
+        productImageAnalysis: {},
+        conversationStep: 'idle',
+        inputType: null,
+    };
+}
+
 module.exports = {
     SellerAgentState,
     REQUIRED_FIELDS,
     CATEGORY_OPTIONS,
     getMissingRequiredFields,
+    getNextMissingField,
     getFieldPrompt,
-    formatProductSummary
+    formatProductSummary,
+    getResetTaskState
 };

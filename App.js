@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const path = require('path');
+const { initializeCheckpointerFromMongoose, closeCheckpointer } = require('./services/langgraph/checkpointer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,7 +11,15 @@ const PORT = process.env.PORT || 3000;
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/badminton_store';
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(async () => {
+        console.log('Connected to MongoDB');
+        try {
+            await initializeCheckpointerFromMongoose();
+            console.log('✅ LangGraph checkpointer initialized');
+        } catch (err) {
+            console.error('❌ Checkpointer initialization error:', err);
+        }
+    })
     .catch(err => console.error('MongoDB connection error:', err));
 
 // View engine setup
@@ -73,4 +82,11 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('Shutting down gracefully...');
+    await closeCheckpointer();
+    process.exit(0);
 });
