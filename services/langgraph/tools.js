@@ -8,6 +8,166 @@ const { DynamicStructuredTool } = require("@langchain/core/tools");
 const Product = require("../../models/Product");
 const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require("../../config/cloudinary");
 
+// ============ Product Info Extraction Helper ============
+
+/**
+ * Known badminton brands for detection
+ */
+const KNOWN_BRANDS = [
+    'yonex', 'victor', 'li-ning', 'lining', 'apacs', 'fleet', 'carlton', 
+    'babolat', 'wilson', 'ashaway', 'fz forza', 'forza', 'kawasaki',
+    'adidas', 'asics', 'mizuno', 'nike', 'head', 'dunlop', 'prince',
+    'kumpoo', 'yang yang', 'protech', 'mmoa', 'gosen', 'toalson'
+];
+
+/**
+ * Category keyword mappings
+ */
+const CATEGORY_KEYWORDS = {
+    rackets: ['racket', 'racquet', 'bat', 'astrox', 'nanoflare', 'arcsaber', 'duora', 'voltric', 'thruster', 'jetspeed', 'auraspeed', 'hypernano', 'brave sword'],
+    shoes: ['shoe', 'shoes', 'footwear', 'shb', 'eclipsion', 'aerus', 'cascade'],
+    shuttles: ['shuttle', 'shuttlecock', 'birdie', 'feather', 'mavis', 'aerosensa', 'as-', 'as50', 'as40', 'as30'],
+    bags: ['bag', 'backpack', 'kitbag', 'racket bag', 'kit bag'],
+    apparel: ['shirt', 'shorts', 'skirt', 'jersey', 'tshirt', 't-shirt', 'cloth', 'dress', 'jacket', 'trouser'],
+    accessories: ['grip', 'string', 'overgrip', 'grommet', 'wristband', 'headband', 'towel', 'socks', 'sock']
+};
+
+/**
+ * Extract product info from description text
+ * @param {string} text - Product description
+ * @returns {Object} Extracted fields with confidence
+ */
+function extractProductInfo(text) {
+    const lowerText = text.toLowerCase();
+    const result = {
+        name: null,
+        price: null,
+        category: null,
+        brand: null,
+        condition: 'new',
+        extracted: []
+    };
+    
+    // ===== PRICE EXTRACTION =====
+    const pricePatterns = [
+        /(?:rs\.?|pkr|price|rate)[:\s]*([\d,]+)/i,
+        /([\d,]+)(?:\s*\/[=-]|\s*rs|\s*pkr)/i,
+        /([\d]+)\s*k\b/i,
+        /\b([\d]{4,})\b/  // 4+ digit number as fallback
+    ];
+    
+    for (const pattern of pricePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+            let priceStr = match[1].replace(/,/g, '');
+            let price = parseInt(priceStr);
+            
+            // Handle "5k" = 5000
+            if (/k\b/i.test(match[0]) && price < 1000) {
+                price = price * 1000;
+            }
+            
+            if (price > 0 && price < 10000000) { // Sanity check
+                result.price = price;
+                result.extracted.push(`Price: Rs. ${price.toLocaleString()}`);
+                break;
+            }
+        }
+    }
+    
+    // ===== BRAND EXTRACTION =====
+    for (const brand of KNOWN_BRANDS) {
+        if (lowerText.includes(brand)) {
+            result.brand = brand.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            // Fix common brand capitalizations
+            if (result.brand.toLowerCase() === 'li-ning' || result.brand.toLowerCase() === 'lining') {
+                result.brand = 'Li-Ning';
+            }
+            result.extracted.push(`Brand: ${result.brand}`);
+            break;
+        }
+    }
+    
+    // ===== CATEGORY EXTRACTION =====
+    for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+        for (const keyword of keywords) {
+            if (lowerText.includes(keyword)) {
+                result.category = category;
+                result.extracted.push(`Category: ${category}`);
+                break;
+            }
+        }
+        if (result.category) break;
+    }
+    
+    // ===== CONDITION EXTRACTION =====
+    const usedKeywords = ['used', 'second hand', 'secondhand', '2nd hand', 'pre-owned', 'preowned', 'old'];
+    for (const keyword of usedKeywords) {
+        if (lowerText.includes(keyword)) {
+            result.condition = 'used';
+            result.extracted.push(`Condition: Used`);
+            break;
+        }
+    }
+    if (result.condition === 'new' && (lowerText.includes('brand new') || lowerText.includes('new'))) {
+        result.extracted.push(`Condition: New`);
+    }
+    
+    // ===== NAME EXTRACTION =====
+    // Try to build name from brand + first part of description or model number
+    const modelPatterns = [
+        /\b(astrox\s*\d+[a-z]*)/i,
+        /\b(nanoflare\s*\d+[a-z]*)/i,
+        /\b(arcsaber\s*\d+[a-z]*)/i,
+        /\b(voltric\s*\d+[a-z]*)/i,
+        /\b(duora\s*\d+[a-z]*)/i,
+        /\b(thruster\s*[a-z]*\d*)/i,
+        /\b(jetspeed\s*\d+[a-z]*)/i,
+        /\b(aerus\s*\d+[a-z]*)/i,
+        /\b(eclipsion\s*\d+[a-z]*)/i,
+        /\b(shb\s*\d+[a-z]*)/i,
+        /\b(as-?\d+)/i,
+        /\b(mavis\s*\d+)/i
+    ];
+    
+    let modelName = null;
+    for (const pattern of modelPatterns) {
+        const match = text.match(pattern);
+        if (match) {
+            modelName = match[1].trim();
+            break;
+        }
+    }
+    
+    if (result.brand && modelName) {
+        result.name = `${result.brand} ${modelName}`;
+    } else if (result.brand) {
+        // Use first line or first few words as name
+        const firstLine = text.split(/[\n,.]/)[0].trim();
+        if (firstLine.length > 3 && firstLine.length < 60) {
+            result.name = firstLine;
+        } else {
+            result.name = `${result.brand} Product`;
+        }
+    } else if (modelName) {
+        result.name = modelName;
+    } else {
+        // Fallback: use first line or truncated description
+        const firstLine = text.split(/[\n,.]/)[0].trim();
+        if (firstLine.length > 3 && firstLine.length < 60) {
+            result.name = firstLine;
+        } else {
+            result.name = text.substring(0, 40).trim() + (text.length > 40 ? '...' : '');
+        }
+    }
+    
+    if (result.name) {
+        result.extracted.push(`Name: ${result.name}`);
+    }
+    
+    return result;
+}
+
 // ============ Zod Schemas ============
 
 const CreateProductSchema = z.object({
@@ -56,6 +216,11 @@ const GetFieldPromptSchema = z.object({
     context: z.string().optional().describe("Additional context about the product (e.g., from image analysis)"),
 });
 
+const QuickCreateProductSchema = z.object({
+    description: z.string().describe("The product description/caption from the seller"),
+    imageUrl: z.string().describe("URL of the product image (required)"),
+});
+
 // ============ Tool Factory Functions ============
 
 /**
@@ -72,7 +237,7 @@ function createProductTool(sellerId) {
                 const productData = {
                     ...input,
                     seller: sellerId,
-                    images: [],
+                    images: input.imageUrl ? [input.imageUrl] : [],
                     description: input.description || `${input.name} - Quality badminton equipment`,
                 };
                 
@@ -89,6 +254,7 @@ function createProductTool(sellerId) {
                         stock: newProduct.stock,
                         brand: newProduct.brand,
                         condition: newProduct.condition,
+                        hasImage: !!input.imageUrl,
                     },
                     message: `Product "${newProduct.name}" created successfully!`
                 });
@@ -690,6 +856,77 @@ function getFieldPromptTool() {
 }
 
 /**
+ * Quick Create Product Tool - Creates product from image + description in one step
+ * Automatically extracts price, category, brand, condition from description
+ * @param {string} sellerId - The seller's MongoDB ID
+ */
+function quickCreateProductTool(sellerId) {
+    return new DynamicStructuredTool({
+        name: "quick_create_product",
+        description: "Create a product quickly from an image with caption/description. Automatically extracts price, category, brand from the description. Use this when seller sends image with caption (INPUT_TYPE: IMAGE_WITH_CAPTION).",
+        schema: QuickCreateProductSchema,
+        func: async (input) => {
+            try {
+                console.log('📦 [QUICK CREATE] Starting with description:', input.description.substring(0, 50));
+                
+                // Extract product info from description
+                const extracted = extractProductInfo(input.description);
+                
+                console.log('📦 [QUICK CREATE] Extracted:', extracted);
+                
+                // Build product data with extracted or default values
+                const productData = {
+                    name: extracted.name || input.description.substring(0, 50),
+                    description: input.description,
+                    price: extracted.price || 0,
+                    category: extracted.category || 'accessories',
+                    brand: extracted.brand || '',
+                    condition: extracted.condition || 'new',
+                    stock: 1,
+                    seller: sellerId,
+                    images: [input.imageUrl],
+                };
+                
+                const newProduct = new Product(productData);
+                await newProduct.save();
+                
+                console.log('✅ [QUICK CREATE] Product created:', newProduct._id);
+                
+                // Build response with extracted fields info
+                const extractedInfo = [];
+                if (extracted.price) extractedInfo.push(`Price: Rs. ${extracted.price.toLocaleString()}`);
+                if (extracted.category) extractedInfo.push(`Category: ${extracted.category}`);
+                if (extracted.brand) extractedInfo.push(`Brand: ${extracted.brand}`);
+                if (extracted.condition) extractedInfo.push(`Condition: ${extracted.condition}`);
+                extractedInfo.push(`Name: ${productData.name}`);
+                
+                return JSON.stringify({
+                    success: true,
+                    product: {
+                        id: newProduct._id.toString(),
+                        name: productData.name,
+                        description: input.description,
+                        price: productData.price,
+                        category: productData.category,
+                        brand: productData.brand,
+                        condition: productData.condition,
+                        hasImage: true,
+                    },
+                    extractedFields: extractedInfo,
+                    message: `Product created successfully!`
+                });
+            } catch (error) {
+                console.error('❌ [QUICK CREATE] Error:', error);
+                return JSON.stringify({
+                    success: false,
+                    error: error.message
+                });
+            }
+        },
+    });
+}
+
+/**
  * Create all tools for a seller
  * @param {string} sellerId - The seller's MongoDB ObjectId
  * @returns {Array} Array of tool instances
@@ -697,6 +934,7 @@ function getFieldPromptTool() {
 function createSellerTools(sellerId) {
     return [
         createProductTool(sellerId),
+        quickCreateProductTool(sellerId),
         updateProductTool(sellerId),
         deleteProductTool(sellerId),
         listProductsTool(sellerId),
@@ -715,9 +953,11 @@ function createSellerTools(sellerId) {
 
 module.exports = {
     createSellerTools,
+    extractProductInfo,
     // Export schemas for reference
     CreateProductSchema,
     UpdateProductSchema,
     DeleteProductSchema,
     ListProductsSchema,
+    QuickCreateProductSchema,
 };

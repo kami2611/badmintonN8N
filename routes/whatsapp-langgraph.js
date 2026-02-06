@@ -128,14 +128,23 @@ async function processBufferedMessage(phone, sellerId) {
     // Determine input type marker for agent
     const inputType = buffer.inputType || (buffer.images?.length > 0 ? 'TEXT_WITH_IMAGE' : 'TEXT_ONLY');
     
-    let fullMessage = `[INPUT_TYPE: ${inputType}]\n\n${buffer.text}`;
+    // Format message clearly for the agent to parse
+    let fullMessage = `[INPUT_TYPE: ${inputType}]`;
     
-    // Append image descriptions if any
-    if (buffer.images && buffer.images.length > 0) {
-        fullMessage += `\n\n📸 [${buffer.images.length} image(s) attached]\n`;
-        buffer.images.forEach((img, i) => {
-            fullMessage += `Image ${i + 1} URL: ${img.url}\n`;
-        });
+    // For IMAGE_WITH_CAPTION, format clearly so agent can easily extract imageUrl
+    if (inputType === 'IMAGE_WITH_CAPTION' && buffer.images?.length > 0) {
+        fullMessage += `\n[IMAGE_URL: ${buffer.images[0].url}]`;
+        fullMessage += `\n[DESCRIPTION]: ${buffer.text}`;
+    } else {
+        fullMessage += `\n\n${buffer.text}`;
+        
+        // Append image URLs if any (for other input types)
+        if (buffer.images && buffer.images.length > 0) {
+            fullMessage += `\n\n📸 [${buffer.images.length} image(s) attached]\n`;
+            buffer.images.forEach((img, i) => {
+                fullMessage += `Image ${i + 1} URL: ${img.url}\n`;
+            });
+        }
     }
     
     console.log('📋 [BUFFER] Processing with inputType:', inputType, 'images:', buffer.images?.length || 0);
@@ -360,7 +369,7 @@ async function handleImageMessage(phone, imageId, mimeType, caption = null) {
             
             messageBuffer.get(phone).timer = timer;
             
-            await sendMessage(phone, `📸 Got your product image and description! Processing...`);
+            await sendMessage(phone, `📸 Got it! Creating your product...`);
             return;
         }
         

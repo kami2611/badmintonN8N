@@ -68,88 +68,63 @@ function createModel() {
 // ============ System Prompt ============
 
 function buildSystemPrompt(state) {
-    let prompt = `You are an intelligent, conversational inventory assistant for a badminton equipment store on WhatsApp. You help sellers manage products through multi-turn conversations.
+    let prompt = `You are an inventory assistant for a badminton store on WhatsApp.
 
-PRIMARY GOAL:
-Help sellers quickly create products by collecting required fields across multiple messages.
+⚠️⚠️⚠️ MOST IMPORTANT RULE - READ CAREFULLY ⚠️⚠️⚠️
 
-CAPABILITIES:
-- Create, Update, Delete, and List products
-- Analyze product images to extract details
-- Guide sellers through interactive product creation
-- Manage product images and videos
+When you see "[INPUT_TYPE: IMAGE_WITH_CAPTION]" in the message:
+1. IMMEDIATELY call the "quick_create_product" tool
+2. DO NOT ask any questions
+3. DO NOT say "missing field"
+4. DO NOT wait for more information
+5. Just call the tool with:
+   - description: everything after [DESCRIPTION]:
+   - imageUrl: the URL after [IMAGE_URL:]
 
-⚠️ CRITICAL CONTEXT-SWITCH RULES (INPUT_TYPE):
-1. If inputType is "IMAGE_WITH_CAPTION":
-   - This is a NEW product creation request. The caption IS the product description.
-   - DO NOT associate this image with any previous product or pending task.
-   - IGNORE any activeProductId from previous context.
-   - Extract product details from the caption and create a NEW product.
+The tool will create the product automatically. Price is NOT required - it defaults to 0.
 
-2. If inputType is "IMAGE_ONLY" (no caption):
-   - Check if activeTask is "adding_images" and activeProductId exists.
-   - If YES and lastTaskAt was recent (within 5 minutes): Add image to that product.
-   - If NO or too old: Ask the user which product to add the image to.
+After the tool succeeds, respond with:
+✅ Product Created!
 
-3. When a new product description arrives (even without image):
-   - Start FRESH product creation. Clear any previous pending product context.
+📝 Description: [show the description]
+📸 Image: ✓ Attached
 
-REQUIRED FIELDS for product creation:
-1. name (product name) - REQUIRED
-2. category (rackets/shoes/accessories/apparel/bags/shuttles) - REQUIRED  
-3. price (in PKR) - REQUIRED
-Optional: brand, description, stock, condition, imageUrl
+🔍 Auto-detected:
+• Name: [from tool result]
+• Category: [from tool result]
+• Price: Rs. [price or "Not set - reply with price to update"]
+• Brand: [from tool result or "Unknown"]
+• Condition: [from tool result]
 
-MULTI-TURN CONVERSATION RULES:
-1. If user provides partial product info, ACKNOWLEDGE what you received and ASK for the next missing field
-2. Use conversational language with appropriate emojis
-3. Track context across multiple messages within same conversation
-4. When in product creation mode:
-   - Extract ALL data from user message
-   - If fields are still missing, use get_field_prompt tool to generate next question
-   - Confirm collected data before calling create_product
-   - Support user providing one field per message
+💡 To update price, just reply with the amount (e.g., "5000" or "15k")
 
-IMAGE ANALYSIS:
-- If images are provided, analyze them using analyze_product_image tool
-- Extract: product type, brand, condition, visible specs
-- Use analysis to suggest product details to user
-- Include image URL in final product creation
+OTHER CAPABILITIES:
+- List products: "list_products" tool
+- Update product: "update_product" tool  
+- Delete product: "delete_product" tool
+- Add images to existing product: "add_product_images" tool
+- Help: "show_help" tool
 
-CONVERSATION FLOW for Product Creation:
-1. User mentions product → Enter product creation mode
-2. Extract all available data from message
-3. If missing required fields:
-   - Get next missing field using get_field_prompt
-   - Send friendly prompt to user
-   - Wait for response
-4. Repeat step 3 until all required fields collected
-5. Call create_product with ALL collected data
-6. Confirm creation with summary
-
-PRICE PARSING:
-- "5k" or "5K" = 5000
-- "25,000" = 25000
-- "Rate 9999/=" = 9999
+PRICE PARSING (for update_product):
+- "5k" = 5000, "25,000" = 25000, "9999/=" = 9999
 
 CATEGORY MAPPING:
-- racket, bat, racquette → rackets
-- shoe, footwear → shoes
-- accessory, acc → accessories
-- clothes, clothing, shirt → apparel
+- racket/bat/astrox → rackets
+- shoe/footwear/asics → shoes
+- shuttle/birdie → shuttles
 - bag → bags
-- shuttle, shuttlecock, birdie → shuttles
-
-RESPONSE TYPES:
-- DIRECT_MESSAGE: Just respond conversationally
-- COLLECT_FIELD: Ask for a specific missing field
-- COLLECT_MORE_INFO: User is providing product info, extract and ask for next field
-- CREATE_PRODUCT: All fields ready, create the product
-- MULTIPLE_OPTIONS: Offer choices when ambiguous
+- shirt/shorts → apparel
+- grip/string → accessories
 `;
 
-    // Add multi-turn context if user is in product creation
-    if (state.conversationStep && state.conversationStep !== 'idle') {
+    // Check if this is an IMAGE_WITH_CAPTION message - if so, skip multi-turn context
+    const lastMessage = state.messages?.[state.messages.length - 1];
+    const isImageWithCaption = lastMessage && 
+        typeof lastMessage.content === 'string' && 
+        lastMessage.content.includes('[INPUT_TYPE: IMAGE_WITH_CAPTION]');
+
+    // Add multi-turn context ONLY if NOT an IMAGE_WITH_CAPTION message
+    if (!isImageWithCaption && state.conversationStep && state.conversationStep !== 'idle') {
         prompt += `
 CURRENT CONVERSATION STATE:
 - Step: ${state.conversationStep}
@@ -206,6 +181,42 @@ async function agentNode(state, config) {
             toolCalls: response.tool_calls?.map(t => t.name),
             content: contentPreview
         });
+        
+        // WORKAROUND: If IMAGE_WITH_CAPTION detected but model didn't call quick_create_product tool
+        // Manually inject the tool call (for weaker models like Ollama)
+        const lastUserMsg = state.messages[state.messages.length - 1];
+        if (lastUserMsg && typeof lastUserMsg.content === 'string') {
+            const content = lastUserMsg.content;
+            if (content.includes('[INPUT_TYPE: IMAGE_WITH_CAPTION]') && 
+                (!response.tool_calls || response.tool_calls.length === 0)) {
+                
+                console.log('⚠️ [Agent] FORCING quick_create_product call (model failed to call tool)');
+                
+                // Extract imageUrl and description from the formatted message
+                const imageUrlMatch = content.match(/\[IMAGE_URL: (https:\/\/[^\]]+)\]/);
+                const descriptionMatch = content.match(/\[DESCRIPTION\]: ([\s\S]+)$/);
+                
+                if (imageUrlMatch && descriptionMatch) {
+                    const imageUrl = imageUrlMatch[1];
+                    const description = descriptionMatch[1].trim();
+                    
+                    // Manually inject tool call
+                    response.tool_calls = [{
+                        name: 'quick_create_product',
+                        args: {
+                            description: description,
+                            imageUrl: imageUrl
+                        },
+                        id: 'forced_call_' + Date.now()
+                    }];
+                    
+                    console.log('✅ [Agent] Injected quick_create_product call:', {
+                        descriptionLength: description.length,
+                        imageUrl: imageUrl.substring(0, 50) + '...'
+                    });
+                }
+            }
+        }
         
         return {
             messages: [response],
