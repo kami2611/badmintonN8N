@@ -4,7 +4,6 @@ const Seller = require('../models/Seller');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const { uploadProductMedia, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
-const { analyzeProductForForm } = require('../services/aiService');
 
 // Seller auth middleware
 const sellerAuth = (req, res, next) => {
@@ -14,37 +13,6 @@ const sellerAuth = (req, res, next) => {
         res.redirect('/seller/login');
     }
 };
-
-// Seller auth middleware for API (returns JSON)
-const sellerAuthApi = (req, res, next) => {
-    if (req.session && req.session.sellerId) {
-        next();
-    } else {
-        res.status(401).json({ success: false, error: 'Not authenticated' });
-    }
-};
-
-// ========== AI-Powered Product Form Fill (Text Only - No Vision) ==========
-router.post('/products/ai-fill', sellerAuthApi, async (req, res) => {
-    try {
-        const { productName, category } = req.body;
-        
-        if (!productName || !category) {
-            return res.status(400).json({ success: false, error: 'Product name and category are required' });
-        }
-        
-        const result = await analyzeProductForForm(productName, category);
-        
-        if (result.success) {
-            res.json({ success: true, data: result.data });
-        } else {
-            res.status(500).json({ success: false, error: result.error || 'AI analysis failed' });
-        }
-    } catch (error) {
-        console.error('AI Fill Error:', error);
-        res.status(500).json({ success: false, error: 'Failed to generate product details' });
-    }
-});
 
 // Seller Logout
 router.get('/logout', (req, res) => {
@@ -247,15 +215,11 @@ router.get('/dashboard', sellerAuth, async (req, res) => {
 router.get('/products', sellerAuth, async (req, res) => {
     try {
         const sellerId = req.session.sellerId;
-        const { category, search } = req.query;
+        const { search } = req.query;
         let query = { seller: sellerId };
         
-        if (category) query.category = category;
         if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { brand: { $regex: search, $options: 'i' } }
-            ];
+            query.description = { $regex: search, $options: 'i' };
         }
         
         const products = await Product.find(query).sort({ createdAt: -1 });
@@ -263,7 +227,6 @@ router.get('/products', sellerAuth, async (req, res) => {
             title: 'My Products',
             storeName: req.session.storeName,
             products,
-            category: category || '',
             search: search || ''
         });
     } catch (error) {
@@ -285,7 +248,7 @@ router.get('/products/add', sellerAuth, (req, res) => {
 
 // Multer middleware for product media
 const productMediaUpload = uploadProductMedia.fields([
-    { name: 'images', maxCount: 5 },
+    { name: 'images', maxCount: 7 },
     { name: 'video', maxCount: 1 }
 ]);
 
@@ -304,30 +267,13 @@ router.post('/products/add', sellerAuth, (req, res) => {
         }
         
         try {
-            const {
-                name, description, price, category, brand,
-                existingImages, stock, weight, material, color, size,
-                // New fields
-                condition, conditionRating,
-                // Racket specs
-                weightClass, gripSize, flexibility, balance, stringStatus, stringTension, maxTension, frameMaterial,
-                // Shoe specs
-                sizeEU, sizeUS, sizeUK, width, closureType, soleType,
-                // Bag specs
-                capacity, bagType, compartments, hasShoeCompartment, hasThermalLining,
-                // Apparel specs
-                apparelType, apparelSize, gender, fabricType,
-                // Shuttle specs
-                shuttleType, speed, quantityPerTube, grade,
-                // Accessory specs
-                accessoryType, packQuantity
-            } = req.body;
+            const { description } = req.body;
             
             // Upload images to Cloudinary
             const imageUrls = [];
             if (req.files && req.files.images) {
                 for (const file of req.files.images) {
-                    // Validate file size (5MB for images - increased for AI flow)
+                    // Validate file size (5MB for images)
                     if (file.size > 5 * 1024 * 1024) {
                         return res.render('seller/product-form', {
                             title: 'Add Product',
@@ -373,81 +319,10 @@ router.post('/products/add', sellerAuth, (req, res) => {
                 };
             }
             
-            // Build category-specific specs
-            let racketSpecs = null;
-            let shoeSpecs = null;
-            let bagSpecs = null;
-            let apparelSpecs = null;
-            let shuttleSpecs = null;
-            let accessorySpecs = null;
-            
-            if (category === 'rackets') {
-                racketSpecs = {
-                    weightClass,
-                    gripSize,
-                    flexibility,
-                    balance,
-                    stringStatus,
-                    stringTension: stringTension ? parseFloat(stringTension) : undefined,
-                    maxTension: maxTension ? parseFloat(maxTension) : undefined,
-                    frameMaterial
-                };
-            } else if (category === 'shoes') {
-                shoeSpecs = {
-                    sizeEU: sizeEU ? parseFloat(sizeEU) : undefined,
-                    sizeUS: sizeUS ? parseFloat(sizeUS) : undefined,
-                    sizeUK: sizeUK ? parseFloat(sizeUK) : undefined,
-                    width,
-                    closureType,
-                    soleType
-                };
-            } else if (category === 'bags') {
-                bagSpecs = {
-                    capacity,
-                    bagType,
-                    compartments: compartments ? parseInt(compartments) : undefined,
-                    hasShoeCompartment: hasShoeCompartment === 'true' || hasShoeCompartment === 'on' || hasShoeCompartment === true,
-                    hasThermalLining: hasThermalLining === 'true' || hasThermalLining === 'on' || hasThermalLining === true
-                };
-            } else if (category === 'apparel') {
-                apparelSpecs = {
-                    apparelType,
-                    apparelSize,
-                    gender,
-                    fabricType
-                };
-            } else if (category === 'shuttles') {
-                shuttleSpecs = {
-                    shuttleType,
-                    speed,
-                    quantityPerTube: quantityPerTube ? parseInt(quantityPerTube) : undefined,
-                    grade
-                };
-            } else if (category === 'accessories') {
-                accessorySpecs = {
-                    accessoryType,
-                    packQuantity: packQuantity ? parseInt(packQuantity) : undefined
-                };
-            }
-            
             const product = new Product({
-                name,
                 description,
-                price: parseFloat(price),
-                category,
-                brand,
                 images: imageUrls,
                 video: videoData,
-                stock: parseInt(stock) || 0,
-                specifications: { weight, material, color, size },
-                condition: condition || 'new',
-                conditionRating: conditionRating ? parseInt(conditionRating) : undefined,
-                racketSpecs,
-                shoeSpecs,
-                bagSpecs,
-                apparelSpecs,
-                shuttleSpecs,
-                accessorySpecs,
                 seller: req.session.sellerId
             });
             
@@ -507,24 +382,7 @@ router.post('/products/edit/:id', sellerAuth, (req, res) => {
         }
         
         try {
-            const {
-                name, description, price, category, brand,
-                existingImages, removeVideo, stock, weight, material, color, size,
-                // New fields
-                condition, conditionRating,
-                // Racket specs
-                weightClass, gripSize, flexibility, balance, stringStatus, stringTension, maxTension, frameMaterial,
-                // Shoe specs
-                sizeEU, sizeUS, sizeUK, width, closureType, soleType,
-                // Bag specs
-                capacity, bagType, compartments, hasShoeCompartment, hasThermalLining,
-                // Apparel specs
-                apparelType, apparelSize, gender, fabricType,
-                // Shuttle specs
-                shuttleType, speed, quantityPerTube, grade,
-                // Accessory specs
-                accessoryType, packQuantity
-            } = req.body;
+            const { description, existingImages, removeVideo } = req.body;
             
             const product = await Product.findOne({ 
                 _id: req.params.id, 
@@ -553,25 +411,25 @@ router.post('/products/edit/:id', sellerAuth, (req, res) => {
             
             // Upload new images
             if (req.files && req.files.images) {
-                // Check total images don't exceed 5
-                if (imageUrls.length + req.files.images.length > 5) {
+                // Check total images don't exceed 7
+                if (imageUrls.length + req.files.images.length > 7) {
                     return res.render('seller/product-form', {
                         title: 'Edit Product',
                         storeName: req.session.storeName,
                         product,
                         action: `/seller/products/edit/${req.params.id}`,
-                        error: 'Maximum 5 images allowed per product'
+                        error: 'Maximum 7 images allowed per product'
                     });
                 }
                 
                 for (const file of req.files.images) {
-                    if (file.size > 2 * 1024 * 1024) {
+                    if (file.size > 5 * 1024 * 1024) {
                         return res.render('seller/product-form', {
                             title: 'Edit Product',
                             storeName: req.session.storeName,
                             product,
                             action: `/seller/products/edit/${req.params.id}`,
-                            error: `Image ${file.originalname} exceeds 2MB limit`
+                            error: `Image ${file.originalname} exceeds 5MB limit`
                         });
                     }
                     
@@ -612,83 +470,12 @@ router.post('/products/edit/:id', sellerAuth, (req, res) => {
                 };
             }
             
-            // Build category-specific specs
-            let racketSpecs = null;
-            let shoeSpecs = null;
-            let bagSpecs = null;
-            let apparelSpecs = null;
-            let shuttleSpecs = null;
-            let accessorySpecs = null;
-            
-            if (category === 'rackets') {
-                racketSpecs = {
-                    weightClass,
-                    gripSize,
-                    flexibility,
-                    balance,
-                    stringStatus,
-                    stringTension: stringTension ? parseFloat(stringTension) : undefined,
-                    maxTension: maxTension ? parseFloat(maxTension) : undefined,
-                    frameMaterial
-                };
-            } else if (category === 'shoes') {
-                shoeSpecs = {
-                    sizeEU: sizeEU ? parseFloat(sizeEU) : undefined,
-                    sizeUS: sizeUS ? parseFloat(sizeUS) : undefined,
-                    sizeUK: sizeUK ? parseFloat(sizeUK) : undefined,
-                    width,
-                    closureType,
-                    soleType
-                };
-            } else if (category === 'bags') {
-                bagSpecs = {
-                    capacity,
-                    bagType,
-                    compartments: compartments ? parseInt(compartments) : undefined,
-                    hasShoeCompartment: hasShoeCompartment === 'true' || hasShoeCompartment === 'on' || hasShoeCompartment === true,
-                    hasThermalLining: hasThermalLining === 'true' || hasThermalLining === 'on' || hasThermalLining === true
-                };
-            } else if (category === 'apparel') {
-                apparelSpecs = {
-                    apparelType,
-                    apparelSize,
-                    gender,
-                    fabricType
-                };
-            } else if (category === 'shuttles') {
-                shuttleSpecs = {
-                    shuttleType,
-                    speed,
-                    quantityPerTube: quantityPerTube ? parseInt(quantityPerTube) : undefined,
-                    grade
-                };
-            } else if (category === 'accessories') {
-                accessorySpecs = {
-                    accessoryType,
-                    packQuantity: packQuantity ? parseInt(packQuantity) : undefined
-                };
-            }
-            
             await Product.findOneAndUpdate(
                 { _id: req.params.id, seller: req.session.sellerId },
                 {
-                    name,
                     description,
-                    price: parseFloat(price),
-                    category,
-                    brand,
                     images: imageUrls,
-                    video: videoData,
-                    stock: parseInt(stock) || 0,
-                    specifications: { weight, material, color, size },
-                    condition: condition || 'new',
-                    conditionRating: conditionRating ? parseInt(conditionRating) : undefined,
-                    racketSpecs,
-                    shoeSpecs,
-                    bagSpecs,
-                    apparelSpecs,
-                    shuttleSpecs,
-                    accessorySpecs
+                    video: videoData
                 }
             );
             

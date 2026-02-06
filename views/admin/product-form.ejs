@@ -1,10 +1,19 @@
-<!DOCTYPE html>
+<!DOCTYPE html>333
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | BadmintonStore Admin</title>
+    <title><%= title %> | RacketBazaar Admin</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        .media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .media-item { border-radius: 8px; overflow: hidden; background: #f5f5f5; }
+        .media-item img { width: 100%; height: 150px; object-fit: cover; }
+        .media-item video { width: 100%; height: 150px; object-fit: cover; }
+        .media-label { padding: 0.5rem; text-align: center; font-size: 0.75rem; color: #6b7280; background: #f9fafb; }
+        .seller-info { background: #f0fdf4; border: 1px solid #86efac; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .seller-info a { color: #16a34a; font-weight: 600; }
+    </style>
 </head>
 <body>
     <%- include('partials/sidebar') %>
@@ -15,92 +24,61 @@
             <a href="/admin/products" class="btn btn-outline">← Back to Products</a>
         </header>
         
+        <% if (product && product.seller) { %>
+        <div class="seller-info">
+            <strong>Seller:</strong> 
+            <a href="/admin/sellers/<%= product.seller._id || product.seller %>">
+                <%= product.seller.storeName || 'View Seller' %>
+            </a>
+        </div>
+        <% } %>
+        
         <form action="<%= action %>" method="POST" class="admin-form">
             <div class="form-section">
-                <h3>Basic Information</h3>
-                
-                <div class="form-group">
-                    <label for="name">Product Name *</label>
-                    <input type="text" id="name" name="name" value="<%= product ? product.name : '' %>" required>
-                </div>
+                <h3>Product Description</h3>
                 
                 <div class="form-group">
                     <label for="description">Description *</label>
-                    <textarea id="description" name="description" rows="4" required><%= product ? product.description : '' %></textarea>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="price">Price ($) *</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0" value="<%= product ? product.price : '' %>" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stock">Stock *</label>
-                        <input type="number" id="stock" name="stock" min="0" value="<%= product ? product.stock : 0 %>" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="category">Category *</label>
-                        <select id="category" name="category" required>
-                            <option value="">Select Category</option>
-                            <option value="rackets" <%= product && product.category === 'rackets' ? 'selected' : '' %>>Rackets</option>
-                            <option value="shoes" <%= product && product.category === 'shoes' ? 'selected' : '' %>>Shoes</option>
-                            <option value="accessories" <%= product && product.category === 'accessories' ? 'selected' : '' %>>Accessories</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="brand">Brand *</label>
-                        <input type="text" id="brand" name="brand" value="<%= product ? product.brand : '' %>" required>
-                    </div>
+                    <textarea id="description" name="description" rows="6" required placeholder="Product description..."><%= product ? product.description : '' %></textarea>
                 </div>
                 
                 <div class="form-group">
                     <label>
                         <input type="checkbox" name="featured" <%= product && product.featured ? 'checked' : '' %>>
-                        Featured Product
+                        Featured Product (will appear in featured section)
                     </label>
                 </div>
             </div>
             
+            <% if (product) { %>
             <div class="form-section">
-                <h3>Images</h3>
-                <div class="form-group">
-                    <label for="images">Image URLs (one per line)</label>
-                    <textarea id="images" name="images" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"><%= product && product.images ? product.images.join('\n') : '' %></textarea>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h3>Specifications</h3>
+                <h3>Product Media</h3>
+                <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
+                    Media is uploaded by sellers. To update media, contact the seller to re-upload their product.
+                </p>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="weight">Weight</label>
-                        <input type="text" id="weight" name="weight" value="<%= product && product.specifications ? product.specifications.weight || '' : '' %>" placeholder="e.g., 83g">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="material">Material</label>
-                        <input type="text" id="material" name="material" value="<%= product && product.specifications ? product.specifications.material || '' : '' %>" placeholder="e.g., Carbon Fiber">
-                    </div>
+                <% if ((product.images && product.images.length > 0) || product.video) { %>
+                <div class="media-gallery">
+                    <% if (product.images) { %>
+                        <% product.images.forEach((img, index) => { %>
+                            <div class="media-item">
+                                <img src="<%= img %>" alt="Product image <%= index + 1 %>">
+                                <div class="media-label">Photo <%= index + 1 %><%= index === 0 ? ' (Main)' : '' %></div>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                    <% if (product.video) { %>
+                        <div class="media-item">
+                            <video src="<%= product.video %>" controls></video>
+                            <div class="media-label">Video</div>
+                        </div>
+                    <% } %>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="color">Color</label>
-                        <input type="text" id="color" name="color" value="<%= product && product.specifications ? product.specifications.color || '' : '' %>" placeholder="e.g., Black/Red">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="size">Size</label>
-                        <input type="text" id="size" name="size" value="<%= product && product.specifications ? product.specifications.size || '' : '' %>" placeholder="e.g., G4">
-                    </div>
-                </div>
+                <% } else { %>
+                <p class="no-data">No media uploaded for this product.</p>
+                <% } %>
             </div>
+            <% } %>
             
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary btn-large">

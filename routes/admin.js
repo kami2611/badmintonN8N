@@ -117,22 +117,17 @@ router.get('/', adminAuth, async (req, res) => {
 // Products List
 router.get('/products', adminAuth, async (req, res) => {
     try {
-        const { category, search } = req.query;
+        const { search } = req.query;
         let query = {};
         
-        if (category) query.category = category;
         if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { brand: { $regex: search, $options: 'i' } }
-            ];
+            query.description = { $regex: search, $options: 'i' };
         }
         
-        const products = await Product.find(query).sort({ createdAt: -1 });
+        const products = await Product.find(query).populate('seller', 'storeName').sort({ createdAt: -1 });
         res.render('admin/products', {
             title: 'Manage Products',
             products,
-            category: category || '',
             search: search || ''
         });
     } catch (error) {
@@ -181,7 +176,7 @@ router.post('/products/add', adminAuth, async (req, res) => {
 // Edit Product Form
 router.get('/products/edit/:id', adminAuth, async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id).populate('seller', 'storeName');
         if (!product) {
             return res.status(404).send('Product not found');
         }
@@ -199,20 +194,10 @@ router.get('/products/edit/:id', adminAuth, async (req, res) => {
 // Update Product
 router.post('/products/edit/:id', adminAuth, async (req, res) => {
     try {
-        const {
-            name, description, price, category, brand,
-            images, stock, weight, material, color, size, featured
-        } = req.body;
+        const { description, featured } = req.body;
         
         await Product.findByIdAndUpdate(req.params.id, {
-            name,
             description,
-            price: parseFloat(price),
-            category,
-            brand,
-            images: images ? images.split('\n').map(img => img.trim()).filter(img => img) : [],
-            stock: parseInt(stock) || 0,
-            specifications: { weight, material, color, size },
             featured: featured === 'on'
         });
         

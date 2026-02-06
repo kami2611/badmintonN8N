@@ -3,154 +3,7 @@
 <!-- ================================ -->
 <!-- PRODUCTS LISTING PAGE            -->
 <!-- RacketBazaar - Mobile-First      -->
-<!-- Redesigned: One Product Per Row  -->
 <!-- ================================ -->
-
-<style>
-    /* Custom styles for the new product cards */
-    .media-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        gap: 2px;
-        aspect-ratio: 1;
-        background: #f7f8f3;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    
-    .media-item {
-        position: relative;
-        overflow: hidden;
-        cursor: pointer;
-    }
-    
-    .media-item img,
-    .media-item video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
-    }
-    
-    .media-item:hover img,
-    .media-item:hover video {
-        transform: scale(1.05);
-    }
-    
-    .media-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .media-overlay span {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: 700;
-    }
-    
-    /* Expanded media view */
-    .media-expanded {
-        position: relative;
-    }
-    
-    .media-expanded .main-media {
-        width: 100%;
-        aspect-ratio: 1;
-        background: #f7f8f3;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    
-    .media-expanded .main-media img,
-    .media-expanded .main-media video {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    
-    .media-expanded .media-thumbnails {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 12px 0;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    
-    .media-expanded .media-thumbnails::-webkit-scrollbar {
-        display: none;
-    }
-    
-    .media-expanded .media-thumb {
-        flex-shrink: 0;
-        width: 60px;
-        height: 60px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 2px solid transparent;
-        cursor: pointer;
-        transition: border-color 0.2s;
-    }
-    
-    .media-expanded .media-thumb.active {
-        border-color: #556B2F;
-    }
-    
-    .media-expanded .media-thumb img,
-    .media-expanded .media-thumb video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    /* Description expand animation */
-    .description-text {
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-    }
-    
-    .description-text.collapsed {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        max-height: 3rem;
-    }
-    
-    .description-text.expanded {
-        max-height: 500px;
-    }
-    
-    .expand-toggle {
-        transition: transform 0.3s ease;
-    }
-    
-    .expand-toggle.rotated {
-        transform: rotate(180deg);
-    }
-    
-    /* Video play indicator */
-    .video-indicator {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.3);
-        pointer-events: none;
-    }
-    
-    .video-indicator i {
-        color: white;
-        width: 32px;
-        height: 32px;
-    }
-</style>
 
 <div class="min-h-screen bg-olive-50 font-sans">
 
@@ -416,7 +269,7 @@
                     </div>
                 </div>
                 
-                <!-- Condition -->
+                <!-- Condition (if exists) -->
                 <div class="mb-6">
                     <h4 class="text-sm font-semibold text-olive-900 mb-3">Condition</h4>
                     <div class="flex gap-2">
@@ -435,7 +288,7 @@
                     </div>
                 </div>
                 
-                <!-- Sort -->
+                <!-- Sort (in drawer for mobile) -->
                 <div class="mb-6">
                     <h4 class="text-sm font-semibold text-olive-900 mb-3">Sort By</h4>
                     <select name="sort" class="w-full px-3 py-2.5 border border-olive-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-olive-500">
@@ -463,165 +316,22 @@
     <!-- ========== MAIN CONTENT ========== -->
     <main class="px-4 py-6">
         <% if (products.length > 0) { %>
-            <!-- Product List - One per row -->
-            <div class="space-y-6">
-                <% products.forEach((product, productIndex) => { 
-                    // Combine images and video into media array
-                    const allMedia = [];
-                    if (product.images && product.images.length > 0) {
-                        product.images.forEach(img => {
-                            allMedia.push({ type: 'image', url: img });
-                        });
-                    }
-                    if (product.video && product.video.url) {
-                        allMedia.push({ type: 'video', url: product.video.url });
-                    }
-                    const totalMedia = allMedia.length;
-                    const displayMedia = allMedia.slice(0, 4);
-                    const extraCount = totalMedia > 4 ? totalMedia - 3 : 0;
-                %>
-                    <article class="product-card bg-white rounded-2xl shadow-sm border border-olive-100 overflow-hidden" data-product-id="<%= product._id %>">
-                        
-                        <!-- Media Section -->
-                        <div class="media-section p-3">
-                            <% if (totalMedia === 0) { %>
-                                <!-- No media placeholder -->
-                                <div class="aspect-square bg-olive-100 rounded-xl flex items-center justify-center">
-                                    <i data-lucide="image-off" class="w-16 h-16 text-olive-300"></i>
-                                </div>
-                            <% } else if (totalMedia === 1) { %>
-                                <!-- Single media - full width -->
-                                <div class="media-expanded" data-product-index="<%= productIndex %>">
-                                    <div class="main-media">
-                                        <% if (allMedia[0].type === 'video') { %>
-                                            <video src="<%= allMedia[0].url %>" controls playsinline class="w-full h-full object-contain"></video>
-                                        <% } else { %>
-                                            <img src="<%= allMedia[0].url %>" alt="<%= product.name || 'Product' %>" class="w-full h-full object-contain">
-                                        <% } %>
-                                    </div>
-                                </div>
-                            <% } else { %>
-                                <!-- Grid view for multiple media (collapsed) -->
-                                <div class="media-grid-container" data-product-index="<%= productIndex %>">
-                                    <!-- Grid View -->
-                                    <div class="media-grid grid-view">
-                                        <% displayMedia.forEach((media, index) => { 
-                                            const isLastAndHasMore = index === 3 && extraCount > 0;
-                                        %>
-                                            <div class="media-item" data-index="<%= index %>" data-type="<%= media.type %>" data-url="<%= media.url %>">
-                                                <% if (media.type === 'video') { %>
-                                                    <video src="<%= media.url %>" muted playsinline class="w-full h-full object-cover"></video>
-                                                    <div class="video-indicator">
-                                                        <i data-lucide="play-circle"></i>
-                                                    </div>
-                                                <% } else { %>
-                                                    <img src="<%= media.url %>" alt="<%= product.name || 'Product' %>" loading="lazy">
-                                                <% } %>
-                                                <% if (isLastAndHasMore) { %>
-                                                    <div class="media-overlay">
-                                                        <span>+<%= extraCount %></span>
-                                                    </div>
-                                                <% } %>
-                                            </div>
-                                        <% }) %>
-                                        <% for (let i = displayMedia.length; i < 4; i++) { %>
-                                            <div class="media-item bg-olive-50"></div>
-                                        <% } %>
-                                    </div>
-                                    
-                                    <!-- Expanded View (hidden initially) -->
-                                    <div class="media-expanded expanded-view hidden">
-                                        <div class="main-media">
-                                            <% if (allMedia[0].type === 'video') { %>
-                                                <video src="<%= allMedia[0].url %>" controls playsinline></video>
-                                            <% } else { %>
-                                                <img src="<%= allMedia[0].url %>" alt="<%= product.name || 'Product' %>">
-                                            <% } %>
-                                        </div>
-                                        <div class="media-thumbnails">
-                                            <% allMedia.forEach((media, idx) => { %>
-                                                <div class="media-thumb <%= idx === 0 ? 'active' : '' %>" data-index="<%= idx %>" data-type="<%= media.type %>" data-url="<%= media.url %>">
-                                                    <% if (media.type === 'video') { %>
-                                                        <video src="<%= media.url %>" muted></video>
-                                                    <% } else { %>
-                                                        <img src="<%= media.url %>" alt="Thumbnail">
-                                                    <% } %>
-                                                </div>
-                                            <% }) %>
-                                        </div>
-                                        <button class="collapse-media-btn mt-2 w-full py-2 text-sm text-olive-600 hover:text-olive-800 flex items-center justify-center gap-1">
-                                            <i data-lucide="grid-2x2" class="w-4 h-4"></i>
-                                            Show grid
-                                        </button>
-                                    </div>
-                                </div>
-                            <% } %>
-                        </div>
-                        
-                        <!-- Description Section -->
-                        <div class="px-4 pb-4">
-                            <!-- Name & Price (if available) -->
-                            <% if (product.name || product.price) { %>
-                                <div class="flex items-start justify-between mb-2">
-                                    <% if (product.name) { %>
-                                        <a href="/products/<%= product._id %>" class="font-semibold text-olive-950 hover:text-olive-700">
-                                            <%= product.name %>
-                                        </a>
-                                    <% } %>
-                                    <% if (product.price) { %>
-                                        <span class="font-bold text-olive-900 ml-2">Rs. <%= product.price.toLocaleString() %></span>
-                                    <% } %>
-                                </div>
-                            <% } %>
-                            
-                            <!-- Description with expand/collapse -->
-                            <% if (product.description) { %>
-                                <div class="description-container">
-                                    <p class="description-text collapsed text-sm text-olive-600 leading-relaxed">
-                                        <%= product.description %>
-                                    </p>
-                                    <button class="expand-btn flex items-center gap-1 mt-2 text-sm font-medium text-olive-500 hover:text-olive-700">
-                                        <span class="expand-text">Show more</span>
-                                        <i data-lucide="chevron-down" class="expand-toggle w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            <% } %>
-                            
-                            <!-- Seller/Store Link -->
-                            <% if (product.sellerInfo) { %>
-                                <a href="/store/<%= product.sellerInfo._id %>" class="flex items-center gap-2 mt-3 p-2 bg-olive-50 rounded-lg hover:bg-olive-100 transition-colors">
-                                    <div class="w-8 h-8 bg-olive-200 rounded-full flex items-center justify-center">
-                                        <i data-lucide="store" class="w-4 h-4 text-olive-600"></i>
-                                    </div>
-                                    <span class="text-sm font-medium text-olive-700"><%= product.sellerInfo.storeName %></span>
-                                    <i data-lucide="chevron-right" class="w-4 h-4 text-olive-400 ml-auto"></i>
-                                </a>
-                            <% } %>
-                            
-                            <!-- WhatsApp Order Button -->
-                            <% if (product.sellerInfo && product.sellerInfo.phone) { %>
-                                <a 
-                                    href="https://wa.me/<%= product.sellerInfo.phone.replace(/[^0-9]/g, '') %>?text=Hi!%20I'm%20interested%20in%20<%= encodeURIComponent(product.name || 'this product') %><%= product.price ? '%20(Rs.%20' + product.price + ')' : '' %>"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="flex items-center justify-center gap-2 w-full mt-3 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors"
-                                >
-                                    <i data-lucide="message-circle" class="w-5 h-5"></i>
-                                    <span>Order on WhatsApp</span>
-                                </a>
-                            <% } %>
-                        </div>
-                    </article>
+            <!-- Product Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <% products.forEach(product => { %>
+                    <%- include('partials/product-card', { product }) %>
                 <% }) %>
             </div>
             
             <!-- Pagination -->
             <% if (totalPages > 1) { %>
                 <nav class="mt-8 flex flex-col items-center gap-4">
+                    <!-- Page Info -->
                     <p class="text-sm text-olive-500">
                         Showing <%= (currentPage - 1) * perPage + 1 %>-<%= Math.min(currentPage * perPage, totalProducts) %> of <%= totalProducts %>
                     </p>
                     
+                    <!-- Page Controls -->
                     <div class="flex items-center gap-2">
                         <% if (currentPage > 1) { %>
                             <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="p-2 bg-white border border-olive-200 rounded-lg hover:bg-olive-50 transition-colors">
@@ -680,9 +390,73 @@
 
 </div>
 
+<!-- ========== ADD TO CART SUCCESS MODAL ========== -->
+<div id="cart-modal" class="fixed inset-0 z-[100] pointer-events-none">
+    <div id="cart-modal-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+    <div id="cart-modal-content" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] overflow-hidden">
+        <!-- Handle -->
+        <div class="flex justify-center pt-3 pb-2">
+            <div class="w-10 h-1 bg-olive-200 rounded-full"></div>
+        </div>
+        
+        <!-- Success Header -->
+        <div class="px-6 py-4 bg-emerald-50 border-b border-emerald-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="check" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-emerald-800">Added to Cart!</p>
+                    <p class="text-sm text-emerald-600">Item successfully added</p>
+                </div>
+                <button id="cart-modal-close" class="ml-auto p-2 rounded-lg hover:bg-emerald-100">
+                    <i data-lucide="x" class="w-5 h-5 text-emerald-600"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Product Info -->
+        <div class="px-6 py-4">
+            <div class="flex gap-4">
+                <div class="w-20 h-20 bg-olive-50 rounded-xl overflow-hidden flex-shrink-0">
+                    <img id="modal-product-image" src="" alt="" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="modal-product-brand" class="text-xs text-olive-500 uppercase tracking-wide"></p>
+                    <h3 id="modal-product-name" class="font-semibold text-olive-900 line-clamp-2"></h3>
+                    <p id="modal-product-price" class="text-lg font-bold text-olive-700 mt-1"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Summary in Modal -->
+        <div class="px-6 py-3 bg-olive-50 border-t border-olive-100">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-olive-600">Cart Total (<span id="modal-cart-count">0</span> items)</span>
+                <span id="modal-cart-total" class="font-bold text-olive-900">$0.00</span>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="px-6 py-4 space-y-3">
+            <a href="/cart" class="flex items-center justify-center gap-2 w-full py-3.5 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span>View Cart & Checkout</span>
+            </a>
+            <button id="continue-shopping-btn" class="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-olive-200 text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                <span>Continue Shopping</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Initialize Lucide icons
     lucide.createIcons();
+    
+    // Cart from localStorage
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
     
     // Mobile Menu Toggle
     const menuToggle = document.getElementById('menu-toggle');
@@ -773,93 +547,105 @@
         window.location.href = url.toString();
     }
     
-    // ========== DESCRIPTION EXPAND/COLLAPSE ==========
-    document.querySelectorAll('.expand-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const container = this.closest('.description-container');
-            const text = container.querySelector('.description-text');
-            const expandText = this.querySelector('.expand-text');
-            const icon = this.querySelector('.expand-toggle');
-            
-            if (text.classList.contains('collapsed')) {
-                text.classList.remove('collapsed');
-                text.classList.add('expanded');
-                expandText.textContent = 'Show less';
-                icon.classList.add('rotated');
-            } else {
-                text.classList.add('collapsed');
-                text.classList.remove('expanded');
-                expandText.textContent = 'Show more';
-                icon.classList.remove('rotated');
-            }
-            
-            lucide.createIcons();
-        });
-    });
+    // ========== CART MODAL FUNCTIONS ==========
+    const cartModal = document.getElementById('cart-modal');
+    const cartModalBackdrop = document.getElementById('cart-modal-backdrop');
+    const cartModalContent = document.getElementById('cart-modal-content');
+    const cartModalClose = document.getElementById('cart-modal-close');
+    const continueShoppingBtn = document.getElementById('continue-shopping-btn');
     
-    // ========== MEDIA GRID/EXPANDED VIEW TOGGLE ==========
-    document.querySelectorAll('.media-grid-container').forEach(container => {
-        const gridView = container.querySelector('.grid-view');
-        const expandedView = container.querySelector('.expanded-view');
-        const mainMedia = expandedView?.querySelector('.main-media');
-        const thumbnails = expandedView?.querySelectorAll('.media-thumb');
-        const collapseBtn = expandedView?.querySelector('.collapse-media-btn');
+    function openCartModal(product) {
+        // Update modal content
+        document.getElementById('modal-product-image').src = product.image;
+        document.getElementById('modal-product-brand').textContent = product.brand || '';
+        document.getElementById('modal-product-name').textContent = product.name;
+        document.getElementById('modal-product-price').textContent = '$' + parseFloat(product.price).toFixed(2);
         
-        // Click on grid item to expand
-        container.querySelectorAll('.grid-view .media-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const url = this.dataset.url;
-                const type = this.dataset.type;
-                
-                if (!url) return; // Empty cell
-                
-                // Show expanded view
-                gridView.classList.add('hidden');
-                expandedView.classList.remove('hidden');
-                
-                // Update main media
-                updateMainMedia(mainMedia, type, url);
-                
-                // Update active thumbnail
-                thumbnails.forEach(thumb => {
-                    thumb.classList.remove('active');
-                    if (thumb.dataset.url === url) {
-                        thumb.classList.add('active');
-                    }
-                });
-                
-                lucide.createIcons();
-            });
-        });
+        // Update cart totals
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('modal-cart-count').textContent = totalItems;
+        document.getElementById('modal-cart-total').textContent = '$' + totalPrice.toFixed(2);
         
-        // Click on thumbnail to change main media
-        thumbnails?.forEach(thumb => {
-            thumb.addEventListener('click', function() {
-                const url = this.dataset.url;
-                const type = this.dataset.type;
-                
-                updateMainMedia(mainMedia, type, url);
-                
-                thumbnails.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        // Show modal
+        cartModal.classList.remove('pointer-events-none');
+        cartModalBackdrop.classList.remove('opacity-0');
+        cartModalContent.classList.remove('translate-y-full');
         
-        // Collapse back to grid
-        collapseBtn?.addEventListener('click', function() {
-            expandedView.classList.add('hidden');
-            gridView.classList.remove('hidden');
-            lucide.createIcons();
-        });
-    });
-    
-    function updateMainMedia(container, type, url) {
-        if (type === 'video') {
-            container.innerHTML = `<video src="${url}" controls playsinline class="w-full h-full object-contain"></video>`;
-        } else {
-            container.innerHTML = `<img src="${url}" alt="Product image" class="w-full h-full object-contain">`;
-        }
+        // Reinitialize icons
+        lucide.createIcons();
     }
+    
+    function closeCartModal() {
+        cartModal.classList.add('pointer-events-none');
+        cartModalBackdrop.classList.add('opacity-0');
+        cartModalContent.classList.add('translate-y-full');
+    }
+    
+    cartModalClose?.addEventListener('click', closeCartModal);
+    cartModalBackdrop?.addEventListener('click', closeCartModal);
+    continueShoppingBtn?.addEventListener('click', closeCartModal);
+    
+    // ========== ADD TO CART FUNCTIONALITY ==========
+    function addToCartWithModal(productCard) {
+        const productId = productCard.dataset.productId;
+        const productName = productCard.dataset.productName;
+        const productPrice = parseFloat(productCard.dataset.productPrice);
+        const productImage = productCard.dataset.productImage;
+        const productBrand = productCard.dataset.productBrand;
+        
+        // Add to cart array
+        const existingItem = cart.find(item => item._id === productId);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({
+                _id: productId,
+                name: productName,
+                price: productPrice,
+                image: productImage,
+                quantity: 1
+            });
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Update cart count in header
+        updateCartDot();
+        
+        // Open modal with product info
+        openCartModal({
+            name: productName,
+            price: productPrice,
+            image: productImage,
+            brand: productBrand
+        });
+    }
+    
+    // Update cart dot indicator
+    function updateCartDot() {
+        const cartDots = document.querySelectorAll('.cart-dot');
+        const hasItems = cart.length > 0;
+        cartDots.forEach(dot => {
+            dot.style.display = hasItems ? 'block' : 'none';
+        });
+    }
+    
+    // Attach click handlers to all add-to-cart buttons
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const productCard = this.closest('.product-card');
+            if (productCard) {
+                addToCartWithModal(productCard);
+            }
+        });
+    });
+    
+    // Initialize cart dot on page load
+    updateCartDot();
 </script>
 
 <%- include('partials/tail') %>

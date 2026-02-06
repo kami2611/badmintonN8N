@@ -10,6 +10,7 @@
 
 const { StateGraph, END, START } = require("@langchain/langgraph");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
+const { ChatOllama } = require("@langchain/ollama");
 const { HumanMessage, AIMessage, ToolMessage, SystemMessage } = require("@langchain/core/messages");
 const { ToolNode } = require("@langchain/langgraph/prebuilt");
 
@@ -39,13 +40,29 @@ const SKIP_WORDS = ['skip', 'pass', 'next', 'no', 'none', "don't have", 'dont ha
 
 // ============ Model Configuration ============
 
+/**
+ * Create AI model - uses local Ollama if USE_LOCAL_AI=true, otherwise Google Gemini
+ */
 function createModel() {
-    return new ChatGoogleGenerativeAI({
-        model: "gemini-2.0-flash-lite-001",
-        apiKey: process.env.GEMINI_API_KEY,
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-    });
+    const useLocalAI = process.env.USE_LOCAL_AI === 'true';
+    
+    if (useLocalAI) {
+        console.log('🤖 [Model] Using LOCAL Ollama (qwen3:8b)');
+        return new ChatOllama({
+            model: "qwen3:8b",
+            baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+            temperature: 0,
+            maxOutputTokens: 1024,
+        });
+    } else {
+        console.log('🤖 [Model] Using Google Gemini (gemini-2.0-flash-lite-001)');
+        return new ChatGoogleGenerativeAI({
+            model: "gemini-2.0-flash-lite-001",
+            apiKey: process.env.GEMINI_API_KEY,
+            temperature: 0.3,
+            maxOutputTokens: 1024,
+        });
+    }
 }
 
 // ============ System Prompt ============

@@ -45,7 +45,7 @@ app.use(session({
 // Routes
 const indexRoutes = require('./routes/index');
 const productRoutes = require('./routes/products');
-const checkoutRoutes = require('./routes/checkout');
+// const checkoutRoutes = require('./routes/checkout'); // Removed - using WhatsApp ordering
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/seller');
@@ -61,7 +61,7 @@ console.log(`📱 WhatsApp using: ${process.env.USE_LANGGRAPH === 'true' ? 'Lang
 
 app.use('/', indexRoutes);
 app.use('/products', productRoutes);
-app.use('/checkout', checkoutRoutes);
+// app.use('/checkout', checkoutRoutes); // Removed - using WhatsApp ordering
 app.use('/api', apiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/seller', sellerRoutes);

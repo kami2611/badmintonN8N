@@ -3,7 +3,79 @@
 <!-- ================================ -->
 <!-- PRODUCT DETAIL PAGE              -->
 <!-- RacketBazaar - Mobile-First      -->
+<!-- Simplified: Media + Description  -->
+<!-- + Store Link + WhatsApp Order    -->
 <!-- ================================ -->
+
+<style>
+    /* Horizontal scrollable media gallery */
+    .media-gallery {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .media-gallery::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .media-gallery-item {
+        flex-shrink: 0;
+        width: 100%;
+        scroll-snap-align: start;
+        aspect-ratio: 1;
+        background: #f7f8f3;
+    }
+    
+    .media-gallery-item img,
+    .media-gallery-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    /* Gallery dots indicator */
+    .gallery-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 0;
+    }
+    
+    .gallery-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #d4d8c9;
+        transition: all 0.3s ease;
+    }
+    
+    .gallery-dot.active {
+        background: #556B2F;
+        width: 24px;
+        border-radius: 4px;
+    }
+    
+    /* Video play indicator overlay */
+    .video-play-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.2);
+        pointer-events: none;
+        transition: opacity 0.3s;
+    }
+    
+    .video-play-overlay.hidden {
+        opacity: 0;
+    }
+</style>
 
 <div class="min-h-screen bg-olive-50 font-sans">
 
@@ -23,13 +95,9 @@
             
             <!-- Right: Icons -->
             <div class="flex items-center gap-1">
-                <button class="p-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Share">
+                <button class="p-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Share" id="share-btn">
                     <i data-lucide="share-2" class="w-5 h-5 text-olive-950"></i>
                 </button>
-                <a href="/cart" class="relative p-2 rounded-lg hover:bg-olive-100 active:bg-olive-200 transition-colors" aria-label="Cart">
-                    <i data-lucide="shopping-bag" class="w-5 h-5 text-olive-950"></i>
-                    <span class="cart-dot absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                </a>
             </div>
         </div>
     </header>
@@ -40,395 +108,255 @@
             <li><a href="/" class="hover:text-olive-700 transition-colors">Home</a></li>
             <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
             <li><a href="/products" class="hover:text-olive-700 transition-colors">Products</a></li>
-            <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
-            <li><a href="/products?category=<%= product.category %>" class="hover:text-olive-700 transition-colors capitalize"><%= product.category %></a></li>
-            <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
-            <li class="text-olive-900 font-medium truncate max-w-[150px]"><%= product.name %></li>
+            <% if (product.category) { %>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li><a href="/products?category=<%= product.category %>" class="hover:text-olive-700 transition-colors capitalize"><%= product.category %></a></li>
+            <% } %>
+            <% if (product.name) { %>
+                <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>
+                <li class="text-olive-900 font-medium truncate max-w-[150px]"><%= product.name %></li>
+            <% } %>
         </ol>
     </nav>
 
     <!-- ========== MAIN CONTENT ========== -->
-    <main class="pb-16">
+    <main class="pb-24">
         
-        <!-- Product Gallery -->
-        <section class="relative bg-white">
-            <!-- Main Image -->
-            <div class="relative aspect-square bg-olive-50">
-                <img 
-                    src="<%= product.images[0] || 'https://placehold.co/600x600/f7f8f3/556B2F?text=No+Image' %>" 
-                    alt="<%= product.name %>" 
-                    id="main-product-image"
-                    class="w-full h-full object-contain"
-                >
-                
-                <!-- Image Counter -->
-                <% if (product.images.length > 1 || (product.video && product.video.url)) { %>
-                    <div class="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 text-white text-sm rounded-full">
-                        <span id="image-counter">1</span> / <%= product.images.length + (product.video && product.video.url ? 1 : 0) %>
+        <!-- Media Gallery Section -->
+        <section class="bg-white">
+            <% 
+            // Combine all media
+            const allMedia = [];
+            if (product.images && product.images.length > 0) {
+                product.images.forEach(img => {
+                    allMedia.push({ type: 'image', url: img });
+                });
+            }
+            if (product.video && product.video.url) {
+                allMedia.push({ type: 'video', url: product.video.url });
+            }
+            const totalMedia = allMedia.length;
+            %>
+            
+            <% if (totalMedia === 0) { %>
+                <!-- No media placeholder -->
+                <div class="aspect-square bg-olive-100 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="image-off" class="w-20 h-20 text-olive-300 mx-auto mb-2"></i>
+                        <p class="text-olive-400 text-sm">No images available</p>
                     </div>
-                <% } %>
+                </div>
+            <% } else if (totalMedia === 1) { %>
+                <!-- Single media -->
+                <div class="aspect-square bg-olive-50">
+                    <% if (allMedia[0].type === 'video') { %>
+                        <video src="<%= allMedia[0].url %>" controls playsinline class="w-full h-full object-contain"></video>
+                    <% } else { %>
+                        <img src="<%= allMedia[0].url %>" alt="<%= product.name || 'Product' %>" class="w-full h-full object-contain">
+                    <% } %>
+                </div>
+            <% } else { %>
+                <!-- Multiple media - horizontal scroll gallery -->
+                <div class="relative">
+                    <div class="media-gallery" id="media-gallery">
+                        <% allMedia.forEach((media, index) => { %>
+                            <div class="media-gallery-item relative" data-index="<%= index %>">
+                                <% if (media.type === 'video') { %>
+                                    <video 
+                                        src="<%= media.url %>" 
+                                        controls 
+                                        playsinline 
+                                        class="w-full h-full object-contain"
+                                        id="video-<%= index %>"
+                                    ></video>
+                                <% } else { %>
+                                    <img 
+                                        src="<%= media.url %>" 
+                                        alt="<%= product.name || 'Product' %> - Image <%= index + 1 %>" 
+                                        class="w-full h-full object-contain"
+                                        loading="<%= index === 0 ? 'eager' : 'lazy' %>"
+                                    >
+                                <% } %>
+                            </div>
+                        <% }) %>
+                    </div>
+                    
+                    <!-- Counter badge -->
+                    <div class="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 text-white text-sm rounded-full">
+                        <span id="current-slide">1</span> / <%= totalMedia %>
+                    </div>
+                </div>
                 
-                <!-- Badges -->
-                <div class="absolute top-4 left-4 flex flex-col gap-2">
+                <!-- Gallery dots -->
+                <div class="gallery-dots" id="gallery-dots">
+                    <% for (let i = 0; i < totalMedia; i++) { %>
+                        <div class="gallery-dot <%= i === 0 ? 'active' : '' %>" data-index="<%= i %>"></div>
+                    <% } %>
+                </div>
+            <% } %>
+        </section>
+        
+        <!-- Product Info Section -->
+        <section class="px-4 py-6 bg-white border-t border-olive-100">
+            
+            <!-- Brand & Category -->
+            <% if (product.brand || product.category) { %>
+                <div class="flex items-center gap-2 mb-2">
+                    <% if (product.brand) { %>
+                        <span class="text-sm font-medium text-olive-600 uppercase tracking-wide"><%= product.brand %></span>
+                        <% if (product.category) { %>
+                            <span class="text-olive-300">•</span>
+                        <% } %>
+                    <% } %>
+                    <% if (product.category) { %>
+                        <a href="/products?category=<%= product.category %>" class="text-sm text-olive-500 capitalize hover:text-olive-700 transition-colors">
+                            <%= product.category %>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+            
+            <!-- Product Name -->
+            <% if (product.name) { %>
+                <h1 class="text-2xl font-bold text-olive-950 leading-tight mb-3"><%= product.name %></h1>
+            <% } %>
+            
+            <!-- Price -->
+            <% if (product.price) { %>
+                <div class="flex items-baseline gap-3 mb-4">
+                    <span class="text-3xl font-bold text-olive-900">Rs. <%= product.price.toLocaleString() %></span>
+                </div>
+            <% } %>
+            
+            <!-- Condition Badge -->
+            <% if (product.condition) { %>
+                <div class="flex items-center gap-2 mb-4">
                     <% if (product.condition === 'used') { %>
-                        <span class="px-3 py-1.5 bg-amber-500 text-white text-sm font-semibold rounded-lg shadow-lg">
+                        <span class="inline-flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 text-sm font-medium rounded-lg">
                             Pre-owned
                             <% if (product.conditionRating) { %>
                                 • <%= product.conditionRating %>/10
                             <% } %>
                         </span>
                     <% } else { %>
-                        <span class="px-3 py-1.5 bg-emerald-500 text-white text-sm font-semibold rounded-lg shadow-lg">
+                        <span class="inline-flex items-center px-3 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg">
                             Brand New
                         </span>
                     <% } %>
-                    <% if (product.stock > 0 && product.stock <= 3) { %>
-                        <span class="px-3 py-1.5 bg-red-500 text-white text-sm font-semibold rounded-lg shadow-lg animate-pulse">
-                            Only <%= product.stock %> left!
-                        </span>
-                    <% } %>
-                </div>
-            </div>
-            
-            <!-- Video Container (hidden by default) -->
-            <% if (product.video && product.video.url) { %>
-            <div id="product-video" class="hidden aspect-square bg-black">
-                <video src="<%= product.video.url %>" controls playsinline class="w-full h-full object-contain">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-            <% } %>
-            
-            <!-- Thumbnail Strip -->
-            <% if (product.images.length > 1 || (product.video && product.video.url)) { %>
-                <div class="flex gap-2 p-4 overflow-x-auto scrollbar-hide">
-                    <% product.images.forEach((img, index) => { %>
-                        <button 
-                            class="thumbnail flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all <%= index === 0 ? 'border-olive-700' : 'border-transparent hover:border-olive-300' %>"
-                            data-src="<%= img %>"
-                            data-type="image"
-                            data-index="<%= index + 1 %>"
-                        >
-                            <img src="<%= img %>" alt="Thumbnail <%= index + 1 %>" class="w-full h-full object-cover">
-                        </button>
-                    <% }) %>
-                    <% if (product.video && product.video.url) { %>
-                        <button 
-                            class="thumbnail flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-transparent hover:border-olive-300 bg-olive-900 flex items-center justify-center"
-                            data-src="<%= product.video.url %>"
-                            data-type="video"
-                            data-index="<%= product.images.length + 1 %>"
-                        >
-                            <i data-lucide="play-circle" class="w-8 h-8 text-white"></i>
-                        </button>
-                    <% } %>
                 </div>
             <% } %>
+            
+            <!-- Description -->
+            <% if (product.description) { %>
+                <div class="mb-6">
+                    <h2 class="text-sm font-semibold text-olive-900 mb-2">Description</h2>
+                    <p class="text-olive-600 leading-relaxed whitespace-pre-line"><%= product.description %></p>
+                </div>
+            <% } %>
+            
         </section>
         
-        <!-- Product Info -->
-        <section class="px-4 py-6 bg-white border-t border-olive-100">
-            <!-- Brand & Category -->
-            <div class="flex items-center gap-2 mb-2">
-                <% if (product.brand) { %>
-                    <span class="text-sm font-medium text-olive-600 uppercase tracking-wide"><%= product.brand %></span>
-                    <span class="text-olive-300">•</span>
-                <% } %>
-                <a href="/products?category=<%= product.category %>" class="text-sm text-olive-500 capitalize hover:text-olive-700 transition-colors">
-                    <%= product.category %>
+        <!-- Seller/Store Card -->
+        <% if (product.sellerInfo) { %>
+            <section class="px-4 py-4 bg-white border-t border-olive-100 mt-2">
+                <h2 class="text-sm font-semibold text-olive-900 mb-3">Seller</h2>
+                <a href="/store/<%= product.sellerInfo._id %>" class="flex items-center gap-4 p-4 bg-olive-50 rounded-2xl hover:bg-olive-100 transition-colors">
+                    <div class="w-14 h-14 bg-olive-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="store" class="w-7 h-7 text-olive-600"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-olive-900"><%= product.sellerInfo.storeName %></p>
+                        <p class="text-sm text-olive-500">View Store</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-olive-400 flex-shrink-0"></i>
                 </a>
-            </div>
-            
-            <!-- Product Name -->
-            <h1 class="text-2xl font-bold text-olive-950 leading-tight mb-4"><%= product.name %></h1>
-            
-            <!-- Price -->
-            <div class="flex items-baseline gap-3 mb-4">
-                <span class="text-3xl font-bold text-olive-900">$<%= product.price.toFixed(2) %></span>
-                <!-- Add original price here if discount available -->
-            </div>
-            
-            <!-- Stock Status -->
-            <div class="flex items-center gap-2 mb-6">
-                <% if (product.stock > 0) { %>
-                    <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg">
-                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-emerald-700">In Stock</span>
-                        <span class="text-sm text-emerald-600">(<%= product.stock %> available)</span>
-                    </div>
-                <% } else { %>
-                    <div class="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg">
-                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-red-700">Out of Stock</span>
-                    </div>
-                <% } %>
-            </div>
-            
-            <!-- Seller Card -->
-            <% if (product.sellerInfo) { %>
-            <div class="p-4 bg-olive-50 rounded-2xl mb-6">
-                <div class="flex items-center justify-between">
-                    <a href="/store/<%= product.sellerInfo._id %>" class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-olive-200 rounded-full flex items-center justify-center">
-                            <i data-lucide="store" class="w-6 h-6 text-olive-600"></i>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-olive-900"><%= product.sellerInfo.storeName %></p>
-                            <p class="text-xs text-olive-500">Verified Seller</p>
-                        </div>
-                    </a>
-                    <a 
-                        href="https://wa.me/<%= (product.sellerInfo.phone || '').replace(/[^0-9]/g, '') %>?text=Hi!%20I%20have%20a%20question%20about%20<%= encodeURIComponent(product.name) %>"
-                        target="_blank"
-                        rel="noopener"
-                        class="p-2.5 bg-green-500 hover:bg-green-600 rounded-xl transition-colors"
-                    >
-                        <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
-                    </a>
-                </div>
-            </div>
-            <% } %>
-            
-            <!-- Quantity Selector -->
-            <% if (product.stock > 0) { %>
-            <div class="flex items-center gap-4 mb-6">
-                <span class="text-sm font-medium text-olive-700">Quantity:</span>
-                <div class="flex items-center border border-olive-200 rounded-xl overflow-hidden">
-                    <button type="button" id="qty-decrease" class="w-10 h-10 flex items-center justify-center text-olive-600 hover:bg-olive-100 transition-colors">
-                        <i data-lucide="minus" class="w-4 h-4"></i>
-                    </button>
-                    <input 
-                        type="number" 
-                        id="quantity" 
-                        value="1" 
-                        min="1" 
-                        max="<%= product.stock %>"
-                        class="w-14 h-10 text-center text-olive-900 font-medium border-x border-olive-200 focus:outline-none"
-                    >
-                    <button type="button" id="qty-increase" class="w-10 h-10 flex items-center justify-center text-olive-600 hover:bg-olive-100 transition-colors">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-            <% } %>
-        </section>
+            </section>
+        <% } %>
         
-        <!-- Product Details Tabs -->
-        <section class="mt-2 bg-white">
-            <!-- Tab Headers -->
-            <div class="flex border-b border-olive-100">
-                <button class="detail-tab flex-1 py-4 text-sm font-medium text-olive-700 border-b-2 border-olive-700" data-tab="description">
-                    Description
-                </button>
-                <button class="detail-tab flex-1 py-4 text-sm font-medium text-olive-400 border-b-2 border-transparent hover:text-olive-600" data-tab="specs">
-                    Specifications
-                </button>
-                <button class="detail-tab flex-1 py-4 text-sm font-medium text-olive-400 border-b-2 border-transparent hover:text-olive-600" data-tab="shipping">
-                    Shipping
-                </button>
-            </div>
-            
-            <!-- Tab Content: Description -->
-            <div id="tab-description" class="tab-content px-4 py-6">
-                <div class="prose prose-olive text-olive-700 text-sm leading-relaxed">
-                    <%= product.description %>
-                </div>
-            </div>
-            
-            <!-- Tab Content: Specifications -->
-            <div id="tab-specs" class="tab-content hidden px-4 py-6">
-                <div class="space-y-3">
+        <!-- Additional Info (if any specs are available) -->
+        <% 
+        const hasSpecs = (product.specifications && (product.specifications.weight || product.specifications.material || product.specifications.color || product.specifications.size)) ||
+                         (product.racketSpecs && (product.racketSpecs.weightClass || product.racketSpecs.flexibility || product.racketSpecs.balance)) ||
+                         (product.shoeSpecs && (product.shoeSpecs.sizeEU || product.shoeSpecs.sizeUS || product.shoeSpecs.width));
+        %>
+        <% if (hasSpecs) { %>
+            <section class="px-4 py-4 bg-white border-t border-olive-100 mt-2">
+                <h2 class="text-sm font-semibold text-olive-900 mb-3">Specifications</h2>
+                <div class="space-y-2">
                     <% if (product.specifications) { %>
                         <% if (product.specifications.weight) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Weight</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.specifications.weight %></span>
                             </div>
                         <% } %>
                         <% if (product.specifications.material) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Material</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.specifications.material %></span>
                             </div>
                         <% } %>
                         <% if (product.specifications.color) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Color</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.specifications.color %></span>
                             </div>
                         <% } %>
                         <% if (product.specifications.size) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Size</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.specifications.size %></span>
                             </div>
                         <% } %>
                     <% } %>
                     
-                    <!-- Category-specific specs for Rackets -->
                     <% if (product.category === 'rackets' && product.racketSpecs) { %>
                         <% if (product.racketSpecs.weightClass) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Weight Class</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.racketSpecs.weightClass %></span>
                             </div>
                         <% } %>
-                        <% if (product.racketSpecs.gripSize) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
-                                <span class="text-sm text-olive-500">Grip Size</span>
-                                <span class="text-sm font-medium text-olive-900"><%= product.racketSpecs.gripSize %></span>
-                            </div>
-                        <% } %>
                         <% if (product.racketSpecs.flexibility) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Flexibility</span>
                                 <span class="text-sm font-medium text-olive-900 capitalize"><%= product.racketSpecs.flexibility %></span>
                             </div>
                         <% } %>
                         <% if (product.racketSpecs.balance) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Balance</span>
                                 <span class="text-sm font-medium text-olive-900 capitalize"><%= product.racketSpecs.balance %></span>
                             </div>
                         <% } %>
-                        <% if (product.racketSpecs.stringStatus) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
-                                <span class="text-sm text-olive-500">String Status</span>
-                                <span class="text-sm font-medium text-olive-900 capitalize"><%= product.racketSpecs.stringStatus %></span>
-                            </div>
-                        <% } %>
-                        <% if (product.racketSpecs.maxTension) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
-                                <span class="text-sm text-olive-500">Max Tension</span>
-                                <span class="text-sm font-medium text-olive-900"><%= product.racketSpecs.maxTension %> lbs</span>
+                        <% if (product.racketSpecs.gripSize) { %>
+                            <div class="flex justify-between py-2 border-b border-olive-50">
+                                <span class="text-sm text-olive-500">Grip Size</span>
+                                <span class="text-sm font-medium text-olive-900"><%= product.racketSpecs.gripSize %></span>
                             </div>
                         <% } %>
                     <% } %>
                     
-                    <!-- Category-specific specs for Shoes -->
                     <% if (product.category === 'shoes' && product.shoeSpecs) { %>
                         <% if (product.shoeSpecs.sizeEU) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Size (EU)</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.shoeSpecs.sizeEU %></span>
                             </div>
                         <% } %>
                         <% if (product.shoeSpecs.sizeUS) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Size (US)</span>
                                 <span class="text-sm font-medium text-olive-900"><%= product.shoeSpecs.sizeUS %></span>
                             </div>
                         <% } %>
                         <% if (product.shoeSpecs.width) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
+                            <div class="flex justify-between py-2 border-b border-olive-50">
                                 <span class="text-sm text-olive-500">Width</span>
                                 <span class="text-sm font-medium text-olive-900 capitalize"><%= product.shoeSpecs.width %></span>
                             </div>
                         <% } %>
-                        <% if (product.shoeSpecs.closureType) { %>
-                            <div class="flex justify-between py-3 border-b border-olive-50">
-                                <span class="text-sm text-olive-500">Closure Type</span>
-                                <span class="text-sm font-medium text-olive-900 capitalize"><%= product.shoeSpecs.closureType %></span>
-                            </div>
-                        <% } %>
                     <% } %>
-                    
-                    <!-- Add more category specs as needed -->
-                    
-                    <% if (!product.specifications && !product.racketSpecs && !product.shoeSpecs && !product.bagSpecs && !product.apparelSpecs && !product.shuttleSpecs && !product.accessorySpecs) { %>
-                        <p class="text-sm text-olive-500 italic">No specifications available for this product.</p>
-                    <% } %>
-                </div>
-            </div>
-            
-            <!-- Tab Content: Shipping -->
-            <div id="tab-shipping" class="tab-content hidden px-4 py-6">
-                <div class="space-y-4">
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="truck" class="w-5 h-5 text-olive-600"></i>
-                        </div>
-                        <div>
-                            <p class="font-medium text-olive-900">Standard Delivery</p>
-                            <p class="text-sm text-olive-500">3-5 business days • Contact seller for rates</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="package-check" class="w-5 h-5 text-olive-600"></i>
-                        </div>
-                        <div>
-                            <p class="font-medium text-olive-900">Local Pickup</p>
-                            <p class="text-sm text-olive-500">Available in seller's city • Message to arrange</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-olive-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="rotate-ccw" class="w-5 h-5 text-olive-600"></i>
-                        </div>
-                        <div>
-                            <p class="font-medium text-olive-900">Returns</p>
-                            <p class="text-sm text-olive-500">Contact seller within 24 hours of delivery</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Trust Signals -->
-        <section class="px-4 py-6 bg-white mt-2">
-            <div class="grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <div class="w-10 h-10 mx-auto mb-2 bg-olive-100 rounded-xl flex items-center justify-center">
-                        <i data-lucide="shield-check" class="w-5 h-5 text-olive-600"></i>
-                    </div>
-                    <p class="text-xs text-olive-600 font-medium">Verified</p>
-                    <p class="text-xs text-olive-400">Seller</p>
-                </div>
-                <div>
-                    <div class="w-10 h-10 mx-auto mb-2 bg-olive-100 rounded-xl flex items-center justify-center">
-                        <i data-lucide="message-circle" class="w-5 h-5 text-olive-600"></i>
-                    </div>
-                    <p class="text-xs text-olive-600 font-medium">Direct</p>
-                    <p class="text-xs text-olive-400">WhatsApp</p>
-                </div>
-                <div>
-                    <div class="w-10 h-10 mx-auto mb-2 bg-olive-100 rounded-xl flex items-center justify-center">
-                        <i data-lucide="credit-card" class="w-5 h-5 text-olive-600"></i>
-                    </div>
-                    <p class="text-xs text-olive-600 font-medium">Secure</p>
-                    <p class="text-xs text-olive-400">Payment</p>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Related Products -->
-        <% if (relatedProducts && relatedProducts.length > 0) { %>
-            <section class="mt-2 bg-white py-6">
-                <div class="px-4 mb-4 flex items-center justify-between">
-                    <h2 class="text-lg font-bold text-olive-950">You May Also Like</h2>
-                    <a href="/products?category=<%= product.category %>" class="text-sm text-olive-600 hover:text-olive-800 transition-colors">
-                        View All
-                    </a>
-                </div>
-                <div class="flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide">
-                    <% relatedProducts.forEach(relProd => { %>
-                        <div class="flex-shrink-0 w-40">
-                            <a href="/products/<%= relProd._id %>" class="block">
-                                <div class="aspect-square bg-olive-50 rounded-2xl overflow-hidden mb-2">
-                                    <img 
-                                        src="<%= relProd.images[0] || 'https://placehold.co/200x200/f7f8f3/556B2F?text=No+Image' %>" 
-                                        alt="<%= relProd.name %>"
-                                        class="w-full h-full object-cover"
-                                        loading="lazy"
-                                    >
-                                </div>
-                                <p class="text-xs text-olive-500 uppercase tracking-wide"><%= relProd.brand %></p>
-                                <h3 class="text-sm font-medium text-olive-900 line-clamp-2"><%= relProd.name %></h3>
-                                <p class="text-sm font-bold text-olive-700 mt-1">$<%= relProd.price.toFixed(2) %></p>
-                            </a>
-                        </div>
-                    <% }) %>
                 </div>
             </section>
         <% } %>
@@ -437,281 +365,83 @@
 
     <!-- ========== STICKY BOTTOM CTA ========== -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-olive-100 px-4 py-4 z-40">
-        <div class="flex gap-3">
-            <!-- Add to Cart -->
-            <button 
-                class="add-to-cart-detail flex-1 flex items-center justify-center gap-2 py-3.5 border-2 border-olive-700 text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors <%= product.stock === 0 ? 'opacity-50 cursor-not-allowed' : '' %>"
-                data-id="<%= product._id %>"
-                <%= product.stock === 0 ? 'disabled' : '' %>
+        <% if (product.sellerInfo && product.sellerInfo.phone) { %>
+            <a 
+                href="https://wa.me/<%= product.sellerInfo.phone.replace(/[^0-9]/g, '') %>?text=Hi!%20I%20want%20to%20order%20<%= encodeURIComponent(product.name || 'this product') %><%= product.price ? '%20(Rs.%20' + product.price.toLocaleString() + ')' : '' %>%20from%20RacketBazaar%0A%0AProduct%20Link:%20<%= encodeURIComponent('https://racketbazaar.com/products/' + product._id) %>"
+                target="_blank"
+                rel="noopener"
+                class="flex items-center justify-center gap-3 w-full py-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-2xl transition-colors shadow-lg text-lg"
             >
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span>Add to Cart</span>
-            </button>
-            
-            <!-- WhatsApp Order (Primary CTA) -->
-            <% if (product.sellerInfo && product.sellerInfo.phone) { %>
-                <a 
-                    href="https://wa.me/<%= product.sellerInfo.phone.replace(/[^0-9]/g, '') %>?text=Hi!%20I%20want%20to%20order%20<%= encodeURIComponent(product.name) %>%20($<%= product.price.toFixed(2) %>)%20from%20RacketBazaar"
-                    target="_blank"
-                    rel="noopener"
-                    class="flex-1 flex items-center justify-center gap-2 py-3.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors"
-                >
-                    <i data-lucide="message-circle" class="w-5 h-5"></i>
-                    <span>Order via WhatsApp</span>
-                </a>
-            <% } else { %>
-                <button 
-                    class="add-to-cart-detail flex-1 flex items-center justify-center gap-2 py-3.5 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors <%= product.stock === 0 ? 'opacity-50 cursor-not-allowed' : '' %>"
-                    data-id="<%= product._id %>"
-                    <%= product.stock === 0 ? 'disabled' : '' %>
-                >
-                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                    <span>Buy Now</span>
-                </button>
-            <% } %>
-        </div>
-    </div>
-
-</div>
-
-<!-- ========== ADD TO CART SUCCESS MODAL ========== -->
-<div id="cart-modal" class="fixed inset-0 z-[100] pointer-events-none">
-    <div id="cart-modal-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
-    <div id="cart-modal-content" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl transform translate-y-full transition-transform duration-300 ease-out max-h-[85vh] overflow-hidden">
-        <!-- Handle -->
-        <div class="flex justify-center pt-3 pb-2">
-            <div class="w-10 h-1 bg-olive-200 rounded-full"></div>
-        </div>
-        
-        <!-- Success Header -->
-        <div class="px-6 py-4 bg-emerald-50 border-b border-emerald-100">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i data-lucide="check" class="w-6 h-6 text-white"></i>
-                </div>
-                <div>
-                    <p class="font-semibold text-emerald-800">Added to Cart!</p>
-                    <p class="text-sm text-emerald-600">Item successfully added</p>
-                </div>
-                <button id="cart-modal-close" class="ml-auto p-2 rounded-lg hover:bg-emerald-100">
-                    <i data-lucide="x" class="w-5 h-5 text-emerald-600"></i>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Product Info -->
-        <div class="px-6 py-4">
-            <div class="flex gap-4">
-                <div class="w-20 h-20 bg-olive-50 rounded-xl overflow-hidden flex-shrink-0">
-                    <img id="modal-product-image" src="<%= product.images[0] || '' %>" alt="" class="w-full h-full object-cover">
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p id="modal-product-brand" class="text-xs text-olive-500 uppercase tracking-wide"><%= product.brand %></p>
-                    <h3 id="modal-product-name" class="font-semibold text-olive-900 line-clamp-2"><%= product.name %></h3>
-                    <p id="modal-product-price" class="text-lg font-bold text-olive-700 mt-1">$<%= product.price.toFixed(2) %></p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Cart Summary in Modal -->
-        <div class="px-6 py-3 bg-olive-50 border-t border-olive-100">
-            <div class="flex justify-between items-center">
-                <span class="text-sm text-olive-600">Cart Total (<span id="modal-cart-count">0</span> items)</span>
-                <span id="modal-cart-total" class="font-bold text-olive-900">$0.00</span>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="px-6 py-4 space-y-3 pb-8">
-            <a href="/cart" class="flex items-center justify-center gap-2 w-full py-3.5 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-xl transition-colors">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span>View Cart & Checkout</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <span>Confirm Order on WhatsApp</span>
             </a>
-            <button id="continue-shopping-btn" class="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-olive-200 text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors">
+        <% } else { %>
+            <a 
+                href="/products"
+                class="flex items-center justify-center gap-2 w-full py-4 bg-olive-700 hover:bg-olive-800 text-white font-semibold rounded-2xl transition-colors text-lg"
+            >
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                <span>Continue Shopping</span>
-            </button>
-        </div>
+                <span>Browse More Products</span>
+            </a>
+        <% } %>
     </div>
+
 </div>
 
 <script>
     // Initialize Lucide icons
     lucide.createIcons();
     
-    // Image Gallery
-    const mainImage = document.getElementById('main-product-image');
-    const productVideo = document.getElementById('product-video');
-    const imageCounter = document.getElementById('image-counter');
-    const thumbnails = document.querySelectorAll('.thumbnail');
+    // Media Gallery Scroll Handling
+    const gallery = document.getElementById('media-gallery');
+    const currentSlide = document.getElementById('current-slide');
+    const dots = document.querySelectorAll('.gallery-dot');
     
-    thumbnails.forEach(thumb => {
-        thumb.addEventListener('click', function() {
-            const src = this.dataset.src;
-            const type = this.dataset.type;
-            const index = this.dataset.index;
-            
-            // Update active state
-            thumbnails.forEach(t => t.classList.remove('border-olive-700'));
-            thumbnails.forEach(t => t.classList.add('border-transparent'));
-            this.classList.remove('border-transparent');
-            this.classList.add('border-olive-700');
-            
-            // Update counter
-            if (imageCounter) {
-                imageCounter.textContent = index;
-            }
-            
-            if (type === 'video') {
-                mainImage.parentElement.classList.add('hidden');
-                productVideo.classList.remove('hidden');
-                productVideo.querySelector('video').play();
-            } else {
-                if (productVideo) {
-                    productVideo.classList.add('hidden');
-                    productVideo.querySelector('video').pause();
-                }
-                mainImage.parentElement.classList.remove('hidden');
-                mainImage.src = src;
-            }
-        });
-    });
-    
-    // Quantity Controls
-    const qtyInput = document.getElementById('quantity');
-    const qtyDecrease = document.getElementById('qty-decrease');
-    const qtyIncrease = document.getElementById('qty-increase');
-    const maxQty = <%= product.stock %>;
-    
-    qtyDecrease?.addEventListener('click', () => {
-        const current = parseInt(qtyInput.value);
-        if (current > 1) {
-            qtyInput.value = current - 1;
-        }
-    });
-    
-    qtyIncrease?.addEventListener('click', () => {
-        const current = parseInt(qtyInput.value);
-        if (current < maxQty) {
-            qtyInput.value = current + 1;
-        }
-    });
-    
-    // Tabs
-    const tabButtons = document.querySelectorAll('.detail-tab');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const tabId = this.dataset.tab;
-            
-            // Update button states
-            tabButtons.forEach(b => {
-                b.classList.remove('text-olive-700', 'border-olive-700');
-                b.classList.add('text-olive-400', 'border-transparent');
-            });
-            this.classList.remove('text-olive-400', 'border-transparent');
-            this.classList.add('text-olive-700', 'border-olive-700');
-            
-            // Update content
-            tabContents.forEach(content => content.classList.add('hidden'));
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-        });
-    });
-    
-    // Add to Cart with quantity
-    const productData = {
-        _id: '<%= product._id %>',
-        name: '<%= product.name.replace(/'/g, "\\'") %>',
-        price: <%= product.price %>,
-        image: '<%= product.images[0] || "" %>',
-        brand: '<%= product.brand %>'
-    };
-    
-    // Cart modal elements
-    const cartModal = document.getElementById('cart-modal');
-    const cartModalBackdrop = document.getElementById('cart-modal-backdrop');
-    const cartModalContent = document.getElementById('cart-modal-content');
-    const cartModalClose = document.getElementById('cart-modal-close');
-    const continueShoppingBtn = document.getElementById('continue-shopping-btn');
-    
-    // Get cart from localStorage
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    function openCartModal() {
-        // Update cart totals
-        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-        const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        document.getElementById('modal-cart-count').textContent = totalItems;
-        document.getElementById('modal-cart-total').textContent = '$' + totalPrice.toFixed(2);
+    if (gallery) {
+        let isScrolling = false;
         
-        // Show modal
-        cartModal.classList.remove('pointer-events-none');
-        cartModalBackdrop.classList.remove('opacity-0');
-        cartModalContent.classList.remove('translate-y-full');
-        
-        // Reinitialize icons
-        lucide.createIcons();
-    }
-    
-    function closeCartModal() {
-        cartModal.classList.add('pointer-events-none');
-        cartModalBackdrop.classList.add('opacity-0');
-        cartModalContent.classList.add('translate-y-full');
-    }
-    
-    cartModalClose?.addEventListener('click', closeCartModal);
-    cartModalBackdrop?.addEventListener('click', closeCartModal);
-    continueShoppingBtn?.addEventListener('click', closeCartModal);
-    
-    // Update cart dot
-    function updateCartDot() {
-        const cartDots = document.querySelectorAll('.cart-dot');
-        const hasItems = cart.length > 0;
-        cartDots.forEach(dot => {
-            dot.style.display = hasItems ? 'block' : 'none';
-        });
-    }
-    
-    document.querySelectorAll('.add-to-cart-detail').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.disabled) return;
-            
-            const quantity = parseInt(qtyInput?.value || 1);
-            
-            // Add to cart
-            const existingItem = cart.find(item => item._id === productData._id);
-            if (existingItem) {
-                existingItem.quantity += quantity;
-            } else {
-                cart.push({
-                    _id: productData._id,
-                    name: productData.name,
-                    price: productData.price,
-                    image: productData.image,
-                    quantity: quantity
+        gallery.addEventListener('scroll', () => {
+            if (!isScrolling) {
+                window.requestAnimationFrame(() => {
+                    const scrollLeft = gallery.scrollLeft;
+                    const itemWidth = gallery.offsetWidth;
+                    const activeIndex = Math.round(scrollLeft / itemWidth);
+                    
+                    // Update counter
+                    if (currentSlide) {
+                        currentSlide.textContent = activeIndex + 1;
+                    }
+                    
+                    // Update dots
+                    dots.forEach((dot, index) => {
+                        dot.classList.toggle('active', index === activeIndex);
+                    });
+                    
+                    isScrolling = false;
                 });
+                isScrolling = true;
             }
-            
-            // Save to localStorage
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
-            // Update cart dot
-            updateCartDot();
-            
-            // Open modal
-            openCartModal();
         });
-    });
-    
-    // Initialize cart dot on page load
-    updateCartDot();
+        
+        // Click on dots to navigate
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                const itemWidth = gallery.offsetWidth;
+                gallery.scrollTo({
+                    left: index * itemWidth,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    }
     
     // Share functionality
-    document.querySelector('[aria-label="Share"]')?.addEventListener('click', async () => {
+    document.getElementById('share-btn')?.addEventListener('click', async () => {
         const shareData = {
-            title: '<%= product.name %>',
-            text: 'Check out this <%= product.name %> on RacketBazaar!',
+            title: '<%= (product.name || "Product").replace(/'/g, "\\'") %>',
+            text: 'Check out this product on RacketBazaar!',
             url: window.location.href
         };
         
@@ -721,7 +451,16 @@
             } else {
                 // Fallback: copy to clipboard
                 await navigator.clipboard.writeText(window.location.href);
-                alert('Link copied to clipboard!');
+                
+                // Show toast notification
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-olive-800 text-white text-sm rounded-lg shadow-lg z-50';
+                toast.textContent = 'Link copied to clipboard!';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 2000);
             }
         } catch (err) {
             console.log('Share failed:', err);

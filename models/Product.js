@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
-        trim: true
+        trim: true,
+        default: ''
     },
     description: {
         type: String,
@@ -13,21 +13,20 @@ const productSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        // required: true,
-        min: 0
+        min: 0,
+        default: 0
     },
     category: {
         type: String,
-        required: true,
-        enum: ['rackets', 'shoes', 'accessories', 'apparel', 'bags', 'shuttles']
+        enum: ['rackets', 'shoes', 'accessories', 'apparel', 'bags', 'shuttles', ''],
+        default: ''
     },
     brand: {
         type: String,
         default: ''
     },
     images: [{
-        type: String,
-        required: true
+        type: String
     }],
     video: {
         url: String,

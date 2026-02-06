@@ -264,7 +264,7 @@
                             <!-- Product Image -->
                             <div class="w-14 h-14 bg-stone-100 rounded-xl overflow-hidden flex-shrink-0">
                                 <% if (product.images && product.images[0]) { %>
-                                <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="w-full h-full object-cover">
+                                <img src="<%= product.images[0] %>" alt="Product" class="w-full h-full object-cover">
                                 <% } else { %>
                                 <div class="w-full h-full flex items-center justify-center">
                                     <i data-lucide="image" class="w-6 h-6 text-stone-300"></i>
@@ -274,14 +274,13 @@
                             
                             <!-- Product Info -->
                             <div class="flex-1 min-w-0">
-                                <h3 class="text-sm font-medium text-stone-800 truncate"><%= product.name %></h3>
-                                <p class="text-xs text-stone-500 mt-0.5"><%= product.category %> • Stock: <%= product.stock %></p>
+                                <p class="text-sm text-stone-800 line-clamp-2"><%= product.description ? product.description.substring(0, 100) + (product.description.length > 100 ? '...' : '') : 'No description' %></p>
+                                <p class="text-xs text-stone-500 mt-1"><%= product.images ? product.images.length : 0 %> photo(s)<%= product.video ? ' • 1 video' : '' %></p>
                             </div>
                             
-                            <!-- Price & Action -->
+                            <!-- Action -->
                             <div class="text-right flex-shrink-0">
-                                <p class="text-sm font-bold text-brand-dark">Rs. <%= product.price.toLocaleString() %></p>
-                                <a href="/seller/products/edit/<%= product._id %>" class="text-xs text-olive-700 hover:underline">Edit</a>
+                                <a href="/seller/products/edit/<%= product._id %>" class="text-sm text-olive-700 font-medium hover:underline">Edit</a>
                             </div>
                         </div>
                         <% }) %>

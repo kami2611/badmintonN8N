@@ -12,20 +12,13 @@
     <main class="admin-main">
         <header class="admin-header">
             <h1>Products</h1>
-            <a href="/admin/products/add" class="btn btn-primary">+ Add Product</a>
         </header>
         
         <div class="filters-bar">
             <form action="/admin/products" method="GET" class="filter-form">
-                <input type="text" name="search" placeholder="Search products..." value="<%= search %>">
-                <select name="category">
-                    <option value="">All Categories</option>
-                    <option value="rackets" <%= category === 'rackets' ? 'selected' : '' %>>Rackets</option>
-                    <option value="shoes" <%= category === 'shoes' ? 'selected' : '' %>>Shoes</option>
-                    <option value="accessories" <%= category === 'accessories' ? 'selected' : '' %>>Accessories</option>
-                </select>
-                <button type="submit" class="btn btn-outline">Filter</button>
-                <% if (search || category) { %>
+                <input type="text" name="search" placeholder="Search by description..." value="<%= search %>">
+                <button type="submit" class="btn btn-outline">Search</button>
+                <% if (search) { %>
                     <a href="/admin/products" class="btn btn-outline">Clear</a>
                 <% } %>
             </form>
@@ -37,12 +30,9 @@
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>Image</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Brand</th>
-                        <th>Price</th>
-                        <th>Stock</th>
+                        <th>Media</th>
+                        <th>Description</th>
+                        <th>Seller</th>
                         <th>Featured</th>
                         <th>Actions</th>
                     </tr>
@@ -52,18 +42,14 @@
                         <tr>
                             <td>
                                 <img src="<%= product.images[0] || 'https://placehold.co/50x50/f5f5f5/333333?text=No+Img' %>" 
-                                     alt="<%= product.name %>" 
+                                     alt="Product" 
                                      class="product-thumbnail">
-                            </td>
-                            <td><%= product.name %></td>
-                            <td><%= product.category %></td>
-                            <td><%= product.brand %></td>
-                            <td>$<%= product.price.toFixed(2) %></td>
-                            <td>
-                                <span class="<%= product.stock < 5 ? 'low-stock' : '' %>">
-                                    <%= product.stock %>
+                                <span style="font-size: 0.75rem; color: #6b7280; display: block;">
+                                    <%= product.images?.length || 0 %> photo(s)<%= product.video ? ', 1 video' : '' %>
                                 </span>
                             </td>
+                            <td style="max-width: 400px;"><%= product.description ? product.description.substring(0, 150) + (product.description.length > 150 ? '...' : '') : 'No description' %></td>
+                            <td><%= product.seller?.storeName || 'Unknown' %></td>
                             <td>
                                 <button class="featured-toggle-btn <%= product.featured ? 'is-featured' : '' %>" 
                                         onclick="toggleProductFeatured('<%= product._id %>', this)"

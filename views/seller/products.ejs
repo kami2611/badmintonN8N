@@ -144,26 +144,17 @@
                     </a>
                 </div>
 
-                <!-- Filters -->
+                <!-- Search -->
                 <div class="bg-white rounded-2xl p-4 shadow-card mb-4">
                     <form action="/seller/products" method="GET" class="flex flex-col sm:flex-row gap-3">
                         <div class="flex-1 relative">
                             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400"></i>
-                            <input type="text" name="search" value="<%= search %>" placeholder="Search products..." class="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:border-olive-500 focus:ring-2 focus:ring-olive-100">
+                            <input type="text" name="search" value="<%= search %>" placeholder="Search products by description..." class="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl text-sm focus:border-olive-500 focus:ring-2 focus:ring-olive-100">
                         </div>
-                        <select name="category" class="px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-white">
-                            <option value="">All Categories</option>
-                            <option value="rackets" <%= category === 'rackets' ? 'selected' : '' %>>Rackets</option>
-                            <option value="shoes" <%= category === 'shoes' ? 'selected' : '' %>>Shoes</option>
-                            <option value="bags" <%= category === 'bags' ? 'selected' : '' %>>Kitbags</option>
-                            <option value="apparel" <%= category === 'apparel' ? 'selected' : '' %>>Apparel</option>
-                            <option value="shuttles" <%= category === 'shuttles' ? 'selected' : '' %>>Shuttles</option>
-                            <option value="accessories" <%= category === 'accessories' ? 'selected' : '' %>>Accessories</option>
-                        </select>
                         <button type="submit" class="px-4 py-2.5 bg-stone-100 text-stone-700 text-sm font-medium rounded-xl hover:bg-stone-200">
-                            Filter
+                            Search
                         </button>
-                        <% if (search || category) { %>
+                        <% if (search) { %>
                         <a href="/seller/products" class="px-4 py-2.5 text-stone-500 text-sm font-medium rounded-xl hover:bg-stone-100 text-center">
                             Clear
                         </a>
@@ -181,27 +172,21 @@
                         <!-- Product Image -->
                         <div class="relative aspect-[4/3] bg-stone-100">
                             <% if (product.images && product.images[0]) { %>
-                            <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="w-full h-full object-cover">
+                            <img src="<%= product.images[0] %>" alt="Product" class="w-full h-full object-cover">
                             <% } else { %>
                             <div class="w-full h-full flex items-center justify-center">
                                 <i data-lucide="image" class="w-12 h-12 text-stone-300"></i>
                             </div>
                             <% } %>
-                            <!-- Category Badge -->
-                            <span class="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-white/90 backdrop-blur rounded-lg capitalize"><%= product.category %></span>
-                            <!-- Stock Badge -->
-                            <% if (product.stock < 5) { %>
-                            <span class="absolute top-3 right-3 px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-lg">Low Stock</span>
-                            <% } %>
+                            <!-- Media Count Badge -->
+                            <span class="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-white/90 backdrop-blur rounded-lg">
+                                <%= product.images ? product.images.length : 0 %> photo(s)<%= product.video ? ' • 1 video' : '' %>
+                            </span>
                         </div>
                         
                         <!-- Product Info -->
                         <div class="p-4">
-                            <h3 class="font-medium text-brand-dark truncate mb-1"><%= product.name %></h3>
-                            <div class="flex items-center justify-between mb-3">
-                                <p class="text-lg font-bold text-olive-700">Rs. <%= product.price.toLocaleString() %></p>
-                                <p class="text-sm text-stone-500">Stock: <span class="<%= product.stock < 5 ? 'text-amber-600 font-medium' : '' %>"><%= product.stock %></span></p>
-                            </div>
+                            <p class="text-sm text-stone-600 line-clamp-3 mb-3"><%= product.description ? product.description.substring(0, 150) + (product.description.length > 150 ? '...' : '') : 'No description' %></p>
                             
                             <!-- Actions -->
                             <div class="flex gap-2">

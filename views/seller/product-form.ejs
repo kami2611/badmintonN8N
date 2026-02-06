@@ -29,17 +29,8 @@
         .upload-area { border: 2px dashed #d4d4d4; transition: all 0.2s; }
         .upload-area:hover, .upload-area.dragover { border-color: #556B2F; background-color: #f7f8f5; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #556B2F !important; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1) !important; }
-        .category-card { transition: all 0.2s; cursor: pointer; }
-        .category-card:hover { border-color: #556B2F; background-color: #f7f8f5; }
-        .category-card.selected { border-color: #556B2F; background-color: #eef0e9; }
-        .ai-button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .ai-button:hover { background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%); }
-        .ai-button:disabled { background: #d1d5db; cursor: not-allowed; }
-        .ai-filled { animation: highlight 0.5s ease-out; }
-        @keyframes highlight { 0% { background-color: #c7d2fe; } 100% { background-color: transparent; } }
-        .step-indicator { transition: all 0.3s; }
-        .step-indicator.active { background-color: #556B2F; color: white; }
-        .step-indicator.completed { background-color: #10b981; color: white; }
+        .media-preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+        @media (max-width: 640px) { .media-preview { grid-template-columns: repeat(3, 1fr); } }
     </style>
 </head>
 <body class="bg-surface-bg font-sans min-h-screen">
@@ -95,7 +86,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 lg:ml-64 min-h-screen pb-24 lg:pb-8">
-            <div class="p-4 lg:p-6 max-w-3xl mx-auto">
+            <div class="p-4 lg:p-6 max-w-2xl mx-auto">
                 
                 <!-- Desktop Header -->
                 <div class="hidden lg:flex items-center justify-between mb-6">
@@ -105,7 +96,7 @@
                         </a>
                         <div>
                             <h1 class="text-2xl font-bold text-brand-dark"><%= title %></h1>
-                            <p class="text-stone-500 mt-1"><%= product ? 'Update your product details' : 'Upload a photo and let AI generate the details' %></p>
+                            <p class="text-stone-500 mt-1"><%= product ? 'Update your product' : 'Upload photos and add a description' %></p>
                         </div>
                     </div>
                 </div>
@@ -118,568 +109,110 @@
                 </div>
                 <% } %>
 
-                <% if (!product) { %>
-                <!-- ========== NEW PRODUCT FLOW (AI-Powered) ========== -->
-                
-                <!-- Step Indicator -->
-                <div class="flex items-center justify-center gap-2 mb-6">
-                    <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold active" id="step-ind-1">1</div>
-                    <div class="w-8 h-0.5 bg-stone-200"></div>
-                    <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-stone-200 text-stone-500" id="step-ind-2">2</div>
-                </div>
-                
-                <!-- Step 1: Image, Name & Category -->
-                <div id="step1" class="space-y-4">
-                    <div class="bg-white rounded-2xl shadow-card p-5">
-                        <h2 class="font-semibold text-brand-dark mb-1">Upload Product Photo</h2>
-                        <p class="text-sm text-stone-500 mb-4">Upload a clear photo of your product. Enter the name and category, then let AI fill in the details.</p>
+                <form action="<%= action %>" method="POST" enctype="multipart/form-data" id="productForm">
+                    
+                    <!-- Media Upload Section -->
+                    <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+                        <h2 class="font-semibold text-brand-dark mb-1">Photos & Video</h2>
+                        <p class="text-sm text-stone-500 mb-4">Upload up to 7 photos and 1 video of your product</p>
                         
-                        <!-- Image Upload -->
-                        <div id="imageUploadArea" class="upload-area rounded-xl p-8 text-center cursor-pointer mb-4">
-                            <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp" class="hidden">
-                            <i data-lucide="camera" class="w-12 h-12 text-stone-400 mx-auto mb-3"></i>
-                            <p class="text-sm font-medium text-stone-600">Tap to upload product image</p>
-                            <p class="text-xs text-stone-400 mt-1">JPG, PNG, WebP • Max 5MB</p>
-                        </div>
-                        
-                        <!-- Image Preview -->
-                        <div id="imagePreview" class="hidden mb-4">
-                            <div class="relative inline-block">
-                                <img id="previewImg" src="" class="w-32 h-32 object-cover rounded-xl border-2 border-olive-500">
-                                <button type="button" onclick="clearImage()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600">×</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Product Name -->
+                        <!-- Photo Upload -->
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="productNameInput" placeholder="e.g., Yonex Astrox 88D Pro" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            <p class="text-xs text-stone-500 mt-1">Enter the product name as you'd like it displayed</p>
+                            <label class="block text-sm font-medium text-stone-700 mb-2">
+                                Photos <span class="text-red-500">*</span>
+                                <span class="text-stone-400 font-normal">(max 7)</span>
+                            </label>
+                            
+                            <div id="photoUploadArea" class="upload-area rounded-xl p-6 text-center cursor-pointer">
+                                <input type="file" id="photoInput" name="images" multiple accept="image/jpeg,image/png,image/webp" class="hidden">
+                                <i data-lucide="image-plus" class="w-10 h-10 text-stone-400 mx-auto mb-2"></i>
+                                <p class="text-sm font-medium text-stone-600">Tap to upload photos</p>
+                                <p class="text-xs text-stone-400 mt-1">JPG, PNG, WebP • Max 5MB each</p>
+                            </div>
+                            
+                            <!-- Photo Preview Grid -->
+                            <div id="photoPreview" class="media-preview mt-3 hidden"></div>
+                            <p id="photoCount" class="text-xs text-stone-500 mt-2 hidden">0/7 photos selected</p>
                         </div>
                         
-                        <!-- Category Selection -->
+                        <!-- Video Upload -->
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-2">Category <span class="text-red-500">*</span></label>
-                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                                <label class="category-card block p-3 border-2 border-stone-200 rounded-xl text-center">
-                                    <input type="radio" name="categorySelect" value="rackets" class="hidden">
-                                    <i data-lucide="swords" class="w-6 h-6 text-olive-700 mx-auto mb-1"></i>
-                                    <span class="text-xs font-medium text-stone-700">Rackets</span>
-                                </label>
-                                <label class="category-card block p-3 border-2 border-stone-200 rounded-xl text-center">
-                                    <input type="radio" name="categorySelect" value="shoes" class="hidden">
-                                    <i data-lucide="footprints" class="w-6 h-6 text-olive-700 mx-auto mb-1"></i>
-                                    <span class="text-xs font-medium text-stone-700">Shoes</span>
-                                </label>
-                                <label class="category-card block p-3 border-2 border-stone-200 rounded-xl text-center">
-                                    <input type="radio" name="categorySelect" value="bags" class="hidden">
-                                    <i data-lucide="briefcase" class="w-6 h-6 text-olive-700 mx-auto mb-1"></i>
-                                    <span class="text-xs font-medium text-stone-700">Bags</span>
-                                </label>
-                                <label class="category-card block p-3 border-2 border-stone-200 rounded-xl text-center">
-                                    <input type="radio" name="categorySelect" value="apparel" class="hidden">
-                                    <i data-lucide="shirt" class="w-6 h-6 text-olive-700 mx-auto mb-1"></i>
-                                    <span class="text-xs font-medium text-stone-700">Apparel</span>
-                                </label>
-                                <label class="category-card block p-3 border-2 border-stone-200 rounded-xl text-center">
-                                    <input type="radio" name="categorySelect" value="shuttles" class="hidden">
-                                    <i data-lucide="circle-dot" class="w-6 h-6 text-olive-700 mx-auto mb-1"></i>
-                                    <span class="text-xs font-medium text-stone-700">Shuttles</span>
-                                </label>
-                                <label class="category-card block p-3 border-2 border-stone-200 rounded-xl text-center">
-                                    <input type="radio" name="categorySelect" value="accessories" class="hidden">
-                                    <i data-lucide="puzzle" class="w-6 h-6 text-olive-700 mx-auto mb-1"></i>
-                                    <span class="text-xs font-medium text-stone-700">Accessories</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- AI Fill Button -->
-                    <button type="button" id="aiFillBtn" disabled class="w-full py-4 ai-button text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">
-                        <i data-lucide="sparkles" class="w-5 h-5"></i>
-                        <span id="aiFillBtnText">Fill Info with AI</span>
-                    </button>
-                    <p class="text-xs text-center text-stone-500">Or <button type="button" onclick="skipAI()" class="text-olive-700 underline">skip and fill manually</button></p>
-                </div>
-                
-                <!-- Step 2: AI-Filled Fields (Hidden initially) -->
-                <div id="step2" class="hidden">
-                    <form action="<%= action %>" method="POST" enctype="multipart/form-data" id="productForm">
-                        <!-- Hidden fields for category -->
-                        <input type="hidden" name="category" id="categoryHidden">
-                        
-                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
-                            <div class="flex items-center justify-between mb-4">
-                                <h2 class="font-semibold text-brand-dark">Review & Edit Details</h2>
-                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full" id="aiBadge">✨ AI-filled</span>
+                            <label class="block text-sm font-medium text-stone-700 mb-2">
+                                Video
+                                <span class="text-stone-400 font-normal">(optional, max 1)</span>
+                            </label>
+                            
+                            <div id="videoUploadArea" class="upload-area rounded-xl p-6 text-center cursor-pointer">
+                                <input type="file" id="videoInput" name="video" accept="video/mp4,video/mov,video/webm" class="hidden">
+                                <i data-lucide="video" class="w-10 h-10 text-stone-400 mx-auto mb-2"></i>
+                                <p class="text-sm font-medium text-stone-600">Tap to upload video</p>
+                                <p class="text-xs text-stone-400 mt-1">MP4, MOV, WebM • Max 50MB</p>
                             </div>
                             
-                            <!-- Product Name (pre-filled) -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
-                                <input type="text" name="name" id="formName" required class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            </div>
-                            
-                            <!-- Brand -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Brand</label>
-                                <input type="text" name="brand" id="formBrand" placeholder="e.g., Yonex" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            </div>
-                            
-                            <!-- Description -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Description</label>
-                                <textarea name="description" id="formDescription" rows="3" placeholder="Product description..." class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm resize-none"></textarea>
-                            </div>
-                            
-                            <!-- Price & Stock (REQUIRED) -->
-                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Price (Rs.) <span class="text-red-500">*</span></label>
-                                    <input type="number" name="price" id="formPrice" required min="0" placeholder="0" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Stock <span class="text-red-500">*</span></label>
-                                    <input type="number" name="stock" id="formStock" required min="1" value="1" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                </div>
-                            </div>
-                            
-                            <!-- Condition -->
-                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Condition</label>
-                                    <select name="condition" id="formCondition" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                        <option value="new">Brand New</option>
-                                        <option value="used">Used</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Color</label>
-                                    <input type="text" name="color" id="formColor" placeholder="e.g., Black/Red" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Category-Specific Specs -->
-                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
-                            <h3 class="font-semibold text-brand-dark mb-4">Category Specifications</h3>
-                            
-                            <!-- Racket Specs -->
-                            <div id="specsRackets" class="specs-section hidden space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Weight Class</label>
-                                        <select name="weightClass" id="formWeightClass" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="2U">2U (90-94g)</option>
-                                            <option value="3U">3U (85-89g)</option>
-                                            <option value="4U">4U (80-84g)</option>
-                                            <option value="5U">5U (75-79g)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Grip Size</label>
-                                        <select name="gripSize" id="formGripSize" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="G4">G4 (Large)</option>
-                                            <option value="G5">G5 (Medium)</option>
-                                            <option value="G6">G6 (Small)</option>
-                                            <option value="G7">G7 (Extra Small)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Flexibility</label>
-                                        <select name="flexibility" id="formFlexibility" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="extra-stiff">Extra Stiff</option>
-                                            <option value="stiff">Stiff</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="flexible">Flexible</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Balance</label>
-                                        <select name="balance" id="formBalance" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="head-heavy">Head Heavy</option>
-                                            <option value="even">Even Balance</option>
-                                            <option value="head-light">Head Light</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">String Status</label>
-                                        <select name="stringStatus" id="formStringStatus" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="strung">Strung</option>
-                                            <option value="unstrung">Unstrung</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Frame Material</label>
-                                        <input type="text" name="frameMaterial" id="formFrameMaterial" placeholder="e.g., Carbon Fiber" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Shoe Specs -->
-                            <div id="specsShoes" class="specs-section hidden space-y-3">
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size (EU)</label>
-                                        <input type="text" name="sizeEU" id="formSizeEU" placeholder="42" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size (US)</label>
-                                        <input type="text" name="sizeUS" id="formSizeUS" placeholder="8.5" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size (UK)</label>
-                                        <input type="text" name="sizeUK" id="formSizeUK" placeholder="7.5" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Width</label>
-                                        <select name="width" id="formWidth" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Standard</option>
-                                            <option value="narrow">Narrow</option>
-                                            <option value="standard">Standard</option>
-                                            <option value="wide">Wide</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Closure</label>
-                                        <select name="closureType" id="formClosureType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="lace-up">Lace-up</option>
-                                            <option value="velcro">Velcro</option>
-                                            <option value="slip-on">Slip-on</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-stone-700 mb-1.5">Sole Type</label>
-                                    <input type="text" name="soleType" id="formSoleType" placeholder="e.g., Non-marking rubber" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                </div>
-                            </div>
-                            
-                            <!-- Bag Specs -->
-                            <div id="specsBags" class="specs-section hidden space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Capacity</label>
-                                        <select name="capacity" id="formCapacity" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="3-racket">3 Rackets</option>
-                                            <option value="6-racket">6 Rackets</option>
-                                            <option value="9-racket">9 Rackets</option>
-                                            <option value="12-racket">12 Rackets</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Bag Type</label>
-                                        <select name="bagType" id="formBagType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="backpack">Backpack</option>
-                                            <option value="duffel">Duffel</option>
-                                            <option value="thermal">Thermal</option>
-                                            <option value="tote">Tote</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Compartments</label>
-                                        <input type="number" name="compartments" id="formCompartments" placeholder="3" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                    <div class="flex flex-col justify-end">
-                                        <label class="flex items-center gap-2 cursor-pointer p-3 border border-stone-200 rounded-xl">
-                                            <input type="checkbox" name="hasShoeCompartment" id="formHasShoeCompartment" class="w-4 h-4 rounded">
-                                            <span class="text-sm text-stone-700">Shoe Compartment</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <label class="flex items-center gap-2 cursor-pointer p-3 border border-stone-200 rounded-xl">
-                                    <input type="checkbox" name="hasThermalLining" id="formHasThermalLining" class="w-4 h-4 rounded">
-                                    <span class="text-sm text-stone-700">Thermal Lining</span>
-                                </label>
-                            </div>
-                            
-                            <!-- Apparel Specs -->
-                            <div id="specsApparel" class="specs-section hidden space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Type</label>
-                                        <select name="apparelType" id="formApparelType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="t-shirt">T-Shirt</option>
-                                            <option value="polo">Polo</option>
-                                            <option value="shorts">Shorts</option>
-                                            <option value="skirt">Skirt</option>
-                                            <option value="jacket">Jacket</option>
-                                            <option value="tracksuit">Tracksuit</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Size</label>
-                                        <select name="apparelSize" id="formApparelSize" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="XS">XS</option>
-                                            <option value="S">S</option>
-                                            <option value="M">M</option>
-                                            <option value="L">L</option>
-                                            <option value="XL">XL</option>
-                                            <option value="2XL">2XL</option>
-                                            <option value="3XL">3XL</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Gender</label>
-                                        <select name="gender" id="formGender" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="men">Men</option>
-                                            <option value="women">Women</option>
-                                            <option value="unisex">Unisex</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Fabric</label>
-                                        <input type="text" name="fabricType" id="formFabricType" placeholder="e.g., Polyester" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Shuttle Specs -->
-                            <div id="specsShuttles" class="specs-section hidden space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Type</label>
-                                        <select name="shuttleType" id="formShuttleType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="feather">Feather</option>
-                                            <option value="nylon">Nylon</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Speed</label>
-                                        <select name="speed" id="formSpeed" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="75">75 (Slow)</option>
-                                            <option value="76">76</option>
-                                            <option value="77">77 (Medium)</option>
-                                            <option value="78">78</option>
-                                            <option value="79">79 (Fast)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Qty Per Tube</label>
-                                        <input type="number" name="quantityPerTube" id="formQuantityPerTube" placeholder="12" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Grade</label>
-                                        <input type="text" name="grade" id="formGrade" placeholder="e.g., Tournament" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Accessory Specs -->
-                            <div id="specsAccessories" class="specs-section hidden space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Type</label>
-                                        <select name="accessoryType" id="formAccessoryType" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                            <option value="">Select</option>
-                                            <option value="grip">Grip / Overgrip</option>
-                                            <option value="string">String</option>
-                                            <option value="towel">Towel</option>
-                                            <option value="wristband">Wristband</option>
-                                            <option value="headband">Headband</option>
-                                            <option value="socks">Socks</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Pack Quantity</label>
-                                        <input type="number" name="packQuantity" id="formPackQuantity" placeholder="1" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
+                            <!-- Video Preview -->
+                            <div id="videoPreview" class="mt-3 hidden">
+                                <div class="relative inline-block">
+                                    <video id="previewVideo" class="w-40 h-28 object-cover rounded-xl border-2 border-olive-500" muted></video>
+                                    <button type="button" onclick="clearVideo()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600">×</button>
+                                    <div class="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">
+                                        <i data-lucide="video" class="w-3 h-3 inline"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Additional Images -->
-                        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
-                            <h3 class="font-semibold text-brand-dark mb-2">Additional Images (Optional)</h3>
-                            <p class="text-xs text-stone-500 mb-3">Add more images to show different angles. Max 4 additional images.</p>
-                            
-                            <div id="additionalImagesArea" class="upload-area rounded-xl p-6 text-center cursor-pointer">
-                                <input type="file" id="additionalImagesInput" name="images" multiple accept="image/jpeg,image/png,image/webp" class="hidden">
-                                <i data-lucide="images" class="w-8 h-8 text-stone-400 mx-auto mb-2"></i>
-                                <p class="text-sm text-stone-600">Add more images</p>
+
+                        <% if (product && product.images && product.images.length > 0) { %>
+                        <!-- Existing Images for Edit Mode -->
+                        <div class="mt-4 pt-4 border-t border-stone-200">
+                            <label class="block text-sm font-medium text-stone-700 mb-2">Current Photos</label>
+                            <div class="media-preview">
+                                <% product.images.forEach((img, index) => { %>
+                                <div class="relative aspect-square rounded-xl overflow-hidden bg-stone-100 border-2 border-olive-500" id="existing-img-<%= index %>">
+                                    <img src="<%= img %>" class="w-full h-full object-cover">
+                                    <input type="hidden" name="existingImages" value="<%= img %>">
+                                    <button type="button" onclick="removeExistingImage(<%= index %>)" class="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-500">×</button>
+                                </div>
+                                <% }) %>
                             </div>
-                            
-                            <div id="additionalImagesPreview" class="grid grid-cols-4 gap-2 mt-3"></div>
-                        </div>
-                        
-                        <!-- Submit Buttons -->
-                        <div class="flex gap-3">
-                            <button type="button" onclick="goBackToStep1()" class="flex-1 py-3 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200">
-                                ← Back
-                            </button>
-                            <button type="submit" id="submitBtn" class="flex-1 py-3 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800">
-                                Add Product
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
-                <% } else { %>
-                <!-- ========== EDIT PRODUCT FLOW ========== -->
-                <form action="<%= action %>" method="POST" enctype="multipart/form-data" id="editProductForm">
-                    <input type="hidden" name="category" value="<%= product.category %>">
-                    
-                    <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
-                        <h2 class="font-semibold text-brand-dark mb-4">Edit Product Details</h2>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" value="<%= product.name %>" required class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Brand</label>
-                            <input type="text" name="brand" value="<%= product.brand || '' %>" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Description</label>
-                            <textarea name="description" rows="3" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm resize-none"><%= product.description || '' %></textarea>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Price (Rs.) <span class="text-red-500">*</span></label>
-                                <input type="number" name="price" value="<%= product.price %>" required min="0" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Stock <span class="text-red-500">*</span></label>
-                                <input type="number" name="stock" value="<%= product.stock %>" required min="0" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Condition</label>
-                                <select name="condition" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                    <option value="new" <%= product.condition === 'new' ? 'selected' : '' %>>Brand New</option>
-                                    <option value="used" <%= product.condition === 'used' ? 'selected' : '' %>>Used</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Color</label>
-                                <input type="text" name="color" value="<%= product.specifications?.color || '' %>" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category Specs for Edit (simplified - include all fields hidden) -->
-                    <% if (product.category === 'rackets') { %>
-                    <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
-                        <h3 class="font-semibold text-brand-dark mb-4">Racket Specifications</h3>
-                        <div class="grid grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Weight Class</label>
-                                <select name="weightClass" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                    <option value="">Select</option>
-                                    <option value="2U" <%= product.racketSpecs?.weightClass === '2U' ? 'selected' : '' %>>2U</option>
-                                    <option value="3U" <%= product.racketSpecs?.weightClass === '3U' ? 'selected' : '' %>>3U</option>
-                                    <option value="4U" <%= product.racketSpecs?.weightClass === '4U' ? 'selected' : '' %>>4U</option>
-                                    <option value="5U" <%= product.racketSpecs?.weightClass === '5U' ? 'selected' : '' %>>5U</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Grip Size</label>
-                                <select name="gripSize" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                    <option value="">Select</option>
-                                    <option value="G4" <%= product.racketSpecs?.gripSize === 'G4' ? 'selected' : '' %>>G4</option>
-                                    <option value="G5" <%= product.racketSpecs?.gripSize === 'G5' ? 'selected' : '' %>>G5</option>
-                                    <option value="G6" <%= product.racketSpecs?.gripSize === 'G6' ? 'selected' : '' %>>G6</option>
-                                    <option value="G7" <%= product.racketSpecs?.gripSize === 'G7' ? 'selected' : '' %>>G7</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Flexibility</label>
-                                <select name="flexibility" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                    <option value="">Select</option>
-                                    <option value="extra-stiff" <%= product.racketSpecs?.flexibility === 'extra-stiff' ? 'selected' : '' %>>Extra Stiff</option>
-                                    <option value="stiff" <%= product.racketSpecs?.flexibility === 'stiff' ? 'selected' : '' %>>Stiff</option>
-                                    <option value="medium" <%= product.racketSpecs?.flexibility === 'medium' ? 'selected' : '' %>>Medium</option>
-                                    <option value="flexible" <%= product.racketSpecs?.flexibility === 'flexible' ? 'selected' : '' %>>Flexible</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Balance</label>
-                                <select name="balance" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                    <option value="">Select</option>
-                                    <option value="head-heavy" <%= product.racketSpecs?.balance === 'head-heavy' ? 'selected' : '' %>>Head Heavy</option>
-                                    <option value="even" <%= product.racketSpecs?.balance === 'even' ? 'selected' : '' %>>Even</option>
-                                    <option value="head-light" <%= product.racketSpecs?.balance === 'head-light' ? 'selected' : '' %>>Head Light</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">String Status</label>
-                                <select name="stringStatus" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm bg-white">
-                                    <option value="">Select</option>
-                                    <option value="strung" <%= product.racketSpecs?.stringStatus === 'strung' ? 'selected' : '' %>>Strung</option>
-                                    <option value="unstrung" <%= product.racketSpecs?.stringStatus === 'unstrung' ? 'selected' : '' %>>Unstrung</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1.5">Frame Material</label>
-                                <input type="text" name="frameMaterial" value="<%= product.racketSpecs?.frameMaterial || '' %>" class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm">
-                            </div>
-                        </div>
-                    </div>
-                    <% } %>
-                    
-                    <!-- Images -->
-                    <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
-                        <h3 class="font-semibold text-brand-dark mb-2">Product Images</h3>
-                        <% if (product.images && product.images.length > 0) { %>
-                        <div class="grid grid-cols-4 gap-2 mb-3">
-                            <% product.images.forEach((img) => { %>
-                            <div class="relative aspect-square rounded-xl overflow-hidden bg-stone-100 border-2 border-olive-500">
-                                <img src="<%= img %>" class="w-full h-full object-cover">
-                                <input type="hidden" name="existingImages" value="<%= img %>">
-                                <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-500">×</button>
-                            </div>
-                            <% }) %>
                         </div>
                         <% } %>
-                        <div class="upload-area rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('editImagesInput').click()">
-                            <input type="file" id="editImagesInput" name="images" multiple accept="image/jpeg,image/png,image/webp" class="hidden">
-                            <i data-lucide="image-plus" class="w-8 h-8 text-stone-400 mx-auto mb-2"></i>
-                            <p class="text-sm text-stone-600">Add more images</p>
+
+                        <% if (product && product.video && product.video.url) { %>
+                        <!-- Existing Video for Edit Mode -->
+                        <div class="mt-4 pt-4 border-t border-stone-200">
+                            <label class="block text-sm font-medium text-stone-700 mb-2">Current Video</label>
+                            <div class="relative inline-block" id="existing-video">
+                                <video src="<%= product.video.url %>" class="w-40 h-28 object-cover rounded-xl border-2 border-olive-500" muted></video>
+                                <button type="button" onclick="removeExistingVideo()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600">×</button>
+                            </div>
+                            <input type="hidden" name="removeVideo" id="removeVideoFlag" value="false">
                         </div>
+                        <% } %>
                     </div>
                     
-                    <button type="submit" class="w-full py-3 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800">
-                        Update Product
+                    <!-- Description Section -->
+                    <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+                        <h2 class="font-semibold text-brand-dark mb-1">Product Description</h2>
+                        <p class="text-sm text-stone-500 mb-4">Describe your product in detail</p>
+                        
+                        <textarea 
+                            name="description" 
+                            id="description"
+                            rows="6" 
+                            required
+                            placeholder="Describe your product... Include details like brand, condition, size, color, specifications, and any other relevant information that buyers would want to know."
+                            class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm resize-none"
+                        ><%= product ? product.description : '' %></textarea>
+                        <p class="text-xs text-stone-400 mt-2">Be detailed - good descriptions help your product sell faster!</p>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn" class="w-full py-4 bg-olive-700 text-white font-semibold rounded-xl hover:bg-olive-800 transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="<%= product ? 'save' : 'plus-circle' %>" class="w-5 h-5"></i>
+                        <span><%= product ? 'Update Product' : 'Create Product' %></span>
                     </button>
+                    
                 </form>
-                <% } %>
                 
             </div>
         </main>
@@ -688,266 +221,194 @@
     <script>
         lucide.createIcons();
         
-        <% if (!product) { %>
-        // ========== New Product Flow Logic ==========
-        let selectedImage = null;
-        let selectedCategory = null;
-        let additionalImages = [];
+        // Photo upload handling
+        const photoUploadArea = document.getElementById('photoUploadArea');
+        const photoInput = document.getElementById('photoInput');
+        const photoPreview = document.getElementById('photoPreview');
+        const photoCount = document.getElementById('photoCount');
+        let selectedPhotos = [];
+        const MAX_PHOTOS = 7;
         
-        // Image upload
-        const imageUploadArea = document.getElementById('imageUploadArea');
-        const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('imagePreview');
-        const previewImg = document.getElementById('previewImg');
+        photoUploadArea.addEventListener('click', () => photoInput.click());
         
-        imageUploadArea.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                selectedImage = e.target.files[0];
-                const url = URL.createObjectURL(selectedImage);
-                previewImg.src = url;
-                imagePreview.classList.remove('hidden');
-                imageUploadArea.classList.add('hidden');
-                checkAIButtonState();
-            }
+        // Drag and drop for photos
+        photoUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            photoUploadArea.classList.add('dragover');
+        });
+        photoUploadArea.addEventListener('dragleave', () => {
+            photoUploadArea.classList.remove('dragover');
+        });
+        photoUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            photoUploadArea.classList.remove('dragover');
+            handlePhotoFiles(e.dataTransfer.files);
         });
         
-        function clearImage() {
-            selectedImage = null;
-            imageInput.value = '';
-            imagePreview.classList.add('hidden');
-            imageUploadArea.classList.remove('hidden');
-            checkAIButtonState();
-        }
-        
-        // Product name input
-        const productNameInput = document.getElementById('productNameInput');
-        productNameInput.addEventListener('input', checkAIButtonState);
-        
-        // Category selection
-        const categoryCards = document.querySelectorAll('input[name="categorySelect"]');
-        categoryCards.forEach(input => {
-            input.addEventListener('change', () => {
-                document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
-                input.closest('.category-card').classList.add('selected');
-                selectedCategory = input.value;
-                checkAIButtonState();
-            });
+        photoInput.addEventListener('change', (e) => {
+            handlePhotoFiles(e.target.files);
         });
         
-        // AI Fill button state
-        const aiFillBtn = document.getElementById('aiFillBtn');
-        function checkAIButtonState() {
-            const hasImage = selectedImage !== null;
-            const hasName = productNameInput.value.trim().length > 0;
-            const hasCategory = selectedCategory !== null;
-            aiFillBtn.disabled = !(hasImage && hasName && hasCategory);
-        }
-        
-        // AI Fill button click
-        aiFillBtn.addEventListener('click', async () => {
-            if (!selectedImage || !productNameInput.value.trim() || !selectedCategory) return;
+        function handlePhotoFiles(files) {
+            const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            const spaceLeft = MAX_PHOTOS - selectedPhotos.length;
+            const filesToAdd = newFiles.slice(0, spaceLeft);
             
-            const btnText = document.getElementById('aiFillBtnText');
-            btnText.innerHTML = '<span class="inline-block animate-spin mr-2">⚙️</span> Generating with AI...';
-            aiFillBtn.disabled = true;
-            
-            try {
-                // Send only product name and category (no image) to AI
-                const response = await fetch('/seller/products/ai-fill', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        productName: productNameInput.value.trim(),
-                        category: selectedCategory
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    fillFormWithAIData(result.data);
-                    showStep2();
-                } else {
-                    alert('AI generation failed: ' + (result.error || 'Unknown error'));
-                    btnText.textContent = 'Fill Info with AI';
-                    aiFillBtn.disabled = false;
-                }
-            } catch (error) {
-                console.error('AI Fill error:', error);
-                alert('Failed to connect to AI service. Please try again.');
-                btnText.textContent = 'Fill Info with AI';
-                aiFillBtn.disabled = false;
+            if (newFiles.length > spaceLeft) {
+                alert('You can only upload ' + MAX_PHOTOS + ' photos maximum. ' + (newFiles.length - spaceLeft) + ' file(s) were not added.');
             }
-        });
-        
-        function fillFormWithAIData(data) {
-            // Basic fields
-            document.getElementById('formName').value = productNameInput.value.trim();
-            document.getElementById('categoryHidden').value = selectedCategory;
             
-            if (data.brand) setFieldWithHighlight('formBrand', data.brand);
-            if (data.description) setFieldWithHighlight('formDescription', data.description);
-            if (data.price) setFieldWithHighlight('formPrice', data.price);
-            if (data.condition) setSelectWithHighlight('formCondition', data.condition);
-            if (data.color) setFieldWithHighlight('formColor', data.color);
-            
-            // Category-specific fields
-            if (selectedCategory === 'rackets') {
-                if (data.weightClass) setSelectWithHighlight('formWeightClass', data.weightClass);
-                if (data.gripSize) setSelectWithHighlight('formGripSize', data.gripSize);
-                if (data.flexibility) setSelectWithHighlight('formFlexibility', data.flexibility);
-                if (data.balance) setSelectWithHighlight('formBalance', data.balance);
-                if (data.stringStatus) setSelectWithHighlight('formStringStatus', data.stringStatus);
-                if (data.frameMaterial) setFieldWithHighlight('formFrameMaterial', data.frameMaterial);
-            } else if (selectedCategory === 'shoes') {
-                if (data.sizeEU) setFieldWithHighlight('formSizeEU', data.sizeEU);
-                if (data.sizeUS) setFieldWithHighlight('formSizeUS', data.sizeUS);
-                if (data.sizeUK) setFieldWithHighlight('formSizeUK', data.sizeUK);
-                if (data.width) setSelectWithHighlight('formWidth', data.width);
-                if (data.closureType) setSelectWithHighlight('formClosureType', data.closureType);
-                if (data.soleType) setFieldWithHighlight('formSoleType', data.soleType);
-            } else if (selectedCategory === 'bags') {
-                if (data.capacity) setSelectWithHighlight('formCapacity', data.capacity);
-                if (data.bagType) setSelectWithHighlight('formBagType', data.bagType);
-                if (data.compartments) setFieldWithHighlight('formCompartments', data.compartments);
-                if (data.hasShoeCompartment) document.getElementById('formHasShoeCompartment').checked = data.hasShoeCompartment;
-                if (data.hasThermalLining) document.getElementById('formHasThermalLining').checked = data.hasThermalLining;
-            } else if (selectedCategory === 'apparel') {
-                if (data.apparelType) setSelectWithHighlight('formApparelType', data.apparelType);
-                if (data.apparelSize) setSelectWithHighlight('formApparelSize', data.apparelSize);
-                if (data.gender) setSelectWithHighlight('formGender', data.gender);
-                if (data.fabricType) setFieldWithHighlight('formFabricType', data.fabricType);
-            } else if (selectedCategory === 'shuttles') {
-                if (data.shuttleType) setSelectWithHighlight('formShuttleType', data.shuttleType);
-                if (data.speed) setSelectWithHighlight('formSpeed', data.speed);
-                if (data.quantityPerTube) setFieldWithHighlight('formQuantityPerTube', data.quantityPerTube);
-                if (data.grade) setFieldWithHighlight('formGrade', data.grade);
-            } else if (selectedCategory === 'accessories') {
-                if (data.accessoryType) setSelectWithHighlight('formAccessoryType', data.accessoryType);
-                if (data.packQuantity) setFieldWithHighlight('formPackQuantity', data.packQuantity);
-            }
+            selectedPhotos = [...selectedPhotos, ...filesToAdd];
+            renderPhotoPreview();
+            updatePhotoInput();
         }
         
-        function setFieldWithHighlight(id, value) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.value = value;
-                el.classList.add('ai-filled');
-            }
-        }
-        
-        function setSelectWithHighlight(id, value) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.value = value;
-                el.classList.add('ai-filled');
-            }
-        }
-        
-        function showStep2() {
-            document.getElementById('step1').classList.add('hidden');
-            document.getElementById('step2').classList.remove('hidden');
-            
-            // Update step indicators
-            document.getElementById('step-ind-1').classList.remove('active');
-            document.getElementById('step-ind-1').classList.add('completed');
-            document.getElementById('step-ind-2').classList.add('active');
-            
-            // Show category-specific specs
-            document.querySelectorAll('.specs-section').forEach(s => s.classList.add('hidden'));
-            const specSection = document.getElementById('specs' + selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1));
-            if (specSection) specSection.classList.remove('hidden');
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        function skipAI() {
-            if (!selectedCategory) {
-                alert('Please select a category first');
+        function renderPhotoPreview() {
+            if (selectedPhotos.length === 0) {
+                photoPreview.classList.add('hidden');
+                photoCount.classList.add('hidden');
                 return;
             }
-            document.getElementById('formName').value = productNameInput.value.trim();
-            document.getElementById('categoryHidden').value = selectedCategory;
-            document.getElementById('aiBadge').classList.add('hidden');
-            showStep2();
-        }
-        
-        function goBackToStep1() {
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step1').classList.remove('hidden');
             
-            document.getElementById('step-ind-2').classList.remove('active');
-            document.getElementById('step-ind-1').classList.remove('completed');
-            document.getElementById('step-ind-1').classList.add('active');
+            photoPreview.classList.remove('hidden');
+            photoCount.classList.remove('hidden');
+            photoCount.textContent = selectedPhotos.length + '/' + MAX_PHOTOS + ' photos selected';
             
-            const btnText = document.getElementById('aiFillBtnText');
-            btnText.textContent = 'Fill Info with AI';
-            checkAIButtonState();
-        }
-        
-        // Additional images
-        const additionalImagesArea = document.getElementById('additionalImagesArea');
-        const additionalImagesInput = document.getElementById('additionalImagesInput');
-        const additionalImagesPreview = document.getElementById('additionalImagesPreview');
-        
-        additionalImagesArea.addEventListener('click', () => additionalImagesInput.click());
-        additionalImagesInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files).slice(0, 4 - additionalImages.length);
-            files.forEach(file => {
-                if (additionalImages.length < 4) {
-                    additionalImages.push(file);
-                }
-            });
-            renderAdditionalImages();
-            updateAdditionalImagesInput();
-        });
-        
-        function renderAdditionalImages() {
-            additionalImagesPreview.innerHTML = '';
-            additionalImages.forEach((file, i) => {
+            photoPreview.innerHTML = '';
+            selectedPhotos.forEach((file, index) => {
                 const div = document.createElement('div');
                 div.className = 'relative aspect-square rounded-xl overflow-hidden bg-stone-100';
+                
                 const img = document.createElement('img');
                 img.className = 'w-full h-full object-cover';
                 img.src = URL.createObjectURL(file);
+                
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-500';
-                btn.textContent = '×';
-                btn.onclick = () => removeAdditionalImage(i);
+                btn.innerHTML = '×';
+                btn.onclick = () => removePhoto(index);
+                
+                if (index === 0) {
+                    const badge = document.createElement('div');
+                    badge.className = 'absolute bottom-1 left-1 bg-olive-700 text-white text-xs px-2 py-0.5 rounded';
+                    badge.textContent = 'Main';
+                    div.appendChild(badge);
+                }
+                
                 div.appendChild(img);
                 div.appendChild(btn);
-                additionalImagesPreview.appendChild(div);
+                photoPreview.appendChild(div);
             });
+            
+            // Add "add more" button if space left
+            if (selectedPhotos.length < MAX_PHOTOS) {
+                const addBtn = document.createElement('div');
+                addBtn.className = 'aspect-square rounded-xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center cursor-pointer hover:border-olive-500 hover:bg-stone-50';
+                addBtn.innerHTML = '<svg class="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span class="text-xs text-stone-500 mt-1">Add more</span>';
+                addBtn.onclick = () => photoInput.click();
+                photoPreview.appendChild(addBtn);
+            }
         }
         
-        function removeAdditionalImage(index) {
-            additionalImages.splice(index, 1);
-            renderAdditionalImages();
-            updateAdditionalImagesInput();
+        function removePhoto(index) {
+            selectedPhotos.splice(index, 1);
+            renderPhotoPreview();
+            updatePhotoInput();
         }
         
-        function updateAdditionalImagesInput() {
+        function updatePhotoInput() {
             const dt = new DataTransfer();
-            // Add main image first
-            if (selectedImage) dt.items.add(selectedImage);
-            // Add additional images
-            additionalImages.forEach(f => dt.items.add(f));
-            additionalImagesInput.files = dt.files;
+            selectedPhotos.forEach(f => dt.items.add(f));
+            photoInput.files = dt.files;
+        }
+        
+        // Video upload handling
+        const videoUploadArea = document.getElementById('videoUploadArea');
+        const videoInput = document.getElementById('videoInput');
+        const videoPreview = document.getElementById('videoPreview');
+        const previewVideo = document.getElementById('previewVideo');
+        let selectedVideo = null;
+        
+        videoUploadArea.addEventListener('click', () => videoInput.click());
+        
+        // Drag and drop for video
+        videoUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            videoUploadArea.classList.add('dragover');
+        });
+        videoUploadArea.addEventListener('dragleave', () => {
+            videoUploadArea.classList.remove('dragover');
+        });
+        videoUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            videoUploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'));
+            if (files[0]) {
+                handleVideoFile(files[0]);
+            }
+        });
+        
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleVideoFile(e.target.files[0]);
+            }
+        });
+        
+        function handleVideoFile(file) {
+            if (file.size > 50 * 1024 * 1024) {
+                alert('Video file is too large. Maximum size is 50MB.');
+                return;
+            }
+            selectedVideo = file;
+            previewVideo.src = URL.createObjectURL(file);
+            videoPreview.classList.remove('hidden');
+            videoUploadArea.classList.add('hidden');
+            lucide.createIcons();
+        }
+        
+        function clearVideo() {
+            selectedVideo = null;
+            videoInput.value = '';
+            videoPreview.classList.add('hidden');
+            videoUploadArea.classList.remove('hidden');
+        }
+        
+        // Edit mode: Remove existing image
+        function removeExistingImage(index) {
+            const el = document.getElementById('existing-img-' + index);
+            if (el) el.remove();
+        }
+        
+        // Edit mode: Remove existing video
+        function removeExistingVideo() {
+            const el = document.getElementById('existing-video');
+            if (el) el.remove();
+            document.getElementById('removeVideoFlag').value = 'true';
         }
         
         // Form submission
-        document.getElementById('productForm').addEventListener('submit', (e) => {
-            // Update files input with main + additional images
-            updateAdditionalImagesInput();
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            <% if (!product) { %>
+            // For new products, require at least one photo
+            if (selectedPhotos.length === 0) {
+                e.preventDefault();
+                alert('Please upload at least one photo of your product.');
+                return;
+            }
+            <% } %>
+            
+            const description = document.getElementById('description').value.trim();
+            if (!description) {
+                e.preventDefault();
+                alert('Please add a description for your product.');
+                return;
+            }
+            
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.textContent = 'Adding Product...';
+            submitBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span><%= product ? "Updating..." : "Creating..." %></span>';
             submitBtn.disabled = true;
         });
-        <% } %>
     </script>
 </body>
 </html>

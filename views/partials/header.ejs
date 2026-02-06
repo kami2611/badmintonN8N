@@ -74,35 +74,4 @@
             <% } %>
         </div>
     </nav>
-    
-    <!-- Cart Drawer - Add this after mobile-nav -->
-    <div class="cart-overlay"></div>
-    <aside class="cart-drawer" id="cart-drawer">
-        <div class="cart-drawer-header">
-            <h3>Your Cart (<span id="cart-drawer-count">0</span>)</h3>
-            <button class="cart-drawer-close" aria-label="Close cart">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        <div class="cart-drawer-body" id="cart-drawer-items">
-            <!-- Cart items will be rendered here by JS -->
-        </div>
-        <div class="cart-drawer-empty" id="cart-drawer-empty">
-            <div class="empty-cart-icon">🛒</div>
-            <p>Your cart is empty</p>
-            <a href="/products" class="btn btn-outline">Continue Shopping</a>
-        </div>
-        <div class="cart-drawer-footer" id="cart-drawer-footer">
-            <div class="cart-drawer-subtotal">
-                <span>Subtotal</span>
-                <span id="cart-drawer-subtotal">$0.00</span>
-            </div>
-            <p class="cart-drawer-note">Shipping calculated at checkout</p>
-            <a href="/checkout" class="btn btn-primary cart-checkout-btn">Proceed to Checkout</a>
-            <button class="btn btn-outline cart-continue-btn" id="continue-shopping-btn">Continue Shopping</button>
-        </div>
-    </aside>
 </header>
