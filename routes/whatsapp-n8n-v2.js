@@ -28,6 +28,8 @@ const N8N_WEBHOOK_TIMEOUT = 30000; // 30 seconds
 
 // Temporary storage for pending image context (when user sends image without caption)
 const pendingImageContext = new Map();
+// Temporary storage for pending seller onboarding data (name/storeName/phone)
+const pendingSellerContext = new Map();
 
 // ============ Webhook Endpoints ============
 
@@ -161,23 +163,22 @@ async function processMessage(phone, msgType, messageObj) {
  */
 async function getSellerContext(phone) {
     let seller = await Seller.findOne({ phone: phone });
-    
+
     if (!seller) {
-        // Create new seller record (pending onboarding)
-        seller = new Seller({
-            phone: phone,
-            name: '',
-            storeName: '',
-            password: 'whatsapp-' + Date.now(), // Placeholder password
+        const pending = pendingSellerContext.get(phone) || {};
+        return {
+            exists: false,
+            id: null,
+            name: pending.name || null,
+            storeName: pending.storeName || null,
             onboardingStep: 'new',
-            status: 'pending'
-        });
-        await seller.save();
-        console.log('👤 [SELLER] New seller created:', phone);
+            status: 'pending',
+            needsOnboarding: true
+        };
     }
-    
+
     const needsOnboarding = seller.onboardingStep !== 'complete';
-    
+
     return {
         exists: true,
         id: seller._id.toString(),
@@ -321,11 +322,48 @@ async function executeIntent(phone, instruction, imageUrl, sellerContext) {
  * Handle onboarding - extract and save name/storeName
  */
 async function handleOnboarding(phone, action, message, sellerContext) {
-    const { name, storeName } = action;
-    
+    const { name, storeName, phone: extractedPhone } = action;
+
     const seller = await Seller.findOne({ phone: phone });
+    const pending = pendingSellerContext.get(phone) || {};
+    const nextPending = {
+        name: name || pending.name,
+        storeName: storeName || pending.storeName,
+        phone: extractedPhone || pending.phone
+    };
+
     if (!seller) {
-        await sendMessage(phone, "Something went wrong. Please try again.");
+        // Store partial onboarding data until we have all required fields
+        pendingSellerContext.set(phone, nextPending);
+
+        if (nextPending.name && nextPending.storeName) {
+            const sellerPhone = nextPending.phone || phone;
+            const newSeller = new Seller({
+                phone: sellerPhone,
+                name: nextPending.name,
+                storeName: nextPending.storeName,
+                password: 'whatsapp-' + Date.now(), // Placeholder password
+                onboardingStep: 'complete',
+                status: 'pending'
+            });
+
+            await newSeller.save();
+            pendingSellerContext.delete(phone);
+            console.log('👤 [SELLER] New seller created:', sellerPhone);
+
+            const welcomeMsg = `🎉 *Welcome to the community, ${newSeller.name}!*\n\n` +
+                `Your store *${newSeller.storeName}* has been created.\n\n` +
+                `📌 *Current Status:* Your store is only visible to you.\n\n` +
+                `You can start adding products now! Just send me:\n` +
+                `📷 An image with a description to add a product\n` +
+                `📝 "show products" to see your inventory\n\n` +
+                `Once we verify your account, your products will be visible to everyone!`;
+
+            await sendMessage(phone, welcomeMsg);
+            return;
+        }
+
+        await sendMessage(phone, message);
         return;
     }
 
