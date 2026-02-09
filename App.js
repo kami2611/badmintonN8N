@@ -53,9 +53,9 @@ const agentRoutes = require('./routes/agent');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/seller');
 const storeRoutes = require('./routes/store');
-const whatsappRoutes = require('./routes/whatsapp-n8n');
+const whatsappRoutes = require('./routes/whatsapp-n8n-v2'); // Brain/Executor architecture
 const productsRoutes = require('./routes/products');
-const n8nRoutes = require('./routes/n8n'); // Import new route
+// n8nRoutes removed - CRUD now handled by whatsapp-n8n-v2.js executor
 
 app.use('/', indexRoutes);
 app.use('/products', productRoutes);
@@ -67,7 +67,7 @@ app.use('/seller', sellerRoutes);
 app.use('/store', storeRoutes);
 app.use('/whatsapp', whatsappRoutes);
 app.use('/products', productsRoutes);
-app.use('/api/n8n', n8nRoutes); // Use new route
+// n8nRoutes removed - all CRUD handled by whatsapp-n8n-v2.js
 
 // 404 handler
 app.use((req, res) => {
