@@ -53,9 +53,9 @@ const agentRoutes = require('./routes/agent');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/seller');
 const storeRoutes = require('./routes/store');
-const whatsappRoutes = require('./routes/whatsapp-n8n');
-
-console.log('📱 WhatsApp using: n8n AI Agent Integration');
+const whatsappRoutes = require('./routes/whatsapp');
+const productsRoutes = require('./routes/products');
+const n8nRoutes = require('./routes/n8n'); // Import new route
 
 app.use('/', indexRoutes);
 app.use('/products', productRoutes);
@@ -65,7 +65,9 @@ app.use('/api/agent', agentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/seller', sellerRoutes);
 app.use('/store', storeRoutes);
-app.use('/whatsapp', whatsappRoutes); 
+app.use('/whatsapp', whatsappRoutes);
+app.use('/products', productsRoutes);
+app.use('/api/n8n', n8nRoutes); // Use new route
 
 // 404 handler
 app.use((req, res) => {
